@@ -270,7 +270,7 @@ static void vi_api_destroy_window(int window_id) {
     }
 }
 
-static void vi_api_set_session_id(int session_id) {
+static void vi_api_set_session_id(long session_id) {
     whist_set_session_id(session_id);
 }
 

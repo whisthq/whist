@@ -96,7 +96,7 @@ void InitializeWhistClient() {
   WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
   // TODO: lifecycle.destroy sometime? If necessary?
 
-  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line, int session_id) {
+  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line, long session_id) {
     LOG(ERROR) << "GOT SESSION ID: " << session_id;
   });
 }

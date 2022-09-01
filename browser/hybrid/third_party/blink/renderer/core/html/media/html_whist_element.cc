@@ -426,7 +426,7 @@ void HTMLWhistElement::whistConnect(const String& whist_parameters) {
   }
 }
 
-void HTMLWhistElement::setSessionID(const int session_id) {
+void HTMLWhistElement::setSessionID(const long session_id) {
   WHIST_VIRTUAL_INTERFACE_CALL(logging.set_session_id, session_id);
 }
 
