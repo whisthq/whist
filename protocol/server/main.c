@@ -126,7 +126,6 @@ static void get_whist_udp_client_messages(WhistServerState* state) {
     size_t wcmsg_size;
     // If received a UDP message
     if (try_get_next_message_udp(state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
-
         double time_before_handling, time_after_handling;
 
         if (PLOT_SERVER_MESSAGE_HANDING) {
@@ -138,8 +137,9 @@ static void get_whist_udp_client_messages(WhistServerState* state) {
         if (PLOT_SERVER_MESSAGE_HANDING) {
             time_after_handling = get_timestamp_sec();
             char buf[30];
-            snprintf(buf,sizeof(buf), "handling of wcmsg_%d", (int)wcmsg.type);
-            whist_plotter_insert_sample(buf, get_timestamp_sec(),
+            snprintf(buf, sizeof(buf), "handling of wcmsg_%d", (int)wcmsg.type);
+            whist_plotter_insert_sample(
+                buf, get_timestamp_sec(),
                 (time_after_handling - time_before_handling) * MS_IN_SECOND);
         }
     }

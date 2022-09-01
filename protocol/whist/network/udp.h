@@ -223,7 +223,10 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void);
 
-// get the len of queued data in socket, unit: bytes
+/**
+ * @brief                          Get length queued in the udp socket of the context
+ * @returns                        num of bytes queued in the udp socket
+ */
 int udp_get_socket_queue_len(void* raw_context);
 /*
 ============================

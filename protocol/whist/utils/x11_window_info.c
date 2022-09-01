@@ -27,8 +27,6 @@ Includes
 #include <X11/Xutil.h>
 #include <stdbool.h>
 
-#include <whist/debug/plotter.h>
-
 // See the EWMH specification; for ease of reading
 #define _NET_WM_STATE_REMOVE 0
 #define _NET_WM_STATE_ADD 1

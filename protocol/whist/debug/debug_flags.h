@@ -10,7 +10,7 @@ Flags for client only
 // but in rare case, you might want to disable it to make performance plotting more accurate
 #define DISABLE_PROTOCOL_ANALYZER false
 
-// if enabled, plotter will start sampling on startup, and export on graceful quit
+// if enabled, plotter will start sampling on startup, and export on **graceful** quit
 #define CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
 // the file to export if above is enabled
 #define CLIENT_SIDE_DEFAULT_EXPORT_FILE "/home/yancey/plot.json"
@@ -29,7 +29,7 @@ Flags for client only
 Flags for server only
 ============================
 */
-// if enabled, plotter will start sampling on startup, and export on graceful quit
+// if enabled, plotter will start sampling on startup, and export on **graceful** quit
 #define SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
 // the file to export if above is enabled
 #define SERVER_SIDE_DEFAULT_EXPORT_FILE "/plot.json"
