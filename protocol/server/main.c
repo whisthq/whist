@@ -137,10 +137,9 @@ static void get_whist_udp_client_messages(WhistServerState* state) {
 
         if (PLOT_SERVER_MESSAGE_HANDING) {
             time_after_handling = get_timestamp_sec();
-            char buf[100];
-            sprintf(buf, "handling of wcmsg_%d", (int)wcmsg.type);
-            whist_plotter_insert_sample(
-                buf, get_timestamp_sec(),
+            char buf[30];
+            snprintf(buf,sizeof(buf), "handling of wcmsg_%d", (int)wcmsg.type);
+            whist_plotter_insert_sample(buf, get_timestamp_sec(),
                 (time_after_handling - time_before_handling) * MS_IN_SECOND);
         }
     }
