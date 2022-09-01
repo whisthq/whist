@@ -131,11 +131,11 @@ static WhistMutex crash_handler_mutex;
  */
 static bool crash_handler_mutex_active;
 
-static void (*external_logger_callback)(unsigned int level, const char* line, long session_id) = NULL;
+static void (*external_logger_callback)(unsigned int level, const char* line, double session_id) = NULL;
 
-static long session_id;
+static double session_id;
 
-void whist_set_session_id (long new_session_id) {
+void whist_set_session_id (double new_session_id) {
     session_id = new_session_id;
 }
 
@@ -143,7 +143,7 @@ int whist_get_session_id () {
     return session_id;
 }
 
-void whist_log_set_external_logger_callback(void (*cb)(unsigned int, const char*, long)) {
+void whist_log_set_external_logger_callback(void (*cb)(unsigned int, const char*, double)) {
     external_logger_callback = cb;
 }
 
