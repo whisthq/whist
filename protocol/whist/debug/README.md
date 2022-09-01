@@ -344,12 +344,17 @@ the Plotter consist of the C++ APIs part (`plotter.h` and `plotter.cpp`) and the
 ##### Controlling APIs:
 
 ```
-void whist_plotter_init(void);  // init the plotter, usually called inside
+void whist_plotter_init(void);  // init the plotter
+```
+
+This is typically called on client and server startup. But you can also call it inside unit-test if needed.
+
+```
 void whist_plotter_start_sampling(void);  // start sampling,
 void whist_plotter_stop_sampling(void);   // stop sampling
 ```
 
-They are usually expected to be called inside `debug_console`. But you can also call it manually at other places, e.g. in the unit-test to manually draw plot graphs.
+They can be called at any place.
 
 ##### Sampling API:
 
@@ -357,7 +362,7 @@ They are usually expected to be called inside `debug_console`. But you can also 
 void whist_plotter_insert_sample(const char* label, double x, double y);
 ```
 
-This function can be called anywhere inside the `WhistClient`. The first parameter `label` is the label of data point `{x,y}`, data point with same label are considered to belong to a same data collection and has the same color in plotting. The `x` and `y`, are self-explained values to be plotted.
+This function can be called at any place. The first parameter `label` is the label of data point `{x,y}`, data point with same label are considered to belong to a same data collection and has the same color in plotting. The `x` and `y`, are self-explained values to be plotted.
 
 #### Data Exporting API:
 
@@ -367,7 +372,7 @@ std::string whist_plotter_export();
 
 This function exports the sampled values to a string of json, which can be turned into graphs by the `plotter.py`.
 
-It's usually expected to be called inside `debug_console`. But you can also call it manually at other places.
+This function can be called at any place.
 
 #### Python Helper Part
 
@@ -390,6 +395,12 @@ Options:
 ```
 
 ### Introduce to the use of plotter
+
+#### Start and Stop sampling
+
+For client, you can start and stop sampling by talking to debug_console. See the `debug_console` section above.
+
+For both client and server, you can enable auto start/stop sampling on program start/quit by `CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT` or `SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT` macro. See the `debug_flag.h` file.
 
 #### Practices for using the Sampling API
 

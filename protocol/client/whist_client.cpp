@@ -350,6 +350,7 @@ int whist_client_main(int argc, const char* argv[]) {
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
     if (CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        // auto enable start sampling
         whist_plotter_start_sampling();
     }
 
@@ -459,6 +460,7 @@ int whist_client_main(int argc, const char* argv[]) {
     whist_wait_thread(system_info_thread, NULL);
 
     if (CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        // if enabled, auto export to file as well
         whist_plotter_export_to_file(CLIENT_SIDE_DEFAULT_EXPORT_FILE);
     }
 

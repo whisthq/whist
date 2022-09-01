@@ -67,9 +67,9 @@ std::string whist_plotter_export();
  *                                 wrapper of whist_plotter_export().
  *
  * @param filename                 name of the file to export
- *
+ * @returns                        0 on success
  */
-void whist_plotter_export_to_file(const char* filename);
+int whist_plotter_export_to_file(const char* filename);
 
 /**
  * @brief                          Export the samples to a json format string. This function is a C

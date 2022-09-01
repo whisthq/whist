@@ -399,6 +399,7 @@ int main(int argc, char* argv[]) {
     whist_init_subsystems();
 
     if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        // auto enable start sampling
         whist_plotter_start_sampling();
     }
 
@@ -715,6 +716,7 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Protocol has shutdown gracefully");
 
     if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        // if enabled, auto export to file as well
         whist_plotter_export_to_file(SERVER_SIDE_DEFAULT_EXPORT_FILE);
     }
 
