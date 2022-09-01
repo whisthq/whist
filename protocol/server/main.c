@@ -21,8 +21,6 @@ Includes
 #include "parse_args.h"
 #include "handle_client_message.h"
 #include "dbus.h"
-#include "whist/core/whist.h"
-#include "whist/debug/debug_flags.h"
 #include "whist/debug/plotter.h"
 #include "whist/utils/clock.h"
 
@@ -126,12 +124,15 @@ void sig_handler(int sig_num) {
 static void get_whist_udp_client_messages(WhistServerState* state) {
     WhistClientMessage wcmsg;
     size_t wcmsg_size;
-    double time_before_handling, time_after_handling;
     // If received a UDP message
     if (try_get_next_message_udp(state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
+
+        double time_before_handling, time_after_handling;
+
         if (PLOT_SERVER_MESSAGE_HANDING) {
             time_before_handling = get_timestamp_sec();
         }
+
         handle_client_message(state, &wcmsg);
 
         if (PLOT_SERVER_MESSAGE_HANDING) {
@@ -484,9 +485,7 @@ int main(int argc, char* argv[]) {
     // Tracking how long we're willing to attempt to connect
     WhistTimer connection_attempt_timer;
     start_timer(&connection_attempt_timer);
-
-    whist_plotter_insert_sample("before_enter_udp_recv_loop", get_timestamp_sec(), -1);
-
+    
     // Whether or not the client connected at least once
     bool client_connected_once = false;
 
