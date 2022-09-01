@@ -99,12 +99,7 @@ void InitializeWhistClient() {
   // Initialize logging
   int session_id = WHIST_VIRTUAL_INTERFACE_CALL(logging.get_session_id);
 
-  auto get_logging_callback = [](int session_id) {
-    return [](unsigned int level, const char* line) {
-    LOG(ERROR) << "SESSION ID IS: " << session_id;
-    // Send post request to logz.io with the session ID
-  };
-  }
-
-  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, get_logging_callback(session_id));
+  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line, int session_id) {
+    LOG(ERROR) << "GOT SESSION ID: " << session_id;
+  });
 }

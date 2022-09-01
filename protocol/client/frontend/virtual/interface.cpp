@@ -18,7 +18,6 @@ static AVFrame* pending = NULL;
 static std::atomic<bool> protocol_alive = false;
 static int requested_width;
 static int requested_height;
-static int whist_session_id = 0;
 
 // Whist window management
 struct WhistWindowInformation {
@@ -272,11 +271,11 @@ static void vi_api_destroy_window(int window_id) {
 }
 
 static void vi_api_set_session_id(int session_id) {
-    whist_session_id = session_id; 
+    whist_set_session_id(session_id);
 }
 
 static int vi_api_get_session_id() {
-    return whist_session_id;
+    return whist_get_session_id();
 }
 
 static const VirtualInterface vi = {
