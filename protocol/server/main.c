@@ -17,6 +17,7 @@ Includes
 ============================
 */
 
+#include <signal.h>
 #include "state.h"
 #include "parse_args.h"
 #include "handle_client_message.h"
@@ -112,10 +113,9 @@ int xioerror_handler(Display* d) {
 
 void sig_handler(int sig_num) {
     /*
-        When the server receives a SIGTERM, gracefully exit.
+        When the server receives a SIGTERM or SIGINT, gracefully exit.
     */
-
-    if (sig_num == SIGTERM) {
+    if (sig_num == SIGTERM|| sig_num ==SIGINT) {
         graceful_exit(&server_state);
     }
 }
@@ -380,12 +380,6 @@ static void whist_server_state_init(WhistServerState* state, whist_server_config
     server_state.client = init_client();
 }
 
-void term(int signum);
-void term(int signum)
-{
-	fprintf(stdout,"catch sigterm!!!\n");
-	exit(-1);
-}
 int broadcast_tcp_packet_wrapper(Client *client, WhistPacketType type, void *data, int len);
 
 int broadcast_tcp_packet_wrapper(Client *client, WhistPacketType type, void *data, int len) {
@@ -397,13 +391,7 @@ int broadcast_tcp_packet_wrapper(Client *client, WhistPacketType type, void *dat
 }
 
 int main(int argc, char* argv[]) {
-    
-	struct sigaction action;
-	memset(&action, 0, sizeof(action));
-	action.sa_handler = term;
-	sigaction(SIGTERM, &action, NULL);
 
-    fprintf(stdout,"main!!!!!!!!\n");
     whist_server_config config = {0};
 
     int ret = server_parse_args(&config, argc, argv);
@@ -417,6 +405,10 @@ int main(int argc, char* argv[]) {
 
     whist_init_subsystems();
 
+    if(CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        whist_plotter_start_sampling();
+    }
+
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
     whist_server_state_init(&server_state, &config);
@@ -426,7 +418,6 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Whist server revision %s", whist_git_revision());
     LOG_INFO("Server protocol started.");
-    LOG_INFO("Server protocol started!!!!!!!!!!!!!!!!!!");
 
 #if OS_IS(OS_WIN32)
     // set Windows DPI
@@ -778,12 +769,18 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Protocol has shutdown gracefully");
 
+    if(SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        whist_plotter_export_to_file(SERVER_SIDE_DEFAULT_EXPORT_FILE);
+    }
+
     destroy_statistic_logger();
     destroy_logger();
     whist_error_monitor_shutdown();
 
     // This is safe to call here because all other threads have been waited and destroyed
     destroy_client(server_state.client);
+
+
 
     return 0;
 }

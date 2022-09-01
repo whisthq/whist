@@ -102,7 +102,6 @@ int init_debug_console() {
     UNUSED(&create_local_udp_listen_socket);
     UNUSED(&debug_console_thread);
 #endif
-    whist_plotter_init();
     return 0;
 }
 

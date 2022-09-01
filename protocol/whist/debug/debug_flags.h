@@ -15,3 +15,13 @@
 #define PLOT_UDP_RECV_GAP true  // plot the gaps between recvs() are called on hotpath
 
 #define PLOT_UDP_RECV_QUEUE true
+
+
+#define CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
+#define CLIENT_SIDE_DEFAULT_EXPORT_FILE "/home/yancey/plot.json"
+
+#define SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
+#define SERVER_SIDE_DEFAULT_EXPORT_FILE "/plot.json"
+
+
+#define ENABLE_SERVER_PLOT_ON_STARTUP true

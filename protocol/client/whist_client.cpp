@@ -52,6 +52,7 @@ extern "C" {
 #include <whist/utils/color.h>
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
+#include "whist/debug/plotter.h"
 #include "whist/utils/command_line.h"
 #include "frontend/virtual/interface.h"
 
@@ -348,6 +349,10 @@ int whist_client_main(int argc, const char* argv[]) {
 
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
+    if(CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        whist_plotter_start_sampling();
+    }
+
     // (internally, only happens for debug builds)
     init_debug_console();
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
@@ -453,6 +458,10 @@ int whist_client_main(int argc, const char* argv[]) {
     // Wait on system info thread before destroying logger
     whist_wait_thread(system_info_thread, NULL);
 
+    if(CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        whist_plotter_export_to_file(CLIENT_SIDE_DEFAULT_EXPORT_FILE);
+    }
+
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
 
@@ -470,6 +479,8 @@ int whist_client_main(int argc, const char* argv[]) {
     // error monitor breadcrumbs and events can finish being reported
     // before we close the error monitor.
     whist_error_monitor_shutdown();
+
+
 
     return exit_code;
 }
