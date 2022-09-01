@@ -143,7 +143,7 @@ int whist_get_session_id () {
     return session_id;
 }
 
-void whist_log_set_external_logger_callback(void (*cb)(unsigned int, const char*, int)) {
+void whist_log_set_external_logger_callback(void (*cb)(unsigned int, const char*, long)) {
     external_logger_callback = cb;
 }
 
