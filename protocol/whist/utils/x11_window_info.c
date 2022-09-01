@@ -329,7 +329,6 @@ bool get_focused_window_name(char** name_return) {
     char** list = NULL;
 
     XLockDisplay(display);
-
     s = XGetWMName(display, w, &prop);
     if (s) {
         result = XmbTextPropertyToTextList(display, &prop, &list, &count);
@@ -538,7 +537,6 @@ char* get_window_name(X11CaptureDevice* device, Window w) {
     XTextProperty prop;
     // unclear if needed
     XLockDisplay(device->display);
-
     Status s = XGetWMName(device->display, w, &prop);
     if (s) {
         int count = 0;

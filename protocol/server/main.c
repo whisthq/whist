@@ -555,12 +555,7 @@ int main(int argc, char* argv[]) {
             // to the client if the fullscreen value has changed.
             // TODO: Move static variable into client variable, so that it can clear on reactivation
             static bool cur_fullscreen = false;
-            double t_a = get_timestamp_sec();
             bool fullscreen = is_focused_window_fullscreen();
-            double t_b = get_timestamp_sec();
-
-            whist_plotter_insert_sample("is_focused_window_fullscreen", get_timestamp_sec(),
-                                        t_b - t_a);
 
             if (fullscreen != cur_fullscreen) {
                 if (fullscreen) {
@@ -584,7 +579,6 @@ int main(int argc, char* argv[]) {
 
         if (get_timer(&window_name_timer) > 50.0 / MS_IN_SECOND) {
             char* name = NULL;
-            double t_a = get_timestamp_sec();
             bool new_window_name = get_focused_window_name(&name);
 
             if (name != NULL &&
