@@ -44,16 +44,6 @@ endif()
 
 option(SANITIZE "Enable sanitizer during build (address, thread, undefined)." OFF)
 option(CLIENT_SHARED_LIB "Build the client as a shared library" OFF)
-option(USE_CCACHE "Use ccache to speed up builds" OFF)
-
-if(USE_CCACHE)
-    set(CMAKE_C_COMPILER_LAUNCHER "ccache")
-    set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
-    set(CMAKE_CUDA_COMPILER_LAUNCHER "ccache")
-    # Unclear whether we need these two, as I think we just treat these as C/CXX
-    set(CMAKE_OBJC_COMPILER_LAUNCHER "ccache")
-    set(CMAKE_OBJCXX_COMPILER_LAUNCHER "ccache")
-endif()
 
 option(NOGPU "Disable GPU acceleration" OFF)
 if(NOGPU)
@@ -285,6 +275,21 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 else()
     find_package(OpenSSL REQUIRED)
 endif()
+
+# serina mimalloc
+set(MIMALLOC_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/mimalloc/${CMAKE_SYSTEM_NAME}")
+find_library(LIB_MIMALLOC
+    NAMES libmimalloc.2.0.dylib
+    PATHS ${MIMALLOC_DIR_PATH}
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT_PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+    message(VERBOSE "Found mimalloc lib: ${LIB_MIMALLOC}")
+list(APPEND SHARED_LIBS_PATHS ${MIMALLOC_DIR_PATH})
+# set(ENV{DYLD_INSERT_LIBRARIES} "${MIMALLOC_DIR_PATH}/libmimalloc.2.0.dylib")
 
 set(SENTRY_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
 find_library(LIB_SENTRY NAMES sentry PATHS "${SENTRY_DIR_PATH}"
