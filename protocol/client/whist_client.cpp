@@ -375,7 +375,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
     LOG_INFO("Client protocol started...");
 
-#if (OS_IS(OS_LINUX) || OS_IS(OS_MACOS)) && CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT
+#if CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT && (OS_IS(OS_LINUX) || OS_IS(OS_MACOS))
     // if CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT enabled, insert handler
     // for grace quit for ctrl-c and kill, so that plotter data can be
     // exported automatically on quit
