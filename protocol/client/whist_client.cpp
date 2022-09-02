@@ -337,6 +337,8 @@ static void post_connection_cleanup(WhistRenderer* renderer) {
 }
 
 #if OS_IS(OS_LINUX) || OS_IS(OS_MACOS)
+
+// signal handler for graceful quit of program
 void sig_handler(int sig_num) {
     /*
         When the client receives a SIGTERM or SIGINT, gracefully exit.
@@ -374,7 +376,10 @@ int whist_client_main(int argc, const char* argv[]) {
 
     LOG_INFO("Client protocol started...");
 
-#if OS_IS(OS_LINUX) || OS_IS(OS_MACOS)
+#if (OS_IS(OS_LINUX) || OS_IS(OS_MACOS)) && CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT
+    // if CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT enabled, insert handler
+    // for grace quit for ctrl-c and kill, so that plotter data can be
+    // exported automatically on quit
     struct sigaction sa = {0};
     sa.sa_handler = sig_handler;
     if (sigaction(SIGTERM, &sa, NULL) == -1) {

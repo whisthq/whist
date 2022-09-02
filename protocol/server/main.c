@@ -424,7 +424,11 @@ int main(int argc, char* argv[]) {
     if (sigaction(SIGTERM, &sa, NULL) == -1) {
         LOG_FATAL("Establishing SIGTERM signal handler failed.");
     }
-    if (sigaction(SIGINT, &sa, NULL) == -1) {
+
+    // if SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT enabled, insert handler
+    // for grace quit for ctrl-c as well, so that plotter data can be
+    // exported automatically on quit
+    if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT && sigaction(SIGINT, &sa, NULL) == -1) {
         LOG_FATAL("Establishing SIGINT signal handler failed.");
     }
     XSetIOErrorHandler(xioerror_handler);
