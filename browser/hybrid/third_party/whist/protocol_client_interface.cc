@@ -18,6 +18,9 @@
 #include "base/mac/foundation_util.h"
 #include "base/native_library.h"
 #include "base/path_service.h"
+#include "services/network/public/cpp/resource_request.h"
+#include "services/network/public/cpp/simple_url_loader.h"
+#include "services/network/public/cpp/shared_url_loader_factory.h"
 
 typedef const WhistClient::VirtualInterface* (*VirtualInterfaceCreator)(void);
 const WhistClient::VirtualInterface* whist_virtual_interface = NULL;
@@ -97,6 +100,30 @@ void InitializeWhistClient() {
   // TODO: lifecycle.destroy sometime? If necessary?
 
   WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line, double session_id) {
+    auto resource_request = std::make_unique<network::ResourceRequest>();
+    const std::string body = "{\"foo\": 1, \"bar\": \"baz\"}";
 
+    resource_request->url = "https://listener.logz.io:8071/?token=MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ&type=http-bulk";
+    resource_request->method = "POST";
+
+    auto url_loader_ = network::SimpleURLLoader::Create(std::move(resource_request), net::DefineNetworkTrafficAnnotation("whist_logger", R"(
+      semantics {
+        sender: "Whist Logger"
+        description:
+          "This service is used to upload debug logs to Whist"
+        trigger:
+          "Triggered by running cloud tabs"
+      }
+      policy {
+        cookies_allowed: NO
+        setting: "Not implemented."
+        policy_exception_justification: "Not implemented."
+      }
+    )"););
+    url_loader_->AttachStringForUpload(body, "application/json");
+    url_loader_->DownloadToStringOfUnboundedSizeUntilCrashAndDie(
+        g_browser_process->shared_url_loader_factory(),
+        base::BindOnce([url_loader_](std::unique_ptr<std::string> response_body) => {url_loader_.reset();},
+                      base::Unretained(this)));
   });
 }
