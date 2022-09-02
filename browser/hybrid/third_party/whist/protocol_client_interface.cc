@@ -124,6 +124,6 @@ void InitializeWhistClient() {
     url_loader_->AttachStringForUpload(body, "application/json");
     url_loader_->DownloadToStringOfUnboundedSizeUntilCrashAndDie(
         g_browser_process->shared_url_loader_factory(),
-        base::BindOnce([url_loader_](std::unique_ptr<std::string> response_body) => {url_loader_.reset()}));
+        base::BindOnce([url_loader_](std::unique_ptr<std::string> response_body) {url_loader_.reset()}));
   });
 }
