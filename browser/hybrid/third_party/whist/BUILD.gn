@@ -42,9 +42,7 @@ source_set("protocol_client_interface") {
     "//third_party/abseil-cpp:absl_include_config",
     "//third_party/abseil-cpp:absl_define_config",
   ]
-  deps = [
-    "//base",
-  ]
+  deps = [ "//base" ]
 }
 
 # Build and Copy Whist Client Library
