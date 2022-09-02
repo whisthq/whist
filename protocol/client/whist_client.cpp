@@ -337,7 +337,6 @@ static void post_connection_cleanup(WhistRenderer* renderer) {
 }
 
 #if OS_IS(OS_LINUX) || OS_IS(OS_MACOS)
-
 // signal handler for graceful quit of program
 void sig_handler(int sig_num) {
     /*
