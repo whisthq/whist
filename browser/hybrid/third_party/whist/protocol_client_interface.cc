@@ -119,7 +119,7 @@ void InitializeWhistClient() {
         setting: "Not implemented."
         policy_exception_justification: "Not implemented."
       }
-    )"););
+    )"));
     url_loader_->AttachStringForUpload(body, "application/json");
     url_loader_->DownloadToStringOfUnboundedSizeUntilCrashAndDie(
         g_browser_process->shared_url_loader_factory(),
