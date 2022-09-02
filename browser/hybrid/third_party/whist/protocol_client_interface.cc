@@ -96,20 +96,4 @@ void InitializeWhistClient() {
   // Initialize whist, so that connections can be made from javascript later
   WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
   // TODO: lifecycle.destroy sometime? If necessary?
-
-  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line, double session_id) {
-    try
-    {
-        http::Request request{"https://listener.logz.io:8071/?token=MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ"};
-        const std::string body = "{\"session_id\": " + std::to_string(session_id) + "\"bar\": \"baz\"}";
-        const auto response = request.send("POST", body, {
-            {"Content-Type", "application/json"}
-        });
-        std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Request failed, error: " << e.what() << '\n';
-    }
-  });
 }

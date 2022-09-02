@@ -36,4 +36,5 @@
     [ImplementedAs=whistConnect] void whistConnect(DOMString whist_parameters);
     [ImplementedAs=isWhistConnected] boolean isWhistConnected();
     [ImplementedAs=setSessionID] void setSessionID(double session_id);
+    [ImplementedAs=onProtocolLog] void onProtocolLog([callback] void f(DOMString line))
 };
