@@ -18,6 +18,7 @@
 #include "base/mac/foundation_util.h"
 #include "base/native_library.h"
 #include "base/path_service.h"
+#include "chrome/browser/browser_process.h"
 #include "services/network/public/cpp/resource_request.h"
 #include "services/network/public/cpp/simple_url_loader.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
@@ -103,7 +104,7 @@ void InitializeWhistClient() {
     auto resource_request = std::make_unique<network::ResourceRequest>();
     const std::string body = "{\"foo\": 1, \"bar\": \"baz\"}";
 
-    resource_request->url = "https://listener.logz.io:8071/?token=MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ&type=http-bulk";
+    resource_request->url = GURL("https://listener.logz.io:8071/?token=MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ&type=http-bulk");
     resource_request->method = "POST";
 
     auto url_loader_ = network::SimpleURLLoader::Create(std::move(resource_request), net::DefineNetworkTrafficAnnotation("whist_logger", R"(
@@ -123,7 +124,6 @@ void InitializeWhistClient() {
     url_loader_->AttachStringForUpload(body, "application/json");
     url_loader_->DownloadToStringOfUnboundedSizeUntilCrashAndDie(
         g_browser_process->shared_url_loader_factory(),
-        base::BindOnce([url_loader_](std::unique_ptr<std::string> response_body) => {url_loader_.reset();},
-                      base::Unretained(this)));
+        base::BindOnce([url_loader_](std::unique_ptr<std::string> response_body) => {url_loader_.reset()}));
   });
 }
