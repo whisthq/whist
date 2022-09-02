@@ -9,6 +9,7 @@
 #include <string.h>
 #include <thread>
 #include <vector>
+#include <fstream>
 
 #include "base/base_paths.h"
 #include "base/files/file_path.h"
@@ -18,10 +19,7 @@
 #include "base/mac/foundation_util.h"
 #include "base/native_library.h"
 #include "base/path_service.h"
-#include "chrome/browser/browser_process.h"
-#include "services/network/public/cpp/resource_request.h"
-#include "services/network/public/cpp/simple_url_loader.h"
-#include "services/network/public/cpp/shared_url_loader_factory.h"
+#include "chrome/common/chrome_paths.h"
 
 typedef const WhistClient::VirtualInterface* (*VirtualInterfaceCreator)(void);
 const WhistClient::VirtualInterface* whist_virtual_interface = NULL;
@@ -74,6 +72,7 @@ static base::NativeLibrary LoadWhistClientLibrary() {
   }
   return library;
 }
+static std::ofstream whist_logs_out;
 
 void InitializeWhistClient() {
   base::AutoLock whist_client_auto_lock(whist_virtual_interface_lock);
@@ -100,30 +99,11 @@ void InitializeWhistClient() {
   WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
   // TODO: lifecycle.destroy sometime? If necessary?
 
+  base::FilePath path;
+  base::PathService::Get(chrome::DIR_USER_DATA, &path);
+  path = path.Append("whist_protocol_client.log");
+  whist_logs_out.open(path.AsUTF8Unsafe().c_str());
   WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line, double session_id) {
-    auto resource_request = std::make_unique<network::ResourceRequest>();
-    const std::string body = "{\"foo\": 1, \"bar\": \"baz\"}";
-
-    resource_request->url = GURL("https://listener.logz.io:8071/?token=MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ&type=http-bulk");
-    resource_request->method = "POST";
-
-    const auto url_loader_ = network::SimpleURLLoader::Create(std::move(resource_request), net::DefineNetworkTrafficAnnotation("whist_logger", R"(
-      semantics {
-        sender: "Whist Logger"
-        description:
-          "This service is used to upload debug logs to Whist"
-        trigger:
-          "Triggered by running cloud tabs"
-      }
-      policy {
-        cookies_allowed: NO
-        setting: "Not implemented."
-        policy_exception_justification: "Not implemented."
-      }
-    )"));
-    url_loader_->AttachStringForUpload(body, "application/json");
-    url_loader_->DownloadToStringOfUnboundedSizeUntilCrashAndDie(
-        g_browser_process->shared_url_loader_factory(),
-        base::BindOnce([url_loader_](std::unique_ptr<std::string> response_body) {url_loader_.reset()}));
+    whist_logs_out << line;
   });
 }

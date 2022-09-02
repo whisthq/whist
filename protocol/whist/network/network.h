@@ -442,32 +442,6 @@ int recv_no_intr(SOCKET sockfd, void* buf, size_t len, int flags);
 int recvfrom_no_intr(SOCKET sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
                      socklen_t* addrlen);
 
-/**
- * @brief                          Sends a JSON POST request to some host and
- *                                 provides the response body
- *
- * @param host_s                   The hostname IP address
- * @param path                     The /path/to/the/endpoint
- * @param payload                  A string consisting of the payload
- *                                 to send to the webserver.
- * @param response_body            After the function returns, this parameter
- *                                 will point to a buffer containing the body
- *                                 of the response. That buffer will need to
- *                                 be freed to avoid a memory leak.
- * @param max_response_size        The size of buffer to allocate for the
- *                                 response (including the headers, which are
- *                                 stripped out and returned via
- *                                 `response_body`)
- *
- * @returns                        Will return false on failure, will return
- *                                 true on success Failure implies that the
- *                                 socket is broken or the TCP connection has
- *                                 ended, use GetLastNetworkError() to learn
- *                                 more about the error
- */
-bool send_post_request(char* host_s, char* path, char* payload, char** response_body,
-                       size_t max_response_size);
-
 // TODO: Move
 #include <whist/network/tcp.h>
 #include <whist/network/udp.h>
