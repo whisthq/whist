@@ -11,7 +11,7 @@ Flags for client only
 #define DISABLE_PROTOCOL_ANALYZER false
 
 // if enabled, plotter will start sampling on startup, and export on **graceful** quit
-#define CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT false
+#define CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
 // the file to export if above is enabled
 #define CLIENT_SIDE_DEFAULT_EXPORT_FILE "/tmp/plot.json"
 

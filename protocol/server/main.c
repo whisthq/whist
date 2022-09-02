@@ -424,7 +424,9 @@ int main(int argc, char* argv[]) {
     if (sigaction(SIGTERM, &sa, NULL) == -1) {
         LOG_FATAL("Establishing SIGTERM signal handler failed.");
     }
-
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        LOG_FATAL("Establishing SIGINT signal handler failed.");
+    }
     XSetIOErrorHandler(xioerror_handler);
 #endif
 

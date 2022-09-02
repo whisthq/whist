@@ -30,6 +30,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "network.h"
 #include <whist/core/whist_string.h>
@@ -335,6 +336,17 @@ static void post_connection_cleanup(WhistRenderer* renderer) {
     close_connections();
 }
 
+#if OS_IS(OS_LINUX) || OS_IS(OS_MACOS)
+void sig_handler(int sig_num) {
+    /*
+        When the client receives a SIGTERM or SIGINT, gracefully exit.
+    */
+    if (sig_num == SIGTERM || sig_num == SIGINT) {
+        client_exiting = true;
+    }
+}
+#endif
+
 int whist_client_main(int argc, const char* argv[]) {
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
@@ -361,6 +373,17 @@ int whist_client_main(int argc, const char* argv[]) {
     srand(rand() * (unsigned int)time(NULL) + rand());
 
     LOG_INFO("Client protocol started...");
+
+#if OS_IS(OS_LINUX) || OS_IS(OS_MACOS)
+    struct sigaction sa = {0};
+    sa.sa_handler = sig_handler;
+    if (sigaction(SIGTERM, &sa, NULL) == -1) {
+        LOG_FATAL("Establishing SIGTERM signal handler failed.");
+    }
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        LOG_FATAL("Establishing SIGINT signal handler failed.");
+    }
+#endif
 
     // Initialize logger error monitor
     whist_error_monitor_initialize(true);
