@@ -107,7 +107,7 @@ void InitializeWhistClient() {
     resource_request->url = GURL("https://listener.logz.io:8071/?token=MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ&type=http-bulk");
     resource_request->method = "POST";
 
-    auto url_loader_ = network::SimpleURLLoader::Create(std::move(resource_request), net::DefineNetworkTrafficAnnotation("whist_logger", R"(
+    const auto url_loader_ = network::SimpleURLLoader::Create(std::move(resource_request), net::DefineNetworkTrafficAnnotation("whist_logger", R"(
       semantics {
         sender: "Whist Logger"
         description:
