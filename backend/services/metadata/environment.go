@@ -3,10 +3,6 @@ package metadata // import "github.com/whisthq/whist/backend/services/metadata"
 import (
 	"os"
 	"strings"
-
-	"github.com/whisthq/whist/backend/services/metadata/aws"
-	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
-	"github.com/whisthq/whist/backend/services/utils"
 )
 
 func init() {
@@ -102,22 +98,4 @@ func IsRunningInCI() bool {
 	default:
 		return false
 	}
-}
-
-// GetUserID returns the user ID depending on the environment
-// the host is run.
-func GetUserID() (mandelboxtypes.UserID, error) {
-	var UserID mandelboxtypes.UserID
-	if IsRunningInCI() {
-		// CI doesn't run in AWS so we need to set a custom name
-		UserID = "localdev_host_service_CI"
-	} else {
-		instanceName, err := aws.GetInstanceName()
-		if err != nil {
-			return "", err
-		}
-		UserID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
-	}
-
-	return UserID, nil
 }
