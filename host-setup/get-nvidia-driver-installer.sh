@@ -7,18 +7,16 @@ set -Eeuo pipefail
 
 # Hardcode a GRID driver version to avoid server/client version mismatch.
 # This driver version needs to be updated periodically to the latest version
-# supported by all cloud providers.
-VERSION="13.1"
-BUILD="NVIDIA-Linux-x86_64-470.82.01-grid"
+# offered by each cloud provider.
 case "$CLOUD_PROVIDER" in
   "AWS")
-    curl -o nvidia-driver-installer.run https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-"$VERSION"/"$BUILD"-aws.run
+    curl -o nvidia-driver-installer.run https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-14.0/NVIDIA-Linux-x86_64-510.47.03-grid-aws.run
     ;;
   "GCP")
-    curl -o nvidia-driver-installer.run https://storage.googleapis.com/nvidia-drivers-us-public/GRID/GRID"$VERSION"/"$BUILD".run
+    curl -o nvidia-driver-installer.run https://storage.googleapis.com/nvidia-drivers-us-public/GRID/GRID13.1/NVIDIA-Linux-x86_64-470.82.01-grid.run
     ;;
   *)
-    curl -o nvidia-driver-installer.run https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-"$VERSION"/"$BUILD"-aws.run
+    curl -o nvidia-driver-installer.run https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-14.0/NVIDIA-Linux-x86_64-510.47.03-grid-aws.run
     ;;
 esac
 
