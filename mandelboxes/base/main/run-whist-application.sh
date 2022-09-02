@@ -43,6 +43,14 @@ export CLIENT_OS=$CLIENT_OS
 # Explicitly export the fonts path, so that the
 # application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file
 export FONTCONFIG_PATH=/etc/fonts
+# Set FONTCONFIG_FILE based on client OS (darwin, win32, linux)
+if [[ "$CLIENT_OS" == "darwin" ]]; then
+  export FONTCONFIG_FILE=$FONTCONFIG_PATH/mac-fonts.conf
+elif [[ "$CLIENT_OS" == "win32" ]]; then
+  export FONTCONFIG_FILE=$FONTCONFIG_PATH/windows-fonts.conf
+else
+  export FONTCONFIG_FILE=$FONTCONFIG_PATH/linux-fonts.conf
+fi
 
 if [[ -z ${WHIST_DEST_BROWSER+1} ]]; then
   echo "WHIST_DEST_BROWSER is not set! Defaulting to Chrome"

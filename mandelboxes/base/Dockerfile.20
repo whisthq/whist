@@ -389,7 +389,9 @@ COPY --chmod=550 display/update-whist-dpi.sh $HYDRAULIC_ROOT/usr/share/whist/upd
 #########################
 
 # Set up fontconfig to us the fonts we configure
-COPY --chown=whist display/theme/fonts.conf $HYDRAULIC_ROOT/home/whist/.config/fontconfig/fonts.conf
+COPY --chown=whist display/theme/mac-fonts.conf $HYDRAULIC_ROOT/home/whist/.config/fontconfig/mac-fonts.conf
+COPY --chown=whist display/theme/windows-fonts.conf $HYDRAULIC_ROOT/home/whist/.config/fontconfig/windows-fonts.conf
+COPY --chown=whist display/theme/linux-fonts.conf $HYDRAULIC_ROOT/home/whist/.config/fontconfig/linux-fonts.conf
 
 # Set up window manager running on X server, with GTK/QT theming
 COPY display/theme/gtk-3-settings.ini $HYDRAULIC_ROOT/etc/gtk-3.0/settings.ini
