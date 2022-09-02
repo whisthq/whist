@@ -310,10 +310,4 @@ void whist_log_set_external_logger_callback(void (*cb)(unsigned int level, const
  */
 void whist_set_session_id(double session_id);
 
-/**
- * Returns the session ID
- *
- */
-int whist_get_session_id(void);
-
 #endif  // LOGGING_H

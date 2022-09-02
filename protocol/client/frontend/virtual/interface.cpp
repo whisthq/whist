@@ -274,10 +274,6 @@ static void vi_api_set_session_id(double session_id) {
     whist_set_session_id(session_id);
 }
 
-static int vi_api_get_session_id() {
-    return whist_get_session_id();
-}
-
 static const VirtualInterface vi = {
     .lifecycle =
         {
@@ -295,7 +291,6 @@ static const VirtualInterface vi = {
     .logging = {
             .set_callback = whist_log_set_external_logger_callback,
             .set_session_id = vi_api_set_session_id,
-            .get_session_id = vi_api_get_session_id,
         },
     .video =
         {

@@ -139,10 +139,6 @@ void whist_set_session_id (double new_session_id) {
     session_id = new_session_id;
 }
 
-int whist_get_session_id () {
-    return session_id;
-}
-
 void whist_log_set_external_logger_callback(void (*cb)(unsigned int, const char*, double)) {
     external_logger_callback = cb;
 }

@@ -38,7 +38,6 @@ typedef struct VirtualInterface {
     struct {
         void (*set_callback)(void (*cb)(unsigned int level, const char* line, double session_id));
         void (*set_session_id)(double session_id);
-        int (*get_session_id)(void);
     } logging;
     struct {
         void* (*get_frame_ref)(void);
