@@ -99,6 +99,7 @@ void InitializeWhistClient() {
   WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
   // TODO: lifecycle.destroy sometime? If necessary?
 
+  // Pipe protocol logs to a .log file
   base::FilePath path;
   base::PathService::Get(chrome::DIR_USER_DATA, &path);
   path = path.Append("whist_protocol_client.log");
