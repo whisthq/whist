@@ -30,7 +30,6 @@
     HTMLConstructor,
     ActiveScriptWrappable
 ] interface HTMLWhistElement : HTMLVideoElement {
-    attribute EventHandler onwhistlog;
     [ImplementedAs=whistPause] void freeze();
     // TODO: Should this be a promise instead?
     [ImplementedAs=whistPlay] void thaw();
