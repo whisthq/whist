@@ -133,7 +133,7 @@ static bool crash_handler_mutex_active;
 
 static void (*external_logger_callback)(unsigned int level, const char* line) = NULL;
 
-void whist_log_set_external_logger_callback(void (*cb)(unsigned int, const char*, double)) {
+void whist_log_set_external_logger_callback(void (*cb)(unsigned int, const char*)) {
     external_logger_callback = cb;
 }
 
