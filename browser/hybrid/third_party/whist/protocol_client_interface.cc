@@ -103,6 +103,7 @@ void InitializeWhistClient() {
   base::PathService::Get(chrome::DIR_USER_DATA, &path);
   path = path.Append("whist_protocol_client.log");
   whist_logs_out.open(path.AsUTF8Unsafe().c_str());
+  
   WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line, double session_id) {
     whist_logs_out << line;
   });

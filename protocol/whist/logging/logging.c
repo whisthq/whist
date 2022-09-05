@@ -131,13 +131,7 @@ static WhistMutex crash_handler_mutex;
  */
 static bool crash_handler_mutex_active;
 
-static void (*external_logger_callback)(unsigned int level, const char* line, double session_id) = NULL;
-
-static double session_id;
-
-void whist_set_session_id (double new_session_id) {
-    session_id = new_session_id;
-}
+static void (*external_logger_callback)(unsigned int level, const char* line) = NULL;
 
 void whist_log_set_external_logger_callback(void (*cb)(unsigned int, const char*, double)) {
     external_logger_callback = cb;
@@ -147,7 +141,7 @@ static void log_single_line(unsigned int level, const char* line) {
     // Log to stdout.
     fputs(line, stdout);
     if (external_logger_callback != NULL) {
-        external_logger_callback(level, line, session_id);
+        external_logger_callback(level, line);
     }
 
     // Log to the error monitor.

@@ -36,6 +36,8 @@
 #include "base/memory/weak_ptr.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_media.h"
+#include "third_party/blink/renderer/core/dom/events/event_target.h"
+#include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
 
 namespace blink {
 
@@ -48,6 +50,8 @@ class CORE_EXPORT HTMLWhistElement final
   DEFINE_WRAPPERTYPEINFO();
 
   public:
+    DEFINE_STATIC_ATTRIBUTE_EVENT_LISTENER(onwhistlog, kWhistlog);
+
     explicit HTMLWhistElement(Document&);
     HTMLWhistElement(const HTMLWhistElement&) = delete;
     HTMLWhistElement& operator=(const HTMLWhistElement&) = delete;
@@ -80,7 +84,6 @@ class CORE_EXPORT HTMLWhistElement final
     void whistPlay();
     bool isWhistConnected();
     void whistConnect(const String& whist_parameters);
-    void setSessionID(double session_id);
 
   private:
     class HTMLWhistElementResizeObserverDelegate;

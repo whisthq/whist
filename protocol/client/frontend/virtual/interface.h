@@ -36,8 +36,7 @@ typedef struct VirtualInterface {
         void (*destroy_window)(int window_id);
     } lifecycle;
     struct {
-        void (*set_callback)(void (*cb)(unsigned int level, const char* line, double session_id));
-        void (*set_session_id)(double session_id);
+        void (*set_callback)(void (*cb)(unsigned int level, const char* line));
     } logging;
     struct {
         void* (*get_frame_ref)(void);

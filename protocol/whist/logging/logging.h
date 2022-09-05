@@ -301,13 +301,6 @@ void test_set_pause_state_on_logger_thread(bool pause);
  * @param cb  The callback, which is a void-returning function taking
  *            a log level and the logged line, as a string.
  */
-void whist_log_set_external_logger_callback(void (*cb)(unsigned int level, const char* line, double session_id));
-
-/**
- * Sets the session ID
- *
- * @param session_id  The session ID
- */
-void whist_set_session_id(double session_id);
+void whist_log_set_external_logger_callback(void (*cb)(unsigned int level, const char* line));
 
 #endif  // LOGGING_H

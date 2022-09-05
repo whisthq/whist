@@ -426,10 +426,6 @@ void HTMLWhistElement::whistConnect(const String& whist_parameters) {
   }
 }
 
-void HTMLWhistElement::setSessionID(double session_id) {
-  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_session_id, session_id);
-}
-
 Node::InsertionNotificationRequest HTMLWhistElement::InsertedInto(
     ContainerNode& insertion_point) {
   SetSrcObject(nullptr); // placeholder for launching the functions that create the whistplayer
