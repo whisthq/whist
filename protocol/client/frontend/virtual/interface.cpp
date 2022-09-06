@@ -284,7 +284,8 @@ static const VirtualInterface vi = {
             .register_context = vi_api_register_context,
             .destroy_window = vi_api_destroy_window,
         },
-    .logging = {
+    .logging =
+        {
             .set_callback = whist_log_set_external_logger_callback,
         },
     .video =
