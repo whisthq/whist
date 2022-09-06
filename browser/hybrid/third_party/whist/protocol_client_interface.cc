@@ -9,6 +9,7 @@
 #include <string.h>
 #include <thread>
 #include <vector>
+#include <fstream>
 
 #include "base/base_paths.h"
 #include "base/files/file_path.h"
@@ -18,6 +19,7 @@
 #include "base/mac/foundation_util.h"
 #include "base/native_library.h"
 #include "base/path_service.h"
+#include "chrome/common/chrome_paths.h"
 
 typedef const WhistClient::VirtualInterface* (*VirtualInterfaceCreator)(void);
 const WhistClient::VirtualInterface* whist_virtual_interface = NULL;
@@ -70,6 +72,7 @@ static base::NativeLibrary LoadWhistClientLibrary() {
   }
   return library;
 }
+static std::ofstream whist_logs_out;
 
 void InitializeWhistClient() {
   base::AutoLock whist_client_auto_lock(whist_virtual_interface_lock);
@@ -95,4 +98,14 @@ void InitializeWhistClient() {
   // Initialize whist, so that connections can be made from javascript later
   WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
   // TODO: lifecycle.destroy sometime? If necessary?
+
+  // Pipe protocol logs to a .log file
+  base::FilePath path;
+  base::PathService::Get(chrome::DIR_USER_DATA, &path);
+  path = path.Append("whist_protocol_client.log");
+  whist_logs_out.open(path.AsUTF8Unsafe().c_str());
+  
+  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line) {
+    whist_logs_out << line;
+  });
 }
