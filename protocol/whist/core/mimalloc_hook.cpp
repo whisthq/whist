@@ -1,13 +1,15 @@
 #include <whist/core/whist.h>
 #include <malloc/malloc.h>
-#include <mimalloc.h>
+#include <mimalloc/mimalloc.h>
+#include <iostream>
+extern "C" {
+#include "whist_memory.h"
+}
 
 static size_t page_size;
 static malloc_zone_t* original_zone;
 static size_t (*system_size)(malloc_zone_t* zone, const void* ptr);
 static void* (*system_malloc)(malloc_zone_t* zone, size_t size);
-static void (*system_free)(malloc_zone_t* zone, void* ptr);
-static void (*system_free_definite_size)(malloc_zone_t* zone, void* ptr, size_t size);
 static void* (*system_calloc)(malloc_zone_t* zone, size_t num_items, size_t size);
 static void* (*system_valloc)(malloc_zone_t* zone, size_t size);
 static void (*system_free)(malloc_zone_t* zone, void* ptr);
@@ -40,6 +42,7 @@ static size_t whist_size(malloc_zone_t* zone, const void* p) {
 
 static void* whist_malloc(malloc_zone_t* zone, size_t size) {
     UNUSED(zone);
+    // std::cout << "Calling whist_malloc";
     return mi_malloc(size);
 }
 

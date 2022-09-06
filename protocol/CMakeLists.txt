@@ -277,9 +277,11 @@ else()
 endif()
 
 # serina mimalloc
+message(STATUS "Looking for mimalloc lib: libmimalloc.2.0.dylib")
 set(MIMALLOC_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/mimalloc/${CMAKE_SYSTEM_NAME}")
+message(STATUS "MIMALLOC_DIR_PATH: ${MIMALLOC_DIR_PATH}")
 find_library(LIB_MIMALLOC
-    NAMES libmimalloc.2.0.dylib
+    NAMES mimalloc
     PATHS ${MIMALLOC_DIR_PATH}
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT_PATH
@@ -287,7 +289,7 @@ find_library(LIB_MIMALLOC
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
-    message(VERBOSE "Found mimalloc lib: ${LIB_MIMALLOC}")
+    message(STATUS "Found mimalloc lib: ${LIB_MIMALLOC}")
 list(APPEND SHARED_LIBS_PATHS ${MIMALLOC_DIR_PATH})
 # set(ENV{DYLD_INSERT_LIBRARIES} "${MIMALLOC_DIR_PATH}/libmimalloc.2.0.dylib")
 

@@ -17,6 +17,7 @@ add_library(whistCore STATIC
         features.c
         error_codes.c
         whist_string.c
+        mimalloc_hook.cpp
         )
 
 # Ensure that whist.v is updated prior to compiling whistCore
@@ -24,3 +25,5 @@ add_dependencies(whistCore git_revision)
 
 set_property(TARGET whistCore PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+target_link_libraries(whistCore ${LIB_MIMALLOC})
