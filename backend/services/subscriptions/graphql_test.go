@@ -2,7 +2,6 @@ package subscriptions
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"reflect"
 	"testing"
 
@@ -20,22 +19,29 @@ func TestRoundTrip(t *testing.T) {
 		{"Empty secret", http.MethodGet, "http://localhost:8080", ""},
 	}
 
-	mux := http.NewServeMux()
-	mux.Handle("/v1/graphql", http.HandlerFunc(socketHandler))
-	srv := httptest.NewUnstartedServer(mux)
-	srv.Config = &http.Server{
-		Addr: ":8080",
-	}
-	srv.Start()
-	defer srv.Close()
+	go func() {
+		http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("OK"))
+		}))
+	}()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			secretTransport := withAdminSecretTransport{}
 			secretTransport.AdminSecret = tt.secret
 
-			req := httptest.NewRequest(tt.method, tt.url, nil)
-			_, err := secretTransport.RoundTrip(req)
+			httpClient := http.Client{
+				Transport: &withAdminSecretTransport{
+					AdminSecret: tt.secret,
+				},
+			}
+
+			req, err := http.NewRequest(tt.method, tt.url, nil)
+			if err != nil {
+				t.Errorf("failed to create req: %s", err)
+			}
+
+			_, err = httpClient.Do(req)
 			if err != nil {
 				t.Errorf("failed to set roundtripper: %s", err)
 			}
