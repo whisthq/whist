@@ -1175,6 +1175,9 @@ jobs:
           # passed to npm, NOT the build script. Option arguments to the
           # build script must come after the naked '--'.
           # https://docs.npmjs.com/cli/v8/commands/npm-run-script
+          #
+          # Note, we set symbol_level to 1 to retain stack traces but speed up builds. For maximum
+          # build speed, set to 0, and set to 2 to enable line-by-line debugging.
           npm run build ${{ env.build_type }} \
               --sccache=ccache \
               -- \
@@ -1185,6 +1188,7 @@ jobs:
               --uphold_client_secret=x \
               --uphold_staging_client_id=x \
               --uphold_staging_client_secret=x \
+              --gn=symbol_level=1 \
               --gn=brave_services_key:${{ secrets.WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY }} \
               --gn=brave_stats_api_key:x  \
               --gn=brave_stats_updater_url:x \
@@ -1245,6 +1249,9 @@ jobs:
           # arguments to the create_dist script must come after the
           # naked '--'.
           # https://docs.npmjs.com/cli/v8/commands/npm-run-script
+          #
+          # Note, we set symbol_level to 1 to retain stack traces but speed up builds. For maximum
+          # build speed, set to 0, and set to 2 to enable line-by-line debugging.
           npm run create_dist ${{ env.build_type }} \
               --sccache=ccache \
               -- \
@@ -1258,6 +1265,7 @@ jobs:
               --uphold_client_secret=x \
               --uphold_staging_client_id=x \
               --uphold_staging_client_secret=x \
+              --gn=symbol_level=1 \
               --gn=brave_services_key:${{ secrets.WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY }} \
               --gn=brave_stats_api_key:x  \
               --gn=brave_stats_updater_url:x \
