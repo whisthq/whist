@@ -20,6 +20,15 @@ func TestRoundTrip(t *testing.T) {
 		{"Empty secret", http.MethodGet, "http://localhost:8080", ""},
 	}
 
+	mux := http.NewServeMux()
+	mux.Handle("/v1/graphql", http.HandlerFunc(socketHandler))
+	srv := httptest.NewUnstartedServer(mux)
+	srv.Config = &http.Server{
+		Addr: ":8080",
+	}
+	srv.Start()
+	defer srv.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			secretTransport := withAdminSecretTransport{}
