@@ -1,278 +1,20 @@
 package subscriptions
 
 import (
+	"context"
 	"reflect"
 	"sync"
 	"testing"
-
-	"context"
-	"math/rand"
-	"net/http"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/graph-gophers/graphql-go"
-	"github.com/graph-gophers/graphql-go/relay"
-	"github.com/graph-gophers/graphql-transport-ws/graphqlws"
-	hasura "github.com/hasura/go-graphql-client"
+	"github.com/hasura/go-graphql-client"
+	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 )
 
-// mockWhistClient is a struct that mocks a real Hasura client for testing.
-type mockWhistClient struct {
-	Params          HasuraParams
-	Subscriptions   []HasuraSubscription
-	SubscriptionIDs []string
-}
-
-func (cl *mockWhistClient) Initialize(useConfigDB bool) error {
-	return nil
-}
-
-func (cl *mockWhistClient) GetSubscriptions() []HasuraSubscription {
-	return cl.Subscriptions
-}
-
-func (cl *mockWhistClient) SetSubscriptions(subscriptions []HasuraSubscription) {
-	cl.Subscriptions = subscriptions
-}
-
-func (cl *mockWhistClient) GetSubscriptionIDs() []string {
-	return cl.SubscriptionIDs
-}
-
-func (cl *mockWhistClient) SetSubscriptionsIDs(subscriptionIDs []string) {
-	cl.SubscriptionIDs = subscriptionIDs
-}
-
-func (cl *mockWhistClient) GetParams() HasuraParams {
-	return cl.Params
-}
-
-func (cl *mockWhistClient) SetParams(params HasuraParams) {
-	cl.Params = params
-}
-
-const schema = `
-schema {
-	subscription: Subscription
-	mutation: Mutation
-	query: Query
-}
-type Query {
-	InstanceQuery: [whist_instances!]
-}
-type whist_instances {
-	id: String!
-	provider: String!
-	region: String!
-	image_id: String!
-	client_sha: String!
-	ip_addr: String!
-	instance_type: String!
-	remaining_capacity: String!
-	status: String!
-	created_at: String!
-	updated_at: String!
-}
-
-type Subscription {
-	SubscriptionFired(): InstanceEvent!
-}
-type Mutation {
-	SendSubscription(msg: String!): InstanceEvent!
-}
-type InstanceEvent {
-	id: String!
-	whist_instances: [whist_instances!]
-}
-`
-
-func subscription_setupClients() (*GraphQLClient, *SubscriptionClient) {
-	endpoint := "http://localhost:4679/graphql"
-
-	client := hasura.NewClient(endpoint, &http.Client{Transport: http.DefaultTransport})
-
-	subscriptionClient := hasura.NewSubscriptionClient(endpoint).
-		WithConnectionParams(map[string]interface{}{
-			"headers": map[string]string{
-				"foo": "bar",
-			},
-		})
-
-	whistSubscriptionClient := &SubscriptionClient{}
-	whistSubscriptionClient.Hasura = subscriptionClient
-
-	whistGraphQLClient := &GraphQLClient{}
-	whistGraphQLClient.Hasura = client
-
-	return whistGraphQLClient, whistSubscriptionClient
-}
-
-func subscription_setupServer() *http.Server {
-
-	// init graphQL schema
-	s, err := graphql.ParseSchema(schema, newResolver())
-	if err != nil {
-		panic(err)
-	}
-
-	// graphQL handler
-	mux := http.NewServeMux()
-	graphQLHandler := graphqlws.NewHandlerFunc(s, &relay.Handler{Schema: s})
-	mux.HandleFunc("/graphql", graphQLHandler)
-	server := &http.Server{Addr: ":4679", Handler: mux}
-
-	return server
-}
-
-type resolver struct {
-	instanceEvents     chan *instanceEvent
-	instanceSubscriber chan *instanceSubscriber
-}
-
-func newResolver() *resolver {
-	r := &resolver{
-		instanceEvents:     make(chan *instanceEvent),
-		instanceSubscriber: make(chan *instanceSubscriber),
-	}
-
-	go r.broadcastHelloSaid()
-
-	return r
-}
-
-func (r *resolver) InstanceQuery() *[]Instance {
-	return &[]Instance{
-		{},
-	}
-}
-
-func (r *resolver) SendSubscription(args struct{ Msg string }) *instanceEvent {
-	e := &instanceEvent{}
-	e.instances = []Instance{
-		{ID: uuid.NewString(), ImageID: "test_image_id"},
-	}
-	go func() {
-		select {
-		case r.instanceEvents <- e:
-		case <-time.After(1 * time.Second):
-		}
-	}()
-	return e
-}
-
-type instanceSubscriber struct {
-	stop   <-chan struct{}
-	events chan<- *instanceEvent
-}
-
-func (r *resolver) broadcastHelloSaid() {
-	subscribers := map[string]*instanceSubscriber{}
-	unsubscribe := make(chan string)
-
-	// NOTE: subscribing and sending events are at odds.
-	for {
-		select {
-		case id := <-unsubscribe:
-			delete(subscribers, id)
-		case s := <-r.instanceSubscriber:
-			subscribers[randomID()] = s
-		case e := <-r.instanceEvents:
-			for id, s := range subscribers {
-				go func(id string, s *instanceSubscriber) {
-					select {
-					case <-s.stop:
-						unsubscribe <- id
-						return
-					default:
-					}
-
-					select {
-					case <-s.stop:
-						unsubscribe <- id
-					case s.events <- e:
-					case <-time.After(time.Second):
-					}
-				}(id, s)
-			}
-		}
-	}
-}
-
-func (r *resolver) SubscriptionFired(ctx context.Context) <-chan *instanceEvent {
-	c := make(chan *instanceEvent)
-	// NOTE: this could take a while
-	r.instanceSubscriber <- &instanceSubscriber{events: c, stop: ctx.Done()}
-
-	return c
-}
-
-type instanceEvent struct {
-	id        string
-	instances []Instance
-}
-
-func (r *instanceEvent) Instances() []Instance {
-	return r.instances
-}
-
-func (r *instanceEvent) ID() string {
-	return r.id
-}
-
-func randomID() string {
-	var letter = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-	b := make([]rune, 16)
-	for i := range b {
-		b[i] = letter[rand.Intn(len(letter))]
-	}
-	return string(b)
-}
-
-// Subscribe mocks creating subscriptions. For testing, only returned predefined test events.
-func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
-	conditionFn Handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
-
-	// Create fake instance event
-	testInstanceEvent := InstanceEvent{Instances: []Instance{{
-		ID:     variables["id"].(string),
-		Status: variables["status"].(string),
-	}}}
-
-	// Create fake mandelbox event
-	testMandelboxEvent := MandelboxEvent{Mandelboxes: []Mandelbox{{
-		InstanceID: variables["instance_id"].(string),
-		Status:     "ALLOCATED",
-	}}}
-
-	// Send fake event through channel depending on the result type received
-	switch result.(type) {
-
-	case InstanceEvent:
-		if conditionFn(testInstanceEvent, variables) {
-			subscriptionEvents <- testInstanceEvent
-		}
-	case MandelboxEvent:
-		if conditionFn(testMandelboxEvent, variables) {
-			subscriptionEvents <- testMandelboxEvent
-		}
-	default:
-
-	}
-
-	return uuid.NewString(), nil
-}
-
-func (cl *mockWhistClient) Run(goroutinetracker *sync.WaitGroup) {}
-
-func (cl *mockWhistClient) Close() error {
-	return nil
-}
 func TestInstanceStatusHandler(t *testing.T) {
 	var variables = map[string]interface{}{
-		"id":     hasura.String("test-instance-id"),
-		"status": hasura.String("DRAINING"),
+		"id":     graphql.String("test-instance-id"),
+		"status": graphql.String(dbdriver.InstanceStatusDraining),
 	}
 
 	// Create different tests for the instance status handler,
@@ -288,7 +30,7 @@ func TestInstanceStatusHandler(t *testing.T) {
 		}, false},
 		{"Correct status event", InstanceEvent{
 			Instances: []Instance{
-				{ID: "test-instance-id", Status: "DRAINING"},
+				{ID: "test-instance-id", Status: string(dbdriver.InstanceStatusDraining)},
 			},
 		}, true},
 	}
@@ -306,8 +48,8 @@ func TestInstanceStatusHandler(t *testing.T) {
 }
 func TestMandelboxAllocatedHandler(t *testing.T) {
 	var variables = map[string]interface{}{
-		"instance_id": hasura.String("test-instance-id"),
-		"status":      hasura.String("ALLOCATED"),
+		"instance_id": graphql.String("test-instance-id"),
+		"status":      graphql.String(dbdriver.MandelboxStatusAllocated),
 	}
 
 	// Create different tests for the mandelbox allocated handler,
@@ -325,7 +67,7 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 		}, false},
 		{"Correct status event", MandelboxEvent{
 			Mandelboxes: []Mandelbox{
-				{InstanceID: "test-instance-id", Status: "ALLOCATED"},
+				{InstanceID: "test-instance-id", Status: string(dbdriver.MandelboxStatusAllocated)},
 			},
 		}, true},
 	}
@@ -359,7 +101,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"id": hasura.String(instanceID),
+		"id": graphql.String(instanceID),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
@@ -368,8 +110,8 @@ func TestSetupHostSubscriptions(t *testing.T) {
 	}
 
 	variables = map[string]interface{}{
-		"instance_id": hasura.String(instanceID),
-		"status":      hasura.String("ALLOCATED"),
+		"instance_id": graphql.String(instanceID),
+		"status":      graphql.String(dbdriver.MandelboxStatusAllocated),
 	}
 
 	// Verify that the "variables" maps are deep equal for the second subscription
@@ -394,7 +136,7 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"status": hasura.String("DRAINING"),
+		"status": graphql.String(dbdriver.InstanceStatusDraining),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
@@ -404,4 +146,92 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 	}
 }
 
-// TODO: Add test to subscriptions start function.
+func TestSubscriptionLifecycle(t *testing.T) {
+	events := make(chan SubscriptionEvent)
+	tracker := &sync.WaitGroup{}
+	msg := randomID()
+
+	server := subscription_setupServer()
+	client, subscriptionClient := subscription_setupClients()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer server.Shutdown(ctx)
+	defer cancel()
+
+	var sub struct {
+		HelloSaid struct {
+			ID      graphql.String
+			Message graphql.String `graphql:"msg" json:"msg"`
+		} `graphql:"helloSaid" json:"helloSaid"`
+	}
+
+	err := runServerAndSubscribe(ctx, server, subscriptionClient, sub, events)
+	if err != nil {
+		t.Fatalf("failed to run server or subscribe: %s", err)
+	}
+
+	go func(tracker *sync.WaitGroup) {
+		subscriptionClient.Run(tracker)
+	}(tracker)
+	defer subscriptionClient.Hasura.Close()
+
+	err = triggerSubscription(client, msg)
+	if err != nil {
+		t.Fatalf("failed to trigger subscription: %s", err)
+	}
+
+	e := <-events
+
+	// Check that the result is the expected
+	subRes := e.(map[string]interface{})["helloSaid"].(map[string]interface{})
+	if subRes["msg"] != msg {
+		t.Fatalf("subscription message does not match. got: %s, want: %s", subRes["msg"], msg)
+	}
+}
+
+func TestClose(t *testing.T) {
+	// Use a non-blocking channel to test subscription closing
+	events := make(chan SubscriptionEvent, 1)
+	tracker := &sync.WaitGroup{}
+	msg := randomID()
+
+	server := subscription_setupServer()
+	client, subscriptionClient := subscription_setupClients()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer server.Shutdown(ctx)
+	defer cancel()
+
+	var sub struct {
+		HelloSaid struct {
+			ID      graphql.String
+			Message graphql.String `graphql:"msg" json:"msg"`
+		} `graphql:"helloSaid" json:"helloSaid"`
+	}
+
+	err := runServerAndSubscribe(ctx, server, subscriptionClient, sub, events)
+	if err != nil {
+		t.Fatalf("failed to run server or subscribe: %s", err)
+	}
+
+	go func(tracker *sync.WaitGroup) {
+		subscriptionClient.Run(tracker)
+	}(tracker)
+
+	// Close the client connection prematurely, so
+	// no event should be sent on the events channel.
+	err = subscriptionClient.Close()
+	if err != nil {
+		t.Errorf("failed to close subscriptions client: %s", err)
+	}
+
+	err = triggerSubscription(client, msg)
+	if err != nil {
+		t.Fatalf("failed to trigger subscription: %s", err)
+	}
+
+	e := <-events
+	if e != nil {
+		t.Errorf("expected nil event, got: %s", e)
+	}
+}
