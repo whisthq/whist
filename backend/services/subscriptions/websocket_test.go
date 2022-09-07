@@ -57,6 +57,45 @@ func newTestConn(serverURL string) (*WhistWebsocketHandler, error) {
 
 }
 
+func TestWhistWebsocketConn(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.Handle("/graphql", http.HandlerFunc(socketHandler))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	u, err := url.JoinPath(srv.URL, "graphql")
+	if err != nil {
+		t.Errorf("failed to join url path: %s", err)
+	}
+
+	_, subscriptionClient := subscription_setupClients(&u)
+	subscriptionClient.SetParams(HasuraParams{
+		URL:       u,
+		AccessKey: "key",
+	})
+
+	ws, err := WhistWebsocketConn(subscriptionClient.Hasura)
+	if err != nil {
+		t.Fatalf("failed to create websocket connection: %s", err)
+	}
+
+	msg := "hello, Whist!"
+	err = ws.WriteJSON(msg)
+	if err != nil {
+		t.Fatalf("failed to write to socket: %s", err)
+	}
+
+	var r string
+	err = ws.ReadJSON(&r)
+	if err != nil {
+		t.Fatalf("failed to read from socket: %s", err)
+	}
+
+	if r != msg {
+		t.Fatalf("socket message is not the same, got %s, expected %s", r, msg)
+	}
+}
+
 func TestJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(socketHandler))
 	defer srv.Close()
@@ -119,24 +158,5 @@ func TestWebsocketClose(t *testing.T) {
 	err = testSocket.WriteJSON("test")
 	if err == nil {
 		t.Errorf("expected error after closing connection, received nil error")
-	}
-}
-
-func TestWhistWebsocketConn(t *testing.T) {
-	_, subscriptionClient := subscription_setupClients()
-
-	ws, err := WhistWebsocketConn(subscriptionClient.Hasura)
-	if err != nil {
-		t.Fatalf("failed to create websocket connection: %s", err)
-	}
-
-	expectSocket, err := newTestConn("http://localhost:8080")
-	if err != nil {
-		t.Fatalf("failed to start test connection: %s", err)
-	}
-
-	ok := reflect.DeepEqual(expectSocket, ws)
-	if !ok {
-		t.Errorf("expected socket connection %v, got %v", expectSocket, ws)
 	}
 }

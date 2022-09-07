@@ -202,8 +202,13 @@ func (r *helloSaidEvent) ID() string {
 	return r.id
 }
 
-func subscription_setupClients() (*GraphQLClient, *SubscriptionClient) {
-	endpoint := "http://localhost:4679/graphql"
+func subscription_setupClients(url *string) (*GraphQLClient, *SubscriptionClient) {
+	var endpoint string
+	if url != nil {
+		endpoint = *url
+	} else {
+		endpoint = "http://localhost:4679/graphql"
+	}
 
 	client := hasura.NewClient(endpoint, &http.Client{Transport: http.DefaultTransport})
 

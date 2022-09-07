@@ -152,7 +152,7 @@ func TestSubscriptionLifecycle(t *testing.T) {
 	msg := randomID()
 
 	server := subscription_setupServer()
-	client, subscriptionClient := subscription_setupClients()
+	client, subscriptionClient := subscription_setupClients(nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer server.Shutdown(ctx)
@@ -196,7 +196,7 @@ func TestClose(t *testing.T) {
 	msg := randomID()
 
 	server := subscription_setupServer()
-	client, subscriptionClient := subscription_setupClients()
+	client, subscriptionClient := subscription_setupClients(nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer server.Shutdown(ctx)
@@ -218,6 +218,9 @@ func TestClose(t *testing.T) {
 		subscriptionClient.Run(tracker)
 	}(tracker)
 
+	// Wait for the client to start subscriptions before closing
+	time.Sleep(1 * time.Second)
+
 	// Close the client connection prematurely, so
 	// no event should be sent on the events channel.
 	err = subscriptionClient.Close()
@@ -230,8 +233,16 @@ func TestClose(t *testing.T) {
 		t.Fatalf("failed to trigger subscription: %s", err)
 	}
 
-	e := <-events
-	if e != nil {
-		t.Errorf("expected nil event, got: %s", e)
+	select {
+	case e := <-events:
+		if e != nil {
+			t.Errorf("expected nil event, got: %s", e)
+		}
+
+	case <-time.After(3 * time.Second):
+		// The test should time out because the subscriptions
+		// weere closed prematurely./
+		return
 	}
+
 }
