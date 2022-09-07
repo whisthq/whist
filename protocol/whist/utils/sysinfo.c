@@ -296,9 +296,13 @@ void print_ram_info(void) {
         total_ram = -1;
     } else {
         char* token = strtok(memsize, ": ");
-        token = strtok(NULL, ": ");       // get the second token, the RAM number
-        token[strlen(token) - 1] = '\0';  // remove newline
-        total_ram = atoll(token);
+        token = strtok(NULL, ": ");  // get the second token, the RAM number
+        if (token == NULL) {
+            total_ram = -1;
+        } else {
+            token[strlen(token) - 1] = '\0';  // remove newline
+            total_ram = atoll(token);
+        }
         free(memsize);
     }
     runcmd("top -l 1 | grep -E '^Phys'", &total_ram_usage);
