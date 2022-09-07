@@ -33,13 +33,13 @@ type withAdminSecretTransport struct {
 
 // RoundTrip will inject the auth headers in each request to Hasura.
 func (t *withAdminSecretTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Add("content-type", "application/json")
+	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("x-hasura-admin-secret", t.AdminSecret)
 
 	return http.DefaultTransport.RoundTrip(req)
 }
 
-// Initialize creates the client. This function is respinsible from fetching the server
+// Initialize creates the client. This function is responsible from fetching the server
 // information from Heroku.
 func (wc *GraphQLClient) Initialize(useConfigDB bool) error {
 	if !Enabled {
