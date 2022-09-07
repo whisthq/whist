@@ -113,6 +113,7 @@ Defines
 #if OS_IS(OS_WIN32)
 // Note: SOCKET, INVALID_SOCKET, and closesocket are already defined on Windows
 #define WHIST_IOCTL_SOCKET ioctlsocket
+#define WHIST_IOCTL_ARG unsigned long
 #define WHIST_CLOSE_SOCKET closesocket
 #define socklen_t int
 
@@ -129,6 +130,7 @@ Defines
 #define INVALID_SOCKET (-1)
 #define closesocket close
 #define WHIST_IOCTL_SOCKET ioctl
+#define WHIST_IOCTL_ARG int
 #define WHIST_CLOSE_SOCKET close
 // Note: socklen_t is already defined on Linux
 

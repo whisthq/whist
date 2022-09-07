@@ -190,7 +190,7 @@ void set_timeout(SOCKET socket, int timeout_ms) {
         LOG_WARNING(
             "WARNING: This socket will blocking indefinitely. You will not be "
             "able to recover if a packet is never received");
-        unsigned long mode = 0;
+        WHIST_IOCTL_ARG mode = 0;
 
         if (WHIST_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
             LOG_FATAL("Failed to make socket blocking.");
@@ -201,13 +201,13 @@ void set_timeout(SOCKET socket, int timeout_ms) {
         // set_timeout(1);
         // set_timeout(-1);
     } else if (timeout_ms == 0) {
-        unsigned long mode = 1;
+        WHIST_IOCTL_ARG mode = 1;
         if (WHIST_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
             LOG_FATAL("Failed to make socket return immediately.");
         }
     } else {
         // Set to blocking when setting a timeout
-        unsigned long mode = 0;
+        WHIST_IOCTL_ARG mode = 0;
         if (WHIST_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
             LOG_FATAL("Failed to make socket blocking.");
         }
@@ -640,18 +640,10 @@ static bool confirm_private_key(PrivateKeyData* our_priv_key_data,
 }
 
 int socket_get_queue_len(SOCKET socket) {
-#if OS_IS(OS_WIN32)
-    unsigned long len;
-    if (ioctlsocket(socket, FIONREAD, &len) != 0) {
-        return 0;
-    }
-    return (int)len;
-#else
-    int len;
-    if (ioctl(socket, FIONREAD, &len) != 0) {
+    WHIST_IOCTL_ARG len;
+    if (WHIST_IOCTL_SOCKET(socket, FIONREAD, &len) != 0) {
         return 0;
     }
     FATAL_ASSERT(len >= 0);
-    return len;
-#endif
+    return (int)len;
 }
