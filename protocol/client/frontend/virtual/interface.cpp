@@ -13,7 +13,6 @@ extern "C" {
 // Just chosen a very large number for events queue size. If required we can optimize/reduce it.
 #define MAX_EVENTS_QUEUED 10000
 
-static WhistMutex lock;
 static AVFrame* pending = NULL;
 static std::atomic<bool> protocol_alive = false;
 static int requested_width;
@@ -61,9 +60,6 @@ static std::thread whist_main_thread;
 
 static int vi_api_initialize(int argc, const char* argv[]) {
     // Create variables, if not already existant
-    if (lock == NULL) {
-        lock = whist_create_mutex();
-    }
     if (events_queue == NULL) {
         events_queue = fifo_queue_create(sizeof(WhistFrontendEvent), MAX_EVENTS_QUEUED);
     }

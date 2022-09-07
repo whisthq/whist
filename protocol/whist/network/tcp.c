@@ -245,7 +245,8 @@ static bool tcp_update(void* raw_context) {
         } else {
             // If we haven't received the last ping,
             // and TCP_PING_MAX_WAIT_SEC has passed, the connection has been lost
-            if (get_timer(&context->last_ping_timer) > TCP_PING_MAX_WAIT_SEC) {
+            if (get_timer(&context->last_ping_timer) > TCP_PING_MAX_WAIT_SEC &&
+                !context->connection_lost) {
                 LOG_WARNING("TCP Connection has been lost");
                 context->connection_lost = true;
             }

@@ -117,10 +117,11 @@ void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_win
  *
  */
 WhistWindow get_active_window(CaptureDevice* capture_device);
+
 // TODO: replace with a function that doesn't just return the raw string?
 // or explicitly make one for Window (private) and one for WhistWindow (public)
 // char* get_window_name(CaptureDevice* capture_device, WhistWindow whist_window);
-//
+
 /**
  * @brief                          Return whether or not the window is resizable (e.g. popups or
  * right click menus are not resizable, but Chrome is)
