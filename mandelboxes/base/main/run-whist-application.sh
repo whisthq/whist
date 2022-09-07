@@ -43,6 +43,16 @@ export CLIENT_OS=$CLIENT_OS
 # Explicitly export the fonts path, so that the
 # application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file
 export FONTCONFIG_PATH=/etc/fonts
+FONTCONFIG_LOCAL_FOLDER=/home/whist/.config/fontconfig
+# Set FONTCONFIG_FILE based on client OS (darwin, win32, linux)
+if [[ "$CLIENT_OS" == "darwin" ]]; then
+  FONT_CONFIG_CUSTOM_FILE=$FONTCONFIG_LOCAL_FOLDER/mac-fonts.conf
+elif [[ "$CLIENT_OS" == "win32" ]]; then
+  FONT_CONFIG_CUSTOM_FILE=$FONTCONFIG_LOCAL_FOLDER/windows-fonts.conf
+else
+  FONT_CONFIG_CUSTOM_FILE=$FONTCONFIG_LOCAL_FOLDER/linux-fonts.conf
+fi
+cp -f $FONT_CONFIG_CUSTOM_FILE $FONTCONFIG_LOCAL_FOLDER/fonts.conf
 
 if [[ -z ${WHIST_DEST_BROWSER+1} ]]; then
   echo "WHIST_DEST_BROWSER is not set! Defaulting to Chrome"
@@ -55,3 +65,4 @@ APPLICATION_ERR_FILENAME=/home/whist/whist_application-err.log
 
 # Start the application that this mandelbox runs
 exec whist-application $WHIST_DEST_BROWSER > $APPLICATION_OUT_FILENAME 2>$APPLICATION_ERR_FILENAME
+
