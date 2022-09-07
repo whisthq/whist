@@ -409,8 +409,9 @@ class QueueLenController {
         // Check whether or not we're overflowing the audio buffer
         if (!is_overflowing && total_queue_len > total_queue_overflow_size) {
             if (LOG_AUDIO) {
-                LOG_WARNING("[AUDIO_ALGO] Audio Buffer overflowing (%.2f Frames)! Force-dropping Frames",
-                            total_queue_len);
+                LOG_WARNING(
+                    "[AUDIO_ALGO] Audio Buffer overflowing (%.2f Frames)! Force-dropping Frames",
+                    total_queue_len);
             }
             is_overflowing = true;
         }
@@ -586,7 +587,8 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
                               num_frames_buffered, device_queue_len, audio_context->audio_state,
                               adaptive_parameter_controller.get_scale_factor());
     } else {
-        LOG_INFO_RATE_LIMITED(5, 1, "[AUDIO_ALGO] queue_len: %d %.2f  state=%d  scale_factor=%.2f\n",
+        LOG_INFO_RATE_LIMITED(5, 1,
+                              "[AUDIO_ALGO] queue_len: %d %.2f  state=%d  scale_factor=%.2f\n",
                               num_frames_buffered, device_queue_len, audio_context->audio_state,
                               adaptive_parameter_controller.get_scale_factor());
     }

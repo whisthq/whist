@@ -449,7 +449,8 @@ bool whist_congestion_controller_handle_severe_congestion(NetworkSettings *netwo
     network_settings->burst_bitrate = network_settings->video_bitrate = MINIMUM_BITRATE;
     network_settings->congestion_detected = true;
     network_settings->saturate_bandwidth = true;
-    LOG_INFO_RATE_LIMITED(5, 1, "Severe congestion detected. New bitrate = %d", network_settings->video_bitrate);
+    LOG_INFO_RATE_LIMITED(5, 1, "Severe congestion detected. New bitrate = %d",
+                          network_settings->video_bitrate);
     start_timer(&last_update_timer);
     return true;
 }
