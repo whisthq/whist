@@ -10,7 +10,7 @@ Note that to run locally, you _must_ mount the monorepo to the container as a Do
 
 ```bash
 # Build the docker image
-docker build --tag whist/db-migration .github/actions/db-migration
+docker build --quiet --tag whist/db-migration .github/actions/db-migration
 
 # Run database migration, output schema diff
 docker run \

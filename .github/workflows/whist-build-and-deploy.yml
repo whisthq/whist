@@ -1189,7 +1189,7 @@ jobs:
               --uphold_staging_client_id=x \
               --uphold_staging_client_secret=x \
               --gn=symbol_level=1 \
-              --gn=brave_services_key:x \
+              --gn=brave_services_key:${{ secrets.WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY }} \
               --gn=brave_stats_api_key:x  \
               --gn=brave_stats_updater_url:x \
               --gn=brave_sync_endpoint:x \
@@ -1205,8 +1205,8 @@ jobs:
               --gn=rewards_grant_staging_endpoint:x \
               --gn=safebrowsing_api_endpoint:https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
               --gn=sparkle_eddsa_public_key:wYagjtw56tFzS39Yc9iCZCFyk3bVa09dWlWXxnN7l8M= \
-              --gn=updater_dev_endpoint:https://clients2.google.com/service/update2/crx \
-              --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx
+              --gn=updater_dev_endpoint:https://go-updater-dev.bravesoftware.com/extensions \
+              --gn=updater_prod_endpoint:https://go-updater.brave.com/extensions
 
       - name: Unlock codesigning keychain
         if: runner.os == 'macOS'
@@ -1266,7 +1266,7 @@ jobs:
               --uphold_staging_client_id=x \
               --uphold_staging_client_secret=x \
               --gn=symbol_level=1 \
-              --gn=brave_services_key:x \
+              --gn=brave_services_key:${{ secrets.WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY }} \
               --gn=brave_stats_api_key:x  \
               --gn=brave_stats_updater_url:x \
               --gn=brave_sync_endpoint:x \

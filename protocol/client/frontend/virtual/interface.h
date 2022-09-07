@@ -24,13 +24,20 @@ typedef int (*GetModifierKeyState)(void);
 
 typedef struct VirtualInterface {
     struct {
-        void (*connect)(void);
+        int (*initialize)(int argc, const char* argv[]);
+        void (*destroy)(void);
+
+        bool (*connect)(void);
+        bool (*is_connected)(void);
+        void (*disconnect)(void);
+
         int (*create_window)(void);
         void (*register_context)(int window_id, void* context);
         void (*destroy_window)(int window_id);
-        int (*start)(int argc, const char* argv[]);
-        void (*disconnect)(void);
     } lifecycle;
+    struct {
+        void (*set_callback)(void (*cb)(unsigned int level, const char* line));
+    } logging;
     struct {
         void* (*get_frame_ref)(void);
         void* (*get_handle_from_frame_ref)(void* frame_ref);

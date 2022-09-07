@@ -645,14 +645,11 @@ Public Functions
 void whist_init_subsystems(void);
 
 /**
- * @brief                          Print the memory trace of a process
- */
-void print_memory_info(void);
-
-/**
  * @brief                          Print the system info of the computer
+ *
+ * @returns                        The thread that will be printing the system info
  */
-void print_system_info(void);
+WhistThread print_system_info(void);
 
 /**
  * @brief                          Run a system command via command prompt or

@@ -45,9 +45,15 @@ def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt):
 
     # Wait for dpkg / apt locks
     wait_for_apt_locks(pexpect_process, pexpect_prompt)
+
+    # Remove the Ubuntu welcome message, to reduce noise in the logs
+    # https://askubuntu.com/questions/676374/how-to-disable-welcome-message-after-ssh-login
+    pexpect_process.sendline("sudo chmod -x /etc/update-motd.d/*")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+
     # Clean, upgrade and update all the apt lists
     pexpect_process.sendline(
-        "sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y"
+        "sudo apt-get -y -q clean && sudo apt-get -y -q upgrade && sudo apt-get -y -q update"
     )
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
@@ -117,7 +123,7 @@ def install_and_configure_aws(
     wait_for_apt_locks(pexpect_process, pexpect_prompt)
 
     # Step 2: Install the AWS CLI if it's not already there
-    pexpect_process.sendline("sudo apt-get -y update")
+    pexpect_process.sendline("sudo apt-get -y -q update")
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
     # Check if the AWS CLI is installed, and install it if not.
     pexpect_process.sendline("aws --version")
