@@ -19,4 +19,8 @@ const (
 	// The type of instances we want to launch. TODO: change data structure when
 	// different instance types are added.
 	INSTANCE_TYPE = ec2Types.InstanceTypeG4dn2xlarge
+
+	// The name of the cloud provider, used for registering
+	// instances in the database.
+	PROVIDER_NAME = "AWS"
 )

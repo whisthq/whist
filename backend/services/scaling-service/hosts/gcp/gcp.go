@@ -13,12 +13,18 @@ func (gc *GCPHost) Initialize(region string) error {
 	return nil
 }
 
+// Return the provider's name. This access method is necessary (as opposed to using a constant or struct field)
+// so the scaling algorithm can abstract any provider-specific logic.
 func (gc *GCPHost) GetProvider() string {
-	return "GCP"
+	return PROVIDER_NAME
 }
 
+// Return the default instance type. This access method is necessary (as opposed to using a constant or struct field)
+// so the scaling algorithm can abstract any provider-specific logic.
 func (gc *GCPHost) GetInstanceType() string {
-	return ""
+	// TODO: Once support for different instance types is added, decide
+	// which kinnd of instance type to return.
+	return INSTANCE_TYPE
 }
 
 func (gc *GCPHost) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTimeReady time.Duration, image subscriptions.Image) (createdInstances []subscriptions.Instance, err error) {
