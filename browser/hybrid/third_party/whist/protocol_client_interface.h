@@ -23,7 +23,7 @@ namespace WhistClient {
 // Initialize WhistClient. Call this explicitly to initialize the WhistClient library
 // (before initializing the sandbox in Chrome) and hook up the Chrome+WhistClient
 // integration such as passing of streaming data between Chrome and WhistClient.
-RTC_EXPORT void InitializeWhistClient();
+RTC_EXPORT bool InitializeWhistClient();
 
 RTC_EXPORT extern const WhistClient::VirtualInterface* whist_virtual_interface;
 

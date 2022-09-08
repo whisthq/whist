@@ -3,8 +3,10 @@
 #include "protocol_client_interface.h"
 
 int main(int argc, const char* argv[]) {
-  InitializeWhistClient();
-  base::PlatformThread::Sleep(base::Seconds(3));
+  if (!InitializeWhistClient()) {
+    return 1;
+  }
+  base::PlatformThread::Sleep(base::Milliseconds(300));
   WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.disconnect);
 
   return 0;

@@ -85,16 +85,16 @@ static base::NativeLibrary LoadWhistClientLibrary() {
 }
 static std::ofstream whist_logs_out;
 
-void InitializeWhistClient() {
+bool InitializeWhistClient() {
   base::AutoLock whist_client_auto_lock(whist_virtual_interface_lock);
 
   if (whist_virtual_interface != NULL) {
-    return;
+    return true;
   }
 
   base::NativeLibrary whist_client_library = LoadWhistClientLibrary();
   if (!whist_client_library) {
-    return;
+    return false;
   }
 
   VirtualInterfaceCreator get_virtual_interface_ptr =
