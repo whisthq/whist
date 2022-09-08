@@ -173,7 +173,7 @@ func TestSubscriptionLifecycle(t *testing.T) {
 	go func(tracker *sync.WaitGroup) {
 		subscriptionClient.Run(tracker)
 	}(tracker)
-	defer subscriptionClient.Hasura.Close()
+	defer subscriptionClient.Close()
 
 	err = triggerSubscription(client, msg)
 	if err != nil {
@@ -241,8 +241,7 @@ func TestClose(t *testing.T) {
 
 	case <-time.After(3 * time.Second):
 		// The test should time out because the subscriptions
-		// weere closed prematurely./
+		// were closed prematurely.
 		return
 	}
-
 }
