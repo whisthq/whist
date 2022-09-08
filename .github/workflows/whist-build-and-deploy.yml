@@ -1350,7 +1350,7 @@ jobs:
 
       - name: Update appcast to publish macOS browser update
         if: needs.whist-publish-build-config.outputs.publish == 'true'
-        uses: whisthq/update-appcast@v0.1
+        uses: whisthq/update-appcast@v0.2
         with:
           version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}
           bucket: ${{ steps.prepare-update.outputs.bucket-name }}
