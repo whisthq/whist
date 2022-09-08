@@ -33,6 +33,7 @@ extern "C" {
 #include "video.h"
 #include "sync_packets.h"
 #include "client_utils.h"
+#include "whist/debug/plotter.h"
 }
 
 // Updater variables
@@ -87,6 +88,14 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 
     while (run_sync_packets_threads) {
+        if (PLOT_CLIENT_UDP_SOCKET_RECV_QUEUE) {
+            double current_time = get_timestamp_sec();
+            int socket_queue_len = udp_get_socket_queue_len(udp_context->context);
+
+            whist_plotter_insert_sample("udp_socket_queue", current_time,
+                                        socket_queue_len / 1024.0);
+        }
+
         // Update the UDP socket
         start_timer(&statistics_timer);
         // Disconnect if the UDP connection was lost

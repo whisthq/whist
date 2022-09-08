@@ -113,6 +113,7 @@ Defines
 #if OS_IS(OS_WIN32)
 // Note: SOCKET, INVALID_SOCKET, and closesocket are already defined on Windows
 #define WHIST_IOCTL_SOCKET ioctlsocket
+#define WHIST_IOCTL_ARG unsigned long
 #define WHIST_CLOSE_SOCKET closesocket
 #define socklen_t int
 
@@ -129,6 +130,7 @@ Defines
 #define INVALID_SOCKET (-1)
 #define closesocket close
 #define WHIST_IOCTL_SOCKET ioctl
+#define WHIST_IOCTL_ARG int
 #define WHIST_CLOSE_SOCKET close
 // Note: socklen_t is already defined on Linux
 
@@ -441,6 +443,12 @@ int recv_no_intr(SOCKET sockfd, void* buf, size_t len, int flags);
  */
 int recvfrom_no_intr(SOCKET sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
                      socklen_t* addrlen);
+
+/**
+ * @brief                          Get length queued in the socket
+ * @returns                        num of bytes queued in the socket
+ */
+int socket_get_queue_len(SOCKET socket);
 
 // TODO: Move
 #include <whist/network/tcp.h>

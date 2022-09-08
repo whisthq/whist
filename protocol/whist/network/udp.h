@@ -223,6 +223,11 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void);
 
+/**
+ * @brief                          Get length queued in the udp socket of the context
+ * @returns                        num of bytes queued in the udp socket
+ */
+int udp_get_socket_queue_len(void* raw_context);
 /*
 ============================
 Private Functions. Exposed for the sake of unit testing only.

@@ -21,6 +21,8 @@ Includes
 #include "parse_args.h"
 #include "handle_client_message.h"
 #include "dbus.h"
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 
 /*
 ============================
@@ -110,10 +112,9 @@ int xioerror_handler(Display* d) {
 
 void sig_handler(int sig_num) {
     /*
-        When the server receives a SIGTERM, gracefully exit.
+        When the server receives a SIGTERM or SIGINT, gracefully exit.
     */
-
-    if (sig_num == SIGTERM) {
+    if (sig_num == SIGTERM || sig_num == SIGINT) {
         graceful_exit(&server_state);
     }
 }
@@ -123,10 +124,23 @@ void sig_handler(int sig_num) {
 static void get_whist_udp_client_messages(WhistServerState* state) {
     WhistClientMessage wcmsg;
     size_t wcmsg_size;
-
     // If received a UDP message
     if (try_get_next_message_udp(state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
+        double time_before_handling, time_after_handling;
+        if (PLOT_SERVER_UDP_MESSAGE_HANDING) {
+            time_before_handling = get_timestamp_sec();
+        }
+
         handle_client_message(state, &wcmsg);
+
+        if (PLOT_SERVER_UDP_MESSAGE_HANDING) {
+            time_after_handling = get_timestamp_sec();
+            char buf[30];
+            snprintf(buf, sizeof(buf), "handling of wcmsg_%d", (int)wcmsg.type);
+            whist_plotter_insert_sample(
+                buf, get_timestamp_sec(),
+                (time_after_handling - time_before_handling) * MS_IN_SECOND);
+        }
     }
 }
 
@@ -384,6 +398,11 @@ int main(int argc, char* argv[]) {
 
     whist_init_subsystems();
 
+    if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        // auto enable start sampling
+        whist_plotter_start_sampling();
+    }
+
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
     whist_server_state_init(&server_state, &config);
@@ -406,6 +425,12 @@ int main(int argc, char* argv[]) {
         LOG_FATAL("Establishing SIGTERM signal handler failed.");
     }
 
+    // if SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT enabled, insert handler
+    // for grace quit for ctrl-c as well, so that plotter data can be
+    // exported automatically on quit
+    if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT && sigaction(SIGINT, &sa, NULL) == -1) {
+        LOG_FATAL("Establishing SIGINT signal handler failed.");
+    }
     XSetIOErrorHandler(xioerror_handler);
 #endif
 
@@ -695,6 +720,11 @@ int main(int argc, char* argv[]) {
     whist_cursor_cache_destroy(server_state.cursor_cache);
 
     LOG_INFO("Protocol has shutdown gracefully");
+
+    if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        // if enabled, auto export to file as well
+        whist_plotter_export_to_file(SERVER_SIDE_DEFAULT_EXPORT_FILE);
+    }
 
     destroy_statistic_logger();
     destroy_logger();

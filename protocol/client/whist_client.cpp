@@ -30,6 +30,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "network.h"
 #include <whist/core/whist_string.h>
@@ -52,6 +53,7 @@ extern "C" {
 #include <whist/utils/color.h>
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
+#include "whist/debug/plotter.h"
 #include "whist/utils/command_line.h"
 #include "frontend/virtual/interface.h"
 
@@ -334,6 +336,18 @@ static void post_connection_cleanup(WhistRenderer* renderer) {
     close_connections();
 }
 
+#if OS_IS(OS_LINUX) || OS_IS(OS_MACOS)
+// signal handler for graceful quit of program
+void sig_handler(int sig_num) {
+    /*
+        When the client receives a SIGTERM or SIGINT, gracefully exit.
+    */
+    if (sig_num == SIGTERM || sig_num == SIGINT) {
+        client_exiting = true;
+    }
+}
+#endif
+
 int whist_client_main(int argc, const char* argv[]) {
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
@@ -348,6 +362,11 @@ int whist_client_main(int argc, const char* argv[]) {
 
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
+    if (CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        // auto enable start sampling
+        whist_plotter_start_sampling();
+    }
+
     // (internally, only happens for debug builds)
     init_debug_console();
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
@@ -355,6 +374,20 @@ int whist_client_main(int argc, const char* argv[]) {
     srand(rand() * (unsigned int)time(NULL) + rand());
 
     LOG_INFO("Client protocol started...");
+
+#if CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT && (OS_IS(OS_LINUX) || OS_IS(OS_MACOS))
+    // if CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT enabled, insert handler
+    // for grace quit for ctrl-c and kill, so that plotter data can be
+    // exported automatically on quit
+    struct sigaction sa = {0};
+    sa.sa_handler = sig_handler;
+    if (sigaction(SIGTERM, &sa, NULL) == -1) {
+        LOG_FATAL("Establishing SIGTERM signal handler failed.");
+    }
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        LOG_FATAL("Establishing SIGINT signal handler failed.");
+    }
+#endif
 
     // Initialize logger error monitor
     whist_error_monitor_initialize(true);
@@ -452,6 +485,11 @@ int whist_client_main(int argc, const char* argv[]) {
 
     // Wait on system info thread before destroying logger
     whist_wait_thread(system_info_thread, NULL);
+
+    if (CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        // if enabled, auto export to file as well
+        whist_plotter_export_to_file(CLIENT_SIDE_DEFAULT_EXPORT_FILE);
+    }
 
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
