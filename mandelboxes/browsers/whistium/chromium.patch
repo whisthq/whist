@@ -1,3 +1,20 @@
+diff --git a/chrome/browser/devtools/devtools_window.cc b/chrome/browser/devtools/devtools_window.cc
+index 5d6907c38a7e8..882a50e187653 100644
+--- a/chrome/browser/devtools/devtools_window.cc
++++ b/chrome/browser/devtools/devtools_window.cc
+@@ -1110,10 +1110,12 @@ DevToolsWindow::DevToolsWindow(FrontendType frontend_type,
+ // static
+ bool DevToolsWindow::AllowDevToolsFor(Profile* profile,
+                                       content::WebContents* web_contents) {
++  /* We want DevTools UI in kiosk mode on Whist
+   // Don't allow DevTools UI in kiosk mode, because the DevTools UI would be
+   // broken there. See https://crbug.com/514551 for context.
+   if (base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kKioskMode))
+     return false;
++  */
+ 
+   return ChromeDevToolsManagerDelegate::AllowInspection(profile, web_contents);
+ }
 diff --git a/chrome/browser/renderer_context_menu/render_view_context_menu.cc b/chrome/browser/renderer_context_menu/render_view_context_menu.cc
 index 2516bb55d3836..79212d9fd7fc2 100644
 --- a/chrome/browser/renderer_context_menu/render_view_context_menu.cc
