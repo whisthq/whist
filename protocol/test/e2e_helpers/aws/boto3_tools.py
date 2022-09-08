@@ -7,6 +7,7 @@ from operator import itemgetter
 
 from e2e_helpers.common.git_tools import get_whist_branch_name
 from e2e_helpers.common.timestamps_and_exit_tools import (
+    exit_with_error,
     printformat,
 )
 from e2e_helpers.common.constants import (
