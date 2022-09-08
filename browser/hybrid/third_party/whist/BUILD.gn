@@ -42,7 +42,16 @@ source_set("protocol_client_interface") {
     "//third_party/abseil-cpp:absl_include_config",
     "//third_party/abseil-cpp:absl_define_config",
   ]
-  deps = [ "//base" ]
+  deps = [
+    ":build_whist_client",
+    "//base",
+  ]
+}
+
+executable("WhistProtocolClientInterfaceTester") {
+  sources = [ "protocol_client_interface_tester.cc" ]
+
+  deps = [ ":protocol_client_interface" ]
 }
 
 # Build and Copy Whist Client Library
@@ -106,31 +115,18 @@ action("build_whist_client") {
     ]
   }
 
-
   if (is_linux) {
     outputs = [
-      "$root_out_dir/libavcodec.59.so",
-      "$root_out_dir/libavdevice.59.so",
-      "$root_out_dir/libavfilter.8.so",
-      "$root_out_dir/libavformat.59.so",
-      "$root_out_dir/libavutil.57.so",
-      "$root_out_dir/libopus.0.so",
+      "$root_out_dir/libavcodec.so.59",
+      "$root_out_dir/libavdevice.so.59",
+      "$root_out_dir/libavfilter.so.8",
+      "$root_out_dir/libavformat.so.59",
+      "$root_out_dir/libavutil.so.57",
+      "$root_out_dir/libpostproc.so.56",
       "$root_out_dir/libsentry.so",
-      "$root_out_dir/libswresample.4.so",
-      "$root_out_dir/libswscale.6.so",
+      "$root_out_dir/libswresample.so.4",
+      "$root_out_dir/libswscale.so.6",
       "$root_out_dir/libWhistClient.so",
     ]
-
-    if (target_cpu == "x64") {
-      outputs += [
-        "$root_out_dir/libX11.6.so",
-        "$root_out_dir/libXau.6.so",
-        "$root_out_dir/libxcb-shape.0.0.0.so",
-        "$root_out_dir/libxcb-shm.0.0.0.so",
-        "$root_out_dir/libxcb-xfixes.0.0.0.so",
-        "$root_out_dir/libxcb.1.1.0.so",
-        "$root_out_dir/libXdmcp.6.so",
-      ]
-    }
   }
 }

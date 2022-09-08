@@ -49,15 +49,14 @@ static int protocol_argc = sizeof(protocol_argv) / sizeof(protocol_argv[0]) - 1;
 static base::NativeLibrary LoadWhistClientLibrary() {
   // First, compute the path to the library.
   base::FilePath lib_dir_path;
+  if (!base::PathService::Get(base::DIR_EXE, &lib_dir_path)) {
+    LOG(ERROR) << "PathService::Get failed.";
+    return NULL;
+  }
+
 #if BUILDFLAG(IS_MAC)
   if (base::mac::AmIBundled()) {
     lib_dir_path = base::mac::FrameworkBundlePath().Append("Libraries");
-  } else {
-    if (!base::PathService::Get(base::FILE_EXE, &lib_dir_path)) {
-      LOG(ERROR) << "PathService::Get failed.";
-      return NULL;
-    }
-    lib_dir_path = lib_dir_path.DirName();
   }
 #elif BUILDFLAG(IS_WIN)
   if (!base::PathService::Get(base::DIR_MODULE, &lib_dir_path)) {

@@ -87,7 +87,7 @@ platform_library_extensions = {
     "Linux": "so",
 }
 lib_ext = platform_library_extensions.get(platform.system(), "so")
-libraries = Path(protocol_binaries_dir).glob(f"*.{lib_ext}")
+libraries = Path(protocol_binaries_dir).glob(f"*.{lib_ext}*")
 
 for library in libraries:
     shutil.copy2(str(library.resolve()), output_dir)
