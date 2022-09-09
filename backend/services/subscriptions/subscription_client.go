@@ -43,7 +43,7 @@ type SubscriptionClient struct {
 	SubscriptionIDs []string
 }
 
-// Initialize creates the client. This function is respinsible from fetching the server
+// Initialize creates the client. This function is responsible from fetching the server
 // information from Heroku.
 func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 	logger.Infof("Setting up Subscription client...")
@@ -116,9 +116,9 @@ func (wc *SubscriptionClient) SetParams(params HasuraParams) {
 // Subscribe creates the subscriptions according to the received queries and conditions.
 // It passes results through the received channel if the received `conditionFn` is true.
 func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
-	conditionFn Handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
+	conditionFn Handlerfn, subscriptionEvents chan SubscriptionEvent) (id string, err error) {
 
-	id, err := wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
+	id, err = wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
 		if err != nil {
 			return utils.MakeError("error receiving subscription event from Hasura: %s", err)
 		}
@@ -152,6 +152,15 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 			if conditionFn(result, variables) {
 				// We notify via the subscriptionsEvent channel
 				subscriptionEvents <- &result
+			}
+		default:
+			err = json.Unmarshal(*data, &result)
+			if err != nil {
+				return utils.MakeError("failed to unmarshal subscription event: %s", err)
+			}
+			if conditionFn(result, variables) {
+				// We notify via the subscriptionsEvent channel
+				subscriptionEvents <- result
 			}
 		}
 
