@@ -1334,7 +1334,7 @@ jobs:
         # For example, this does not work:
         #
         # - name: Update appcast
-        #   uses: whisthq/update-appcast@v0.1
+        #   uses: whisthq/update-appcast@v0.2
         #     with:
         #       object-key: ${{ env.current_app_version_executable }}
         #       ...
