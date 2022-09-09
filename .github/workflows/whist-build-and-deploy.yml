@@ -1188,7 +1188,7 @@ jobs:
               --uphold_client_secret=x \
               --uphold_staging_client_id=x \
               --uphold_staging_client_secret=x \
-              --gn=symbol_level=1 \
+              --gn=symbol_level:1 \
               --gn=brave_services_key:${{ secrets.WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY }} \
               --gn=brave_stats_api_key:x  \
               --gn=brave_stats_updater_url:x \
@@ -1265,7 +1265,7 @@ jobs:
               --uphold_client_secret=x \
               --uphold_staging_client_id=x \
               --uphold_staging_client_secret=x \
-              --gn=symbol_level=1 \
+              --gn=symbol_level:1 \
               --gn=brave_services_key:${{ secrets.WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY }} \
               --gn=brave_stats_api_key:x  \
               --gn=brave_stats_updater_url:x \
