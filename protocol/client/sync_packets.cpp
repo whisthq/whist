@@ -124,9 +124,9 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         }
 
         // Loop over both VIDEO and AUDIO
-        static const WhistPacketType video_audio_types[2] = {PACKET_VIDEO, PACKET_AUDIO};
-        for (int i = 0; i < 2; i++) {
-            WhistPacketType packet_type = video_audio_types[i];
+        static const WhistPacketType packet_types[] = {PACKET_VIDEO, PACKET_AUDIO};
+        for (int i = 0; i < (int)ARRAY_LENGTH(packet_types); i++) {
+            WhistPacketType packet_type = packet_types[i];
             // If the renderer wants the frame of that type,
             // Knowing how many frames are pending a render...
             if (renderer_wants_frame(whist_renderer, packet_type,

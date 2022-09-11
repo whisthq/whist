@@ -266,6 +266,10 @@ static void vi_api_destroy_window(int window_id) {
     }
 }
 
+static void* virtual_malloc(size_t size) { return safe_malloc(size); }
+
+static void virtual_free(void* ptr) { free(ptr); }
+
 static const VirtualInterface vi = {
     .lifecycle =
         {
@@ -306,6 +310,11 @@ static const VirtualInterface vi = {
             .set_on_file_download_update_callback = vi_api_set_on_file_download_update_callback,
             .set_on_file_download_complete_callback = vi_api_set_on_file_download_complete_callback,
             .set_on_notification_callback = vi_api_set_on_notification_callback,
+        },
+    .utils =
+        {
+            .malloc = virtual_malloc,
+            .free = virtual_free,
         },
 };
 

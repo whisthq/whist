@@ -60,9 +60,21 @@ typedef struct VirtualInterface {
         // TODO: Move this function out of the `file` module.
         void (*set_on_notification_callback)(OnNotificationCallback cb);
     } file;
+    struct {
+        void* (*malloc)(size_t size);
+        void (*free)(void* ptr);
+    } utils;
 } VirtualInterface;
 
-const VirtualInterface* get_virtual_interface(void);
+#ifndef EXPORT_API
+#ifdef _WIN32
+#define EXPORT_API __declspec(dllexport)
+#else
+#define EXPORT_API __attribute__((visibility("default")))
+#endif
+#endif
+
+EXPORT_API const VirtualInterface* get_virtual_interface(void);
 
 // This is a crutch. Once video is callback-ized we won't need it anymore.
 #if FROM_WHIST_PROTOCOL
