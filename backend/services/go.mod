@@ -21,7 +21,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/graph-gophers/graphql-go v1.2.0
+	github.com/graph-gophers/graphql-go v1.3.0
 	github.com/graph-gophers/graphql-transport-ws v0.0.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hasura/go-graphql-client v0.7.1
