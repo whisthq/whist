@@ -20,6 +20,7 @@ import (
 	shortuuid "github.com/lithammer/shortuuid/v3"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -44,15 +45,15 @@ type AWSHost struct {
 var userDataFile []byte
 
 // Initialize starts the AWS and EC2 clients.
-func (host *AWSHost) Initialize(region string) error {
+func (host *AWSHost) Initialize(region types.PlacementRegion) error {
 	// Initialize general AWS config on the selected region
-	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region.String()))
 	if err != nil {
 		return utils.MakeError("unable to load AWS SDK config: %s", err)
 	}
 
 	// Start AWS host and EC2 client
-	host.Region = region
+	host.Region = region.String()
 	host.Config = cfg
 	host.EC2 = ec2.NewFromConfig(cfg)
 
@@ -83,7 +84,7 @@ func (host *AWSHost) Initialize(region string) error {
 
 // Return the provider's name. This access method is necessary (as opposed to using a constant or struct field)
 // so the scaling algorithm can abstract any provider-specific logic.
-func (host *AWSHost) GetProvider() string {
+func (host *AWSHost) GetProvider() types.CloudProvider {
 	return PROVIDER_NAME
 }
 

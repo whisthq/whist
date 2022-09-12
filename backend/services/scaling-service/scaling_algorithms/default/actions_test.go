@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 )
 
 var (
@@ -38,27 +39,27 @@ func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient 
 	return result, nil
 }
 
-func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) ([]subscriptions.Instance, error) {
+func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region types.PlacementRegion) ([]subscriptions.Instance, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
 	var instancesWithCapacity []subscriptions.Instance
 	for _, instance := range testInstances {
-		if string(instance.Region) == region && instance.RemainingCapacity > 0 {
+		if instance.Region == string(region) && instance.RemainingCapacity > 0 {
 			instancesWithCapacity = append(instancesWithCapacity, instance)
 		}
 	}
 	return instancesWithCapacity, nil
 }
 
-func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region string) ([]subscriptions.Instance, error) {
+func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region types.PlacementRegion) ([]subscriptions.Instance, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
 	var result []subscriptions.Instance
 	for _, instance := range testInstances {
 		if string(instance.Status) == status &&
-			string(instance.Region) == region {
+			instance.Region == string(region) {
 			result = append(result, instance)
 		}
 	}
@@ -113,7 +114,7 @@ func (db *mockDBClient) DeleteInstance(scalingCtx context.Context, graphQLClient
 	return 0, nil
 }
 
-func (db *mockDBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) ([]subscriptions.Image, error) {
+func (db *mockDBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider types.CloudProvider, region types.PlacementRegion) ([]subscriptions.Image, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
@@ -159,11 +160,11 @@ func (db *mockDBClient) UpdateMandelbox(context.Context, subscriptions.WhistGrap
 // mockHostHandler is used to test all interactions with cloud providers
 type mockHostHandler struct{}
 
-func (mh *mockHostHandler) Initialize(region string) error {
+func (mh *mockHostHandler) Initialize(region types.PlacementRegion) error {
 	return nil
 }
 
-func (mh *mockHostHandler) GetProvider() string {
+func (mh *mockHostHandler) GetProvider() types.CloudProvider {
 	return "MOCK"
 }
 
@@ -230,7 +231,7 @@ func setup() {
 	testLock = &sync.Mutex{}
 
 	// Set the desired mandelboxes map to a default value for testing
-	desiredFreeMandelboxesPerRegion = map[string]int{
+	desiredFreeMandelboxesPerRegion = map[types.PlacementRegion]int{
 		"test-region": 2,
 	}
 }

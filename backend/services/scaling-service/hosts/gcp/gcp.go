@@ -5,17 +5,18 @@ import (
 	"time"
 
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 )
 
 type GCPHost struct{}
 
-func (gc *GCPHost) Initialize(region string) error {
+func (gc *GCPHost) Initialize(region types.PlacementRegion) error {
 	return nil
 }
 
 // Return the provider's name. This access method is necessary (as opposed to using a constant or struct field)
 // so the scaling algorithm can abstract any provider-specific logic.
-func (gc *GCPHost) GetProvider() string {
+func (gc *GCPHost) GetProvider() types.CloudProvider {
 	return PROVIDER_NAME
 }
 

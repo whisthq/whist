@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"github.com/whisthq/whist/backend/services/types"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 )
 
@@ -49,13 +50,13 @@ func (s *JSONTransportRequest) CreateResultChan() {
 
 // Mandelbox assign request
 type MandelboxAssignRequest struct {
-	Regions    []string              `json:"regions"`
-	CommitHash string                `json:"client_commit_hash"`
-	UserEmail  string                `json:"user_email"`
-	Version    string                `json:"version"`
-	SessionID  int64                 `json:"session_id"`
-	UserID     mandelboxtypes.UserID // The userID is obtained from the access token
-	ResultChan chan RequestResult    // Channel to pass the request result between goroutines
+	Regions    []types.PlacementRegion `json:"regions"`
+	CommitHash string                  `json:"client_commit_hash"`
+	UserEmail  string                  `json:"user_email"`
+	Version    string                  `json:"version"`
+	SessionID  int64                   `json:"session_id"`
+	UserID     mandelboxtypes.UserID   // The userID is obtained from the access token
+	ResultChan chan RequestResult      // Channel to pass the request result between goroutines
 }
 
 type MandelboxAssignRequestResult struct {

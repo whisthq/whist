@@ -18,7 +18,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	contextFields := []interface{}{
 		zap.String("id", event.ID),
 		zap.Any("type", event.Type),
-		zap.String("region", event.Region),
+		zap.Any("region", event.Region),
 	}
 	logger.Infow("Starting verify scale down action.", contextFields)
 	defer logger.Infow("Finished verify scale down action.", contextFields)
@@ -61,7 +61,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	contextFields := []interface{}{
 		zap.String("id", event.ID),
 		zap.Any("type", event.Type),
-		zap.String("region", event.Region),
+		zap.Any("region", event.Region),
 	}
 	logger.Infow("Starting verify capacity action.", contextFields)
 	defer logger.Infow("Finished verify capacity action.", contextFields)

@@ -13,6 +13,7 @@ import (
 	"context"
 
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 )
 
 // WhistDBClient is an interface that abstracts all interactions with
@@ -21,13 +22,13 @@ import (
 // abstracting the methods we can easily test and mock the scaling algorithm actions.
 type WhistDBClient interface {
 	QueryInstance(context.Context, subscriptions.WhistGraphQLClient, string) ([]subscriptions.Instance, error)
-	QueryInstanceWithCapacity(context.Context, subscriptions.WhistGraphQLClient, string) ([]subscriptions.Instance, error)
-	QueryInstancesByStatusOnRegion(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Instance, error)
+	QueryInstanceWithCapacity(context.Context, subscriptions.WhistGraphQLClient, types.PlacementRegion) ([]subscriptions.Instance, error)
+	QueryInstancesByStatusOnRegion(context.Context, subscriptions.WhistGraphQLClient, string, types.PlacementRegion) ([]subscriptions.Instance, error)
 	QueryInstancesByImage(context.Context, subscriptions.WhistGraphQLClient, string) ([]subscriptions.Instance, error)
 	InsertInstances(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Instance) (int, error)
 	UpdateInstance(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Instance) (int, error)
 	DeleteInstance(context.Context, subscriptions.WhistGraphQLClient, string) (int, error)
-	QueryImage(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Image, error)
+	QueryImage(context.Context, subscriptions.WhistGraphQLClient, types.CloudProvider, types.PlacementRegion) ([]subscriptions.Image, error)
 	InsertImages(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Image) (int, error)
 	UpdateImage(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Image) (int, error)
 	QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Mandelbox, error)

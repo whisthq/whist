@@ -22,7 +22,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	contextFields := []interface{}{
 		zap.String("id", event.ID),
 		zap.Any("type", event.Type),
-		zap.String("region", event.Region),
+		zap.Any("region", event.Region),
 	}
 	logger.Infow("Starting mandelbox assign action.", contextFields)
 	defer logger.Infow("Finished mandelbox assign action.", contextFields)
@@ -62,13 +62,13 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	var (
 		requestedRegions   = mandelboxRequest.Regions // This is a list of the regions requested by the frontend, in order of proximity.
-		enabledRegions     []string                   // The list of enabled regions for this cloud provider
-		availableRegions   []string                   // List of regions that are enabled and match the regions in the request.
-		unavailableRegions []string                   // List of regions that are not enabled but are present in the request.
+		enabledRegions     []types.PlacementRegion    // The list of enabled regions for this cloud provider
+		availableRegions   []types.PlacementRegion    // List of regions that are enabled and match the regions in the request.
+		unavailableRegions []types.PlacementRegion    // List of regions that are not enabled but are present in the request.
 		assignedInstance   subscriptions.Instance     // The instance that is assigned to the user.
 	)
 
-	enabledRegions = GetEnabledRegions()[s.Host.GetProvider()]
+	enabledRegions = GetEnabledRegions()
 
 	// Populate availableRegions
 	for _, requestedRegion := range requestedRegions {
@@ -93,12 +93,12 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		}
 	}
 
-	// The user requested access to only unavailable regions. The last resort is to default to us-east-1.
+	// The user requested access to only unavailable regions. The last resort is to default to us-east.
 	if len(unavailableRegions) == len(requestedRegions) {
 		if metadata.GetAppEnvironment() == metadata.EnvProd {
 			logger.Errorf("user %s requested access to only unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions))
 		}
-		availableRegions = []string{"us-east-1"}
+		availableRegions = []types.PlacementRegion{types.PlacementRegion(utils.DefaultRegion)}
 	}
 
 	if len(availableRegions) == 0 {

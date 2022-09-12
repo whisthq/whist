@@ -7,6 +7,7 @@ import (
 	"github.com/whisthq/whist/backend/services/constants"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -21,8 +22,8 @@ var (
 	// desiredFreeMandelboxesPerRegion is the number of free mandelboxes we always
 	// want available in a region. This value is set per-region and it represents
 	// the free mandelboxes we want on each.
-	desiredFreeMandelboxesPerRegion = map[string]int{
-		"us-east-1": 2,
+	desiredFreeMandelboxesPerRegion = map[types.PlacementRegion]int{
+		"us-east": 2,
 	}
 	// frontendVersion represents the current version of the frontend
 	// (e.g. "2.6.13").
@@ -107,39 +108,66 @@ func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]
 
 // GetEnabledRegions returns a list of regions where the backend resources required
 // to run Whist exist, according to the current environment.
-func GetEnabledRegions() map[string][]string {
-	var enabledRegions map[string][]string
+func GetEnabledRegions() []types.PlacementRegion {
+	// TODO: Dynamically load regions from config db
+	var enabledRegions []types.PlacementRegion
 	switch metadata.GetAppEnvironmentLowercase() {
 	case string(metadata.EnvDev):
-		enabledRegions = map[string][]string{
-			"AWS": {
-				"us-east-1",
-			},
+		enabledRegions = []types.PlacementRegion{
+			"us-east",
+			"us-west",
 		}
 	case string(metadata.EnvStaging):
-		enabledRegions = map[string][]string{
-			"AWS": {
-				"us-east-1",
-			},
+		enabledRegions = []types.PlacementRegion{
+			"us-east",
+			"us-west",
 		}
 	case string(metadata.EnvProd):
-		enabledRegions = map[string][]string{
-			"AWS": {
-				"us-east-1",
-				"us-west-1",
-				"ca-central-1",
-				"ap-south-1",
-			},
+		enabledRegions = []types.PlacementRegion{
+			"us-east-1",
+			"us-west-1",
+			"canada",
+			"asia-south",
 		}
 	default:
-		enabledRegions = map[string][]string{
-			"AWS": {
-				"us-east-1",
-			},
+		enabledRegions = []types.PlacementRegion{
+			"us-east",
+			"us-west",
 		}
 	}
 
 	return enabledRegions
+}
+
+// GetEnabledProviders returns a list of cloud providers where the backend resources required
+// to run Whist exist, according to the current environment.
+func GetEnabledProviders() []types.CloudProvider {
+	// TODO: Dynamically load providers from config db
+	var enabledProviders []types.CloudProvider
+	switch metadata.GetAppEnvironmentLowercase() {
+	case string(metadata.EnvDev):
+		enabledProviders = []types.CloudProvider{
+			"AWS",
+			"GCP",
+		}
+	case string(metadata.EnvStaging):
+		enabledProviders = []types.CloudProvider{
+			"AWS",
+			"GCP",
+		}
+	case string(metadata.EnvProd):
+		enabledProviders = []types.CloudProvider{
+			"AWS",
+			"GCP",
+		}
+	default:
+		enabledProviders = []types.CloudProvider{
+			"AWS",
+			"GCP",
+		}
+	}
+
+	return enabledProviders
 }
 
 // getFrontendVersion returns the current version of the frontend, which is initially

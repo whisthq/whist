@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -59,7 +60,7 @@ func TestQueryInstance(t *testing.T) {
 func TestQueryInstanceWithCapacity(t *testing.T) {
 	var tests = []struct {
 		name     string
-		region   string
+		region   types.PlacementRegion
 		err      bool
 		expected []subscriptions.Instance
 	}{
@@ -122,10 +123,11 @@ func TestQueryInstanceWithCapacity(t *testing.T) {
 
 func TestQueryInstancesByStatusOnRegion(t *testing.T) {
 	var tests = []struct {
-		name           string
-		status, region string
-		err            bool
-		expected       []subscriptions.Instance
+		name     string
+		status   string
+		region   types.PlacementRegion
+		err      bool
+		expected []subscriptions.Instance
 	}{
 		{"Successful query", "DRAINING", "us-east-1", false, []subscriptions.Instance{
 			{

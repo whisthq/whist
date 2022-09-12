@@ -12,6 +12,7 @@ import (
 	"github.com/hasura/go-graphql-client"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -203,7 +204,7 @@ func TestStartDeploy(t *testing.T) {
 
 func TestGetScalingAlgorithm(t *testing.T) {
 	algorithmByRegionMap := &sync.Map{}
-	testRegions := []string{
+	testRegions := []types.PlacementRegion{
 		"us-east-1-test",
 	}
 	testAlgorithm := &algos.DefaultScalingAlgorithm{

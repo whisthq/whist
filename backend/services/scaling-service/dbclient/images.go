@@ -5,10 +5,11 @@ import (
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 )
 
 // QueryImage queries the database for an instance image (AMI) that matches the given id.
-func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) ([]subscriptions.Image, error) {
+func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider types.CloudProvider, region types.PlacementRegion) ([]subscriptions.Image, error) {
 	latestImageQuery := subscriptions.QueryLatestImage
 	queryParams := map[string]interface{}{
 		"provider": graphql.String(provider),

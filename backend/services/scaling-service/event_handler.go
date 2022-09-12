@@ -31,7 +31,6 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -41,8 +40,8 @@ import (
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
-	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -113,14 +112,11 @@ func main() {
 	algorithmByRegionMap := &sync.Map{}
 
 	// Load default scaling algorithm for all enabled regions.
-	for provider, regions := range algos.GetEnabledRegions() {
-		for _, region := range regions {
-			name := utils.Sprintf("default-sa-%s-%s", strings.ToLower(provider), region)
-			algorithmByRegionMap.Store(name, &algos.DefaultScalingAlgorithm{
-				Region: region,
-				Host:   helpers.GetHostFromProvider(provider),
-			})
-		}
+	for _, region := range algos.GetEnabledRegions() {
+		name := utils.Sprintf("default-sa-%s-%s", region)
+		algorithmByRegionMap.Store(name, &algos.DefaultScalingAlgorithm{
+			Region: region,
+		})
 	}
 
 	// Instantiate scaling algorithms on allowed regions
@@ -191,20 +187,17 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
 	t := time.Now().Add(start)
 	s.Every(interval).Minutes().StartAt(t).Do(func() {
-		for provider, regions := range algos.GetEnabledRegions() {
-			for _, region := range regions {
-				// Send into scheduling channel
-				scheduledEvents <- algos.ScalingEvent{
-					// Create a UUID so we can identify and search this event on our logs
-					ID: uuid.NewString(),
-					// We set the event type to SCHEDULED_SCALE_DOWN_EVENT
-					// here so that we have more information about the event.
-					// SCHEDULED means the source of the event is the scheduler
-					// and SCALE_DOWN means it will perform a scale down action.
-					Type:     "SCHEDULED_SCALE_DOWN_EVENT",
-					Provider: provider,
-					Region:   region,
-				}
+		for _, region := range algos.GetEnabledRegions() {
+			// Send into scheduling channel
+			scheduledEvents <- algos.ScalingEvent{
+				// Create a UUID so we can identify and search this event on our logs
+				ID: uuid.NewString(),
+				// We set the event type to SCHEDULED_SCALE_DOWN_EVENT
+				// here so that we have more information about the event.
+				// SCHEDULED means the source of the event is the scheduler
+				// and SCALE_DOWN means it will perform a scale down action.
+				Type:   "SCHEDULED_SCALE_DOWN_EVENT",
+				Region: region,
 			}
 		}
 	})
@@ -278,17 +271,13 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 	// Try to get the scaling algorithm on the region the scaling event was requested.
 	// If no region is specified, use the default region.
 	// TODO: figure out how to get non-default scaling algorihtms.
-	var name, region, provider string
-	const defaultRegion = "us-east-1"
+	var name string
 
-	region = scalingEvent.Region
-	provider = strings.ToLower(scalingEvent.Provider)
-
-	if region == "" {
-		logger.Infof("No region found in scaling event, using default region %s", defaultRegion)
-		name = utils.Sprintf("default-sa-%s-%s", provider, defaultRegion)
+	if scalingEvent.Region == "" {
+		logger.Infof("No region found in scaling event, using default region %s", utils.DefaultRegion)
+		name = utils.Sprintf("default-sa-%s", utils.DefaultRegion)
 	} else {
-		name = utils.Sprintf("default-sa-%s-%s", provider, scalingEvent.Region)
+		name = utils.Sprintf("default-sa-%s", scalingEvent.Region)
 	}
 
 	algorithm, ok := algorithmByRegion.Load(name)
@@ -327,8 +316,8 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 					instance := subscriptionEvent.Instances[0]
 					scalingEvent.ID = uuid.NewString()
 					scalingEvent.Data = instance
-					scalingEvent.Region = instance.Region
-					scalingEvent.Provider = instance.Provider
+					scalingEvent.Region = types.PlacementRegion(instance.Region)
+					scalingEvent.Provider = types.CloudProvider(instance.Provider)
 				}
 
 				// Start scaling algorithm based on region

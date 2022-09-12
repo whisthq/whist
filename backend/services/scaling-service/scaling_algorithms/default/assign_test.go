@@ -89,7 +89,7 @@ func TestMandelboxAssign(t *testing.T) {
 			}
 
 			testAssignRequest := &httputils.MandelboxAssignRequest{
-				Regions:    []string{"us-east-1", "us-west-1"},
+				Regions:    []types.PlacementRegion{"us-east-1", "us-west-1"},
 				CommitHash: tt.clientSHA,
 				UserEmail:  "user@whist.com",
 				Version:    "2.13.2",

@@ -55,7 +55,7 @@ func TestParseRequest(t *testing.T) {
 			"version": "1.0.0",
 			"session_id": 1234567890
 		}`, &MandelboxAssignRequest{
-			Regions: []string{
+			Regions: []types.PlacementRegion{
 				"us-east-1",
 			},
 			CommitHash: "test_sha",

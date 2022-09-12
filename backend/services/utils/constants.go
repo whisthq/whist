@@ -11,6 +11,8 @@ const (
 	// backend assumes that it is uniform across the entire system. To change the application, either for
 	// testing or for production, simply change this constant to another Whist mandelbox, like `browsers/chrome`.
 	MandelboxApp string = "browsers/whistium"
+
+	DefaultRegion string = "us-east"
 )
 
 var (

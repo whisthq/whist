@@ -8,11 +8,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 )
 
 // SpinUpFakeInstances will create the desired number of instances with random data. Its a helper function
 // for local testing, to avoid having to spinup instances on a cloud provider.
-func SpinUpFakeInstances(instanceNum int, provider string, imageID string, region string) []subscriptions.Instance {
+func SpinUpFakeInstances(instanceNum int, provider types.CloudProvider, imageID string, region types.PlacementRegion) []subscriptions.Instance {
 	var fakeInstances []subscriptions.Instance
 	for i := 0; i < instanceNum; i++ {
 		src := rand.NewSource(time.Now().UnixNano())
@@ -22,8 +23,8 @@ func SpinUpFakeInstances(instanceNum int, provider string, imageID string, regio
 
 		fakeInstances = append(fakeInstances, subscriptions.Instance{
 			ID:                uuid.NewString(),
-			Provider:          provider,
-			Region:            region,
+			Provider:          provider.String(),
+			Region:            region.String(),
 			ImageID:           imageID,
 			ClientSHA:         metadata.GetGitCommit(),
 			IPAddress:         net.IPv4(bytes[0], bytes[1], bytes[2], bytes[3]).String(),

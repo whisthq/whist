@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -25,7 +26,7 @@ func TestQueryImage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testImages = []subscriptions.WhistImage{tt.expected}
 
-			res, err := testDBClient.QueryImage(context.Background(), mockImagesClient, string(tt.expected.Provider), string(tt.expected.Region))
+			res, err := testDBClient.QueryImage(context.Background(), mockImagesClient, types.CloudProvider(tt.expected.Provider), types.PlacementRegion(tt.expected.Region))
 			if err != nil {
 				t.Fatalf("did not expect an error, got %s", err)
 			}

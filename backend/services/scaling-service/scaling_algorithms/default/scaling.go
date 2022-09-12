@@ -19,7 +19,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	contextFields := []interface{}{
 		zap.String("id", event.ID),
 		zap.Any("type", event.Type),
-		zap.String("region", event.Region),
+		zap.Any("region", event.Region),
 	}
 	logger.Infow("Starting scale down action.", contextFields)
 	defer logger.Infow("Finished scale down action.", contextFields)
@@ -193,7 +193,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	contextFields := []interface{}{
 		zap.String("id", event.ID),
 		zap.Any("type", event.Type),
-		zap.String("region", event.Region),
+		zap.Any("region", event.Region),
 	}
 	logger.Infow("Starting scale up action.", contextFields)
 	defer logger.Infow("Finished scale up action.", contextFields)

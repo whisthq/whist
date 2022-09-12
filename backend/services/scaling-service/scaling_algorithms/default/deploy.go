@@ -27,7 +27,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	contextFields := []interface{}{
 		zap.String("id", event.ID),
 		zap.Any("type", event.Type),
-		zap.String("region", event.Region),
+		zap.Any("region", event.Region),
 	}
 	logger.Infow("Starting upgrade image action.", contextFields)
 	defer logger.Infow("Finished upgrade image action.", contextFields)
@@ -42,7 +42,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	newImage := subscriptions.Image{
 		Provider:  "AWS",
-		Region:    event.Region,
+		Region:    event.Region.String(),
 		ImageID:   imageID.(string),
 		ClientSHA: metadata.GetGitCommit(),
 		UpdatedAt: time.Now(),
@@ -102,7 +102,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 		updateParams := subscriptions.Image{
 			Provider:  "AWS",
-			Region:    event.Region,
+			Region:    event.Region.String(),
 			ImageID:   newImage.ImageID,
 			ClientSHA: newImage.ClientSHA,
 			UpdatedAt: time.Now(),
@@ -140,7 +140,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	contextFields := []interface{}{
 		zap.String("id", event.ID),
 		zap.Any("type", event.Type),
-		zap.String("region", event.Region),
+		zap.Any("region", event.Region),
 	}
 	// Block until the image upgrade has finished successfully.
 	// We time out here in case something went wrong with the

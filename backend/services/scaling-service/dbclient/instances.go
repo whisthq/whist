@@ -6,9 +6,10 @@ import (
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 )
 
-func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) ([]subscriptions.Instance, error) {
+func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region types.PlacementRegion) ([]subscriptions.Instance, error) {
 	// The status will always be active, because we want instances
 	// that are ready to accept mandelboxes (the host service is running)
 	const status = "ACTIVE"
@@ -36,7 +37,7 @@ func (client *DBClient) QueryInstance(scalingCtx context.Context, graphQLClient 
 }
 
 // QueryInstancesByStatusOnRegion queries the database for all instances with the given status on the given region.
-func (client *DBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region string) ([]subscriptions.Instance, error) {
+func (client *DBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region types.PlacementRegion) ([]subscriptions.Instance, error) {
 	instancesQuery := subscriptions.QueryInstancesByStatusOnRegion
 	queryParams := map[string]interface{}{
 		"status": graphql.String(status),
