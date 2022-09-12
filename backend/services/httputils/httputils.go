@@ -92,8 +92,14 @@ func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest
 		return nil, utils.MakeError("couldn't parse request: %s", err)
 	}
 
-	// Extract the user email from request for additional log context
-	userEmail := s.(*MandelboxAssignRequest).UserEmail
+	// Try to extract the user email from the request to add additional
+	// logging
+	var userEmail string
+	switch s := s.(type) {
+	case *MandelboxAssignRequest:
+		userEmail = s.UserEmail
+	default:
+	}
 
 	var claims *auth.WhistClaims
 	// Skip token validation if running on local environment
