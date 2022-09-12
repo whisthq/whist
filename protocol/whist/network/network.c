@@ -250,6 +250,7 @@ void set_tos(SOCKET socket, WhistTOSValue tos) {
 }
 
 void whist_init_networking(void) {
+    init_tcp_sender();
     // Initialize any uninitialized port mappings with the identity
     for (int i = 0; i <= USHRT_MAX; i++) {
         if (port_mappings[i] == 0) {

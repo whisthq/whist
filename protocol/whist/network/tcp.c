@@ -15,6 +15,7 @@ Includes
 #include <whist/utils/clock.h>
 #include <whist/network/throttle.h>
 #include "whist/core/features.h"
+#include "whist/utils/queue.h"
 
 #if !OS_IS(OS_WIN32)
 #include <fcntl.h>
@@ -90,6 +91,16 @@ typedef struct {
     WhistTimer last_recvp;
 } TCPContext;
 
+// TCP send is not atomic, so we have to hold packets in a queue and send on a separate thread
+typedef struct TCPQueueItem {
+    TCPContext* context;
+    TCPNetworkPacket* packet;
+    int packet_size;
+} TCPQueueItem;
+WhistThread tcp_send_thread = NULL;
+QueueContext* tcp_send_queue = NULL;
+bool run_tcp_sender = false;
+
 // Time between consecutive pings
 #define TCP_PING_INTERVAL_SEC 2.0
 // Time before a ping to be considered "lost", and reconnection starts
@@ -159,6 +170,18 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
  *                                 error
  */
 int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet);
+
+/**
+ * @brief                          Multithreaded function to asynchronously
+ *                                 send all TCP packets on the same thread.
+ *                                 This prevents garbled TCP messages from
+ *                                 being sent since large TCP sends are not atomic.
+ * 
+ * @param opaque                   Unused pointer, pass NULL
+ * 
+ * @returns                        0 on exit
+ */
+int multithreaded_tcp_send(void* opaque);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -625,6 +648,18 @@ int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     return 0;
 }
 
+void init_tcp_sender() {
+    run_tcp_sender = true;
+    tcp_send_queue = fifo_queue_create(sizeof(TCPQueueItem), 16);
+    tcp_send_thread = whist_create_thread(multithreaded_tcp_send, "multithreaded_tcp_send", NULL);
+}
+
+void destroy_tcp_sender() {
+    run_tcp_sender = false;
+    whist_wait_thread(tcp_send_thread, NULL);
+    fifo_queue_destroy(tcp_send_queue);
+}
+
 /*
 ============================
 Private Function Implementations
@@ -763,33 +798,57 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
         memcpy(network_packet->payload, packet, packet_size);
     }
 
-    int tcp_packet_size = get_tcp_network_packet_size(network_packet);
+    // Add TCPNetworkPacket to the queue to be sent on the TCP send thread
+    TCPQueueItem* queue_item = safe_malloc(sizeof(TCPQueueItem));
+    queue_item->context = context;
+    queue_item->packet = network_packet;
+    queue_item->packet_size = packet_size;
+    return fifo_queue_enqueue_item(tcp_send_queue, queue_item);
+}
 
-    // For now, the TCP network throttler is NULL, so this is a no-op.
-    network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
+int multithreaded_tcp_send(void* opaque) {
+    UNUSED(opaque);
 
-    // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
-    LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", packet_size,
-             tcp_packet_size);
-
-    // Send the packet
-    bool failed = false;
-    int ret = send(context->socket, (const char*)network_packet, tcp_packet_size, 0);
-    if (ret < 0) {
-        int error = get_last_network_error();
-        if (error == WHIST_ECONNRESET) {
-            LOG_WARNING("TCP Connection reset by peer");
-            context->connection_lost = true;
-        } else {
-            LOG_WARNING("Unexpected TCP Packet Error: %d", error);
+    TCPQueueItem queue_item;
+    TCPNetworkPacket* network_packet = NULL;
+    TCPContext* context = NULL;
+    while (true) {
+        if (fifo_queue_dequeue_item_timeout(tcp_send_queue, &queue_item, 5000) < 0) {
+            if (!run_tcp_sender) {
+                break;
+            }
+            continue;
         }
-        failed = true;
+
+        network_packet = queue_item.packet;
+        context = queue_item.context;
+
+        int tcp_packet_size = get_tcp_network_packet_size(network_packet);
+
+        // For now, the TCP network throttler is NULL, so this is a no-op.
+        network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
+
+        // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
+        LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", queue_item.packet_size,
+                 tcp_packet_size);
+
+        // Send the packet
+        int ret = send(context->socket, (const char*)network_packet, tcp_packet_size, 0);
+        if (ret < 0) {
+            int error = get_last_network_error();
+            if (error == WHIST_ECONNRESET) {
+                LOG_WARNING("TCP Connection reset by peer");
+                context->connection_lost = true;
+            } else {
+                LOG_WARNING("Unexpected TCP Packet Error: %d", error);
+            }
+        }
+
+        // Free the encrypted allocation
+        deallocate_region(network_packet);
     }
 
-    // Free the encrypted allocation
-    deallocate_region(network_packet);
-
-    return failed ? -1 : 0;
+    return 0;
 }
 
 int get_tcp_packet_size(TCPPacket* tcp_packet) {

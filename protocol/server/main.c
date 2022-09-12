@@ -674,6 +674,8 @@ int main(int argc, char* argv[]) {
     // Mark the client as permanently deactivated, which lets the threads reap
     permanently_deactivate_client(server_state.client);
 
+    destroy_tcp_sender();
+
     destroy_input_device(server_state.input_device);
     server_state.input_device = NULL;
 
