@@ -832,15 +832,22 @@ int multithreaded_tcp_send(void* opaque) {
         LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", queue_item.packet_size,
                  tcp_packet_size);
 
-        // Send the packet
-        int ret = send(context->socket, (const char*)network_packet, tcp_packet_size, 0);
-        if (ret < 0) {
-            int error = get_last_network_error();
-            if (error == WHIST_ECONNRESET) {
-                LOG_WARNING("TCP Connection reset by peer");
-                context->connection_lost = true;
+        // Send the packet. If a partial packet is sent, keep sending until full packet has been sent.
+        int total_sent = 0;
+        while (total_sent < tcp_packet_size) {
+            int ret = send(context->socket, (const char*)(network_packet + total_sent), tcp_packet_size, 0);
+            if (ret < 0) {
+                int error = get_last_network_error();
+                if (error == WHIST_ECONNRESET) {
+                    LOG_WARNING("TCP Connection reset by peer");
+                    context->connection_lost = true;
+                } else {
+                    LOG_WARNING("Unexpected TCP Packet Error: %d", error);
+                }
+                // Don't attempt to send the rest of the packet if there was a failure
+                break;
             } else {
-                LOG_WARNING("Unexpected TCP Packet Error: %d", error);
+                total_sent += ret;
             }
         }
 
