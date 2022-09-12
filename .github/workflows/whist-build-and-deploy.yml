@@ -1282,8 +1282,8 @@ jobs:
               --gn=rewards_grant_staging_endpoint:x \
               --gn=safebrowsing_api_endpoint:https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
               --gn=sparkle_eddsa_private_key:${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }} \
-              --gn=updater_dev_endpoint:https://clients2.google.com/service/update2/crx \
-              --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx \
+              --gn=updater_dev_endpoint:https://go-updater-dev.bravesoftware.com/extensions \
+              --gn=updater_prod_endpoint:https://go-updater.brave.com/extensions \
               --gn=notary_user:owen@whist.com \
               --gn=notary_password:${{ secrets.MACOS_SIGNING_NOTARYTOOL_PASSWORD }} \
               --notarize
