@@ -55,7 +55,7 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 	var reqdata httputils.MandelboxAssignRequest
 	claims, err := httputils.AuthenticateRequest(w, r, &reqdata)
 	if err != nil {
-		logger.Errorf("failed while authenticating request: %s", err)
+		logger.Error(err)
 		return
 	}
 
