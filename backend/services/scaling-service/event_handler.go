@@ -230,8 +230,8 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 				// SCHEDULED means the source of the event is the scheduler
 				// and IMAGE_UPGRADE means it will perform an image upgrade action.
 				Type:     "SCHEDULED_IMAGE_UPGRADE_EVENT",
-				Provider: provider,
-				Region:   region,
+				Provider: types.CloudProvider(provider),
+				Region:   types.PlacementRegion(region),
 				Data:     image,
 			}
 		}
@@ -355,9 +355,9 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				}
 
 				for provider, regionsAndImages := range regionImageMap {
-					for _, region := range regionsAndImages {
-						scalingEvent.Provider = provider
-						scalingEvent.Region = region
+					for region := range regionsAndImages {
+						scalingEvent.Provider = types.CloudProvider(provider)
+						scalingEvent.Region = types.PlacementRegion(region)
 						scalingEvent.Data = version
 
 						// Start scaling algorithm based on region
