@@ -87,24 +87,27 @@ func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest
 		return nil, err
 	}
 
+	_, err = ParseRequest(w, r, s)
+	if err != nil {
+		return nil, utils.MakeError("couldn't parse request: %s", err)
+	}
+
+	// Extract the user email from request for additional log context
+	userEmail := s.(*MandelboxAssignRequest).UserEmail
+
 	var claims *auth.WhistClaims
 	// Skip token validation if running on local environment
 	if !metadata.IsLocalEnv() {
 		claims, err = auth.ParseToken(accessToken)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return nil, utils.MakeError("received an unpermissioned backend request on %s to URL %s: %s", r.Host, r.URL, err)
+			return nil, utils.MakeError("received an unpermissioned backend request from user %s on %s to URL %s: %s", userEmail, r.Host, r.URL, err)
 		}
 
 		if err := auth.Verify(claims); err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return nil, utils.MakeError("received an unpermissioned backend request on %s to URL %s: %s", r.Host, r.URL, err)
+			return nil, utils.MakeError("received an unpermissioned backend request from user %s on %s to URL %s: %s", userEmail, r.Host, r.URL, err)
 		}
-	}
-
-	_, err = ParseRequest(w, r, s)
-	if err != nil {
-		return nil, utils.MakeError("Error while parsing request. Err: %v", err)
 	}
 
 	return claims, nil
@@ -123,8 +126,6 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (map[
 		return nil, utils.MakeError("error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
-	// Extract only the jwt_access_token field from a raw JSON unmarshalling that
-	// delays as much decoding as possible
 	var rawmap map[string]*json.RawMessage
 	err = json.Unmarshal(body, &rawmap)
 	if err != nil {
