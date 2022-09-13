@@ -54,7 +54,9 @@
 // Supress the "may be used uninitialized" warning for this library.
 // This warning is only a mabybe, and it has been confirmed the code
 // causing the warning is safe.
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 
 /*
  * The following parameter defines how many bits are used for
