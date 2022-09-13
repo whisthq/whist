@@ -141,9 +141,9 @@ void fifo_queue_destroy(QueueContext *context) {
     if (context == NULL) {
         return;
     }
+    context->destroying = true;
     if (context->sem != NULL) {
         // This ensures that a blocking enqueue will release
-        context->destroying = true;
         whist_post_semaphore(context->sem);
         whist_destroy_semaphore(context->sem);
     }
