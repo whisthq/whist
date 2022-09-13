@@ -1765,7 +1765,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
             nack_id.frame_id = packet->udp_nack_data.id;
             if ((short)packet->udp_nack_data.index >= 0) {
                 nack_id.packet_index = packet->udp_nack_data.index;
-                if (fifo_queue_enqueue_item(context->nack_queue, &nack_id) < 0) {
+                if (fifo_queue_enqueue_item(context->nack_queue, &nack_id, false) < 0) {
                     LOG_ERROR("Failed to enqueue NACK request");
                 }
             } else {
@@ -1786,7 +1786,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
                     if (LOG_NACKING) {
                         LOG_INFO("Generating Nack for Frame ID %d, index %d", nack_id.frame_id, i);
                     }
-                    if (fifo_queue_enqueue_item(context->nack_queue, &nack_id) < 0) {
+                    if (fifo_queue_enqueue_item(context->nack_queue, &nack_id, false) < 0) {
                         LOG_ERROR("Failed to enqueue NACK request");
                     }
                 }
@@ -1809,7 +1809,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
                  i < packet->udp_bitarray_nack_data.numBits; i++) {
                 if (bit_array_test_bit(bit_arr, i)) {
                     nack_id.packet_index = i;
-                    if (fifo_queue_enqueue_item(context->nack_queue, &nack_id) < 0) {
+                    if (fifo_queue_enqueue_item(context->nack_queue, &nack_id, false) < 0) {
                         LOG_ERROR("Failed to enqueue NACK request");
                     }
                 }

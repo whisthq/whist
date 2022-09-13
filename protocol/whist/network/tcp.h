@@ -62,16 +62,4 @@ bool create_tcp_socket_context(SocketContext* context, char* destination, int po
  * @return                          0 on success, otherwise failure.
  */
 int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms);
-
-/**
- * @brief                           Create TCP send thread and resources
- * 
- */
-void init_tcp_sender(void);
-
-/**
- * @brief                           Destroy TCP send thread and resources
- * 
- */
-void destroy_tcp_sender(void);
 #endif  // WHIST_TCP_H

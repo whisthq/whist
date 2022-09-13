@@ -23,10 +23,11 @@ QueueContext *fifo_queue_create(size_t item_size, int max_items);
  *
  * @param queue_context            Queue's context pointer
  * @param item                     Pointer to the item that needs to be enqueued
+ * @param blocking                 Whether the enqueue operation should be blocking
  *
  * @returns                        0 on success, -1 on failure
  */
-int fifo_queue_enqueue_item(QueueContext *queue_context, const void *item);
+int fifo_queue_enqueue_item(QueueContext *queue_context, const void *item, bool blocking);
 
 /**
  * @brief                          Dequeue an item from the FIFO queue. If an item is not available,

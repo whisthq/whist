@@ -89,17 +89,19 @@ typedef struct {
     // Only recvp every RECV_INTERVAL_MS, to keep CPU usage low.
     // This is because a recvp takes ~8ms sometimes
     WhistTimer last_recvp;
+
+    // TCP send is not atomic, so we have to hold packets in a queue and send on a separate thread
+    WhistThread send_thread;
+    QueueContext* send_queue;
+    WhistSemaphore send_semaphore;
+    bool run_sender;
 } TCPContext;
 
-// TCP send is not atomic, so we have to hold packets in a queue and send on a separate thread
+// Struct for holding packets on queue
 typedef struct TCPQueueItem {
-    TCPContext* context;
     TCPNetworkPacket* packet;
     int packet_size;
 } TCPQueueItem;
-WhistThread tcp_send_thread = NULL;
-QueueContext* tcp_send_queue = NULL;
-bool run_tcp_sender = false;
 
 // Time between consecutive pings
 #define TCP_PING_INTERVAL_SEC 2.0
@@ -173,11 +175,12 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet);
 
 /**
  * @brief                          Multithreaded function to asynchronously
- *                                 send all TCP packets on the same thread.
+ *                                 send all TCP packets for one socket context
+ *                                 on the same thread.
  *                                 This prevents garbled TCP messages from
  *                                 being sent since large TCP sends are not atomic.
  * 
- * @param opaque                   Unused pointer, pass NULL
+ * @param opaque                   Pointer to associated socket context
  * 
  * @returns                        0 on exit
  */
@@ -515,6 +518,14 @@ static void tcp_destroy_socket_context(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
 
+    // Destroy TCP send queue resources
+    context->run_sender = false;
+
+    // Any pending TCP packets will be dropped
+    whist_wait_thread(context->send_thread, NULL);
+    TCPQueueItem queue_item;
+    fifo_queue_destroy(context->send_queue);
+
     closesocket(context->socket);
     closesocket(context->listen_socket);
     whist_destroy_mutex(context->mutex);
@@ -583,6 +594,9 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     context->last_pong_id = -1;
     start_timer(&context->last_ping_timer);
     context->connection_lost = false;
+    context->send_queue = NULL;
+    context->send_semaphore = NULL;
+    context->send_thread = NULL;
     start_timer(&context->last_recvp);
 
     int ret;
@@ -596,6 +610,21 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     }
 
     if (ret == -1) {
+        free(context);
+        network_context->context = NULL;
+        return false;
+    }
+
+    // Set up TCP send queue
+    context->run_sender = true;
+    if ((context->send_queue = fifo_queue_create(sizeof(TCPQueueItem), 16)) == NULL ||
+        (context->send_semaphore = whist_create_semaphore(0)) == NULL ||
+        (context->send_thread = whist_create_thread(multithreaded_tcp_send, "multithreaded_tcp_send", context)) == NULL) {
+        // If any of the created resources are NULL, there was a failure and we need to clean up and return false
+        if (context->send_queue)
+            fifo_queue_destroy(context->send_queue);
+        if (context->send_semaphore)
+            whist_destroy_semaphore(context->send_semaphore);
         free(context);
         network_context->context = NULL;
         return false;
@@ -646,18 +675,6 @@ int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     }
 
     return 0;
-}
-
-void init_tcp_sender() {
-    run_tcp_sender = true;
-    tcp_send_queue = fifo_queue_create(sizeof(TCPQueueItem), 16);
-    tcp_send_thread = whist_create_thread(multithreaded_tcp_send, "multithreaded_tcp_send", NULL);
-}
-
-void destroy_tcp_sender() {
-    run_tcp_sender = false;
-    whist_wait_thread(tcp_send_thread, NULL);
-    fifo_queue_destroy(tcp_send_queue);
 }
 
 /*
@@ -799,29 +816,35 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
     }
 
     // Add TCPNetworkPacket to the queue to be sent on the TCP send thread
-    TCPQueueItem* queue_item = safe_malloc(sizeof(TCPQueueItem));
-    queue_item->context = context;
-    queue_item->packet = network_packet;
-    queue_item->packet_size = packet_size;
-    return fifo_queue_enqueue_item(tcp_send_queue, queue_item);
+    TCPQueueItem queue_item;
+    queue_item.packet = network_packet;
+    queue_item.packet_size = packet_size;
+    if (fifo_queue_enqueue_item(context->send_queue, &queue_item, false) < 0)
+        return -1;
+    whist_post_semaphore(context->send_semaphore);
+    return 0;
 }
 
 int multithreaded_tcp_send(void* opaque) {
-    UNUSED(opaque);
-
     TCPQueueItem queue_item;
     TCPNetworkPacket* network_packet = NULL;
-    TCPContext* context = NULL;
+    TCPContext* context = (TCPContext*) opaque;
     while (true) {
-        if (fifo_queue_dequeue_item_timeout(tcp_send_queue, &queue_item, 5000) < 0) {
-            if (!run_tcp_sender) {
-                break;
-            }
+        whist_wait_semaphore(context->send_semaphore);
+        // Check to see if the sender thread needs to stop running
+        if (!context->run_sender)
+            break;
+        // If the connection is lost, re-increment the semaphore and continue
+        // to try again later
+        if (context->connection_lost) {
+            whist_post_semaphore(context->send_semaphore);
             continue;
         }
+        // If there is no item to be dequeued, continue
+        if (fifo_queue_dequeue_item(context->send_queue, &queue_item) < 0)
+            continue;
 
         network_packet = queue_item.packet;
-        context = queue_item.context;
 
         int tcp_packet_size = get_tcp_network_packet_size(network_packet);
 

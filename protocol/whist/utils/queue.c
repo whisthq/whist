@@ -15,7 +15,9 @@ typedef struct QueueContext {
     int max_items;
     WhistMutex mutex;
     WhistCondition cond;
+    WhistSemaphore sem;
     void *data;
+    bool destroying;
 } QueueContext;
 
 static void increment_idx(QueueContext *context, int *idx) {
@@ -55,19 +57,34 @@ QueueContext *fifo_queue_create(size_t item_size, int max_items) {
         return NULL;
     }
 
+    context->sem = whist_create_semaphore(max_items);
+    if (context->sem == NULL) {
+        fifo_queue_destroy(context);
+        return NULL;
+    }
+
     context->item_size = item_size;
     context->max_items = max_items;
+    context->destroying = false;
     return context;
 }
 
-int fifo_queue_enqueue_item(QueueContext *context, const void *item) {
+int fifo_queue_enqueue_item(QueueContext *context, const void *item, bool blocking) {
     if (context == NULL) {
         return -1;
     }
     whist_lock_mutex(context->mutex);
-    if (context->num_items >= context->max_items) {
+    while (context->num_items >= context->max_items) {
         whist_unlock_mutex(context->mutex);
-        return -1;
+        if (blocking) {
+            whist_wait_semaphore(context->sem);
+            if (context->destroying) {
+                return -1;
+            }
+            whist_lock_mutex(context->mutex);
+        } else {
+            return -1;
+        }
     }
     context->num_items++;
     void *target_item = (uint8_t *)context->data + (context->item_size * context->write_idx);
@@ -75,6 +92,11 @@ int fifo_queue_enqueue_item(QueueContext *context, const void *item) {
     increment_idx(context, &context->write_idx);
     whist_broadcast_cond(context->cond);
     whist_unlock_mutex(context->mutex);
+    // If this enqueue call is not blocking, we still need to decrement the semaphore.
+    //     Since we just successfully dequeued an element, we know that the semaphore
+    //     count is greater than 0 and that this wait will be successful.
+    if (!blocking)
+        whist_wait_timeout_semaphore(context->sem, 0);
     return 0;
 }
 
@@ -89,6 +111,7 @@ int fifo_queue_dequeue_item(QueueContext *context, void *item) {
     }
     dequeue_item(context, item);
     whist_unlock_mutex(context->mutex);
+    whist_post_semaphore(context->sem);
     return 0;
 }
 
@@ -117,6 +140,12 @@ int fifo_queue_dequeue_item_timeout(QueueContext *context, void *item, int timeo
 void fifo_queue_destroy(QueueContext *context) {
     if (context == NULL) {
         return;
+    }
+    if (context->sem != NULL) {
+        // This ensures that a blocking enqueue will release
+        context->destroying = true;
+        whist_post_semaphore(context->sem);
+        whist_destroy_semaphore(context->sem);
     }
     if (context->data != NULL) {
         free(context->data);

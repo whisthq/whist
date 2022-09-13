@@ -494,8 +494,6 @@ int whist_client_main(int argc, const char* argv[]) {
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
 
-    destroy_tcp_sender();
-
     destroy_frontend(frontend);
 
     LOG_INFO("Client frontend has exited...");
