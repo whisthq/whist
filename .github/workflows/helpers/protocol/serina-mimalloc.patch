@@ -1,0 +1,83 @@
+diff --git a/src/os.c b/src/os.c
+index 72959d8..14d8ed0 100644
+--- a/src/os.c
++++ b/src/os.c
+@@ -62,6 +62,21 @@ terms of the MIT license. A copy of the license can be found in the file
+ #endif
+ #endif
+ 
++// WHIST CHANGES
++// we mlock on os_commit and munlock on decommit, reset, and free
++// mlock macros
++// we need to align the address only to page size, not the size
++// but we still have to compute the new size once we align the address
++#define MLOCK(addr, size) \
++    uintptr_t aligned_addr = _mi_align_down((uintptr_t)addr, os_page_size); \
++    size_t actual_size = size + ((uintptr_t)addr - aligned_addr); \
++    mlock((void*)aligned_addr, actual_size);
++
++#define MUNLOCK(addr, size) \
++    uintptr_t aligned_addr = _mi_align_down((uintptr_t)addr, os_page_size); \
++    size_t actual_size = size + ((uintptr_t)addr - aligned_addr); \
++    munlock((void*)aligned_addr, actual_size);
++
+ /* -----------------------------------------------------------
+   Initialization.
+   On windows initializes support for aligned allocation and
+@@ -354,6 +369,11 @@ static bool mi_os_mem_free(void* addr, size_t size, bool was_committed, mi_stats
+ {
+   if (addr == NULL || size == 0) return true; // || _mi_os_is_huge_reserved(addr)
+   bool err = false;
++#if defined(__APPLE__)
++  if (addr) {
++      MUNLOCK(addr, size);
++  }
++#endif
+ #if defined(_WIN32)
+   DWORD errcode = 0;
+   err = (VirtualFree(addr, 0, MEM_RELEASE) == 0);
+@@ -927,10 +947,16 @@ static bool mi_os_commitx(void* addr, size_t size, bool commit, bool conservativ
+   // Linux, macOSX and others.
+   if (commit) {
+     // commit: ensure we can access the area    
++#if defined(__APPLE__)
++      MLOCK(start, csize);
++#endif
+     err = mprotect(start, csize, (PROT_READ | PROT_WRITE));
+     if (err != 0) { err = errno; }
+   } 
+   else {
++#if defined(__APPLE__)
++      MUNLOCK(start, csize);
++#endif
+     #if defined(MADV_DONTNEED) && MI_DEBUG == 0 && MI_SECURE == 0
+     // decommit: use MADV_DONTNEED as it decreases rss immediately (unlike MADV_FREE)
+     // (on the other hand, MADV_FREE would be good enough.. it is just not reflected in the stats :-( )
+@@ -1007,15 +1033,26 @@ static bool mi_os_resetx(void* addr, size_t size, bool reset, mi_stats_t* stats)
+   static _Atomic(size_t) advice = MI_ATOMIC_VAR_INIT(MADV_FREE);
+   int oadvice = (int)mi_atomic_load_relaxed(&advice);
+   int err;
+-  while ((err = mi_madvise(start, csize, oadvice)) != 0 && errno == EAGAIN) { errno = 0;  };
++  while ((err = mi_madvise(start, csize, oadvice)) != 0 && errno == EAGAIN) {
++#if defined(__APPLE__)
++      MUNLOCK(start, csize);
++#endif
++      errno = 0;
++  };
+   if (err != 0 && errno == EINVAL && oadvice == MADV_FREE) {  
+     // if MADV_FREE is not supported, fall back to MADV_DONTNEED from now on
+     mi_atomic_store_release(&advice, (size_t)MADV_DONTNEED);
++#if defined(__APPLE__)
++    MUNLOCK(start, csize);
++#endif
+     err = mi_madvise(start, csize, MADV_DONTNEED);
+   }
+ #elif defined(__wasi__)
+   int err = 0;
+ #else
++#if defined(__APPLE__)
++  MUNLOCK(start, csize);
++#endif
+   int err = mi_madvise(start, csize, MADV_DONTNEED);
+ #endif
+   if (err != 0) {
