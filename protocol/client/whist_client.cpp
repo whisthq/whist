@@ -292,6 +292,7 @@ static void pre_connection_setup(WhistFrontend* frontend, WhistRenderer** render
     whist_frontend_get_window_pixel_size(frontend, 0, &initial_width, &initial_height);
     *renderer = init_renderer(frontend, initial_width, initial_height);
     init_clipboard_synchronizer(true);
+    init_file_synchronizer(FILE_TRANSFER_DEFAULT);
 }
 
 /**
