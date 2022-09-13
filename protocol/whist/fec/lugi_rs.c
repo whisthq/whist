@@ -54,8 +54,10 @@
 // Supress the "may be used uninitialized" warning for this library.
 // This warning is only a mabybe, and it has been confirmed the code
 // causing the warning is safe.
-#ifdef __GNUC__
+#if defined(__GNUC__) && defined(__has_warning)
+#if __has_warning("-Wmaybe-uninitialized")
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 #endif
 
 /*
