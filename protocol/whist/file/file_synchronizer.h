@@ -68,7 +68,7 @@ typedef struct FileData {
 
 /**
  * @brief                          The type of the file transfer, as a boolean enum
- * 
+ *
  * @note                           File download is directly implemented in the
  *                                 Chromium extension, so the protocol no longer
  *                                 needs to handle file download to the client.
