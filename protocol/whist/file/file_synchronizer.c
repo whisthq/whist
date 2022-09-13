@@ -174,9 +174,6 @@ void init_file_synchronizer(FileTransferType requested_actions) {
     if ((requested_actions & FILE_TRANSFER_SERVER_DROP) && init_file_drop_handler()) {
         enabled_actions = (FileTransferType)(enabled_actions | FILE_TRANSFER_SERVER_DROP);
     }
-    if ((requested_actions & FILE_TRANSFER_CLIENT_DOWNLOAD)) {
-        enabled_actions = (FileTransferType)(enabled_actions | FILE_TRANSFER_CLIENT_DOWNLOAD);
-    }
     if ((requested_actions & FILE_TRANSFER_SERVER_UPLOAD)) {
         enabled_actions = (FileTransferType)(enabled_actions | FILE_TRANSFER_SERVER_UPLOAD);
     }
@@ -226,16 +223,6 @@ TransferringFile* file_synchronizer_open_file_for_writing(FileMetadata* file_met
         }
         case FILE_TRANSFER_SERVER_UPLOAD: {
             file_dir = "/home/whist/.teleport/uploads";
-            break;
-        }
-        case FILE_TRANSFER_CLIENT_DOWNLOAD: {
-            const char* home_dir = getenv(HOME_ENV_VAR);
-            const char* downloads = "Downloads";
-            // TODO : Where is this freed?
-            char* download_file_dir = (char*)malloc(strlen(home_dir) + 1 + strlen(downloads) + 1);
-            snprintf(download_file_dir, strlen(home_dir) + 1 + strlen(downloads) + 1, "%s%c%s",
-                     home_dir, PATH_SEPARATOR, downloads);
-            file_dir = download_file_dir;
             break;
         }
         case 0: {
@@ -326,10 +313,6 @@ TransferringFile* file_synchronizer_write_file_chunk(FileData* file_chunk,
             switch ((active_file->transfer_type & enabled_actions)) {
                 case FILE_TRANSFER_SERVER_DROP: {
                     file_drop_mark_ready(active_file->id);
-                    break;
-                }
-                case FILE_TRANSFER_CLIENT_DOWNLOAD: {
-                    if (cb) cb(frontend, active_file->opaque);
                     break;
                 }
                 case FILE_TRANSFER_SERVER_UPLOAD: {

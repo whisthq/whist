@@ -638,38 +638,6 @@ int main(int argc, char* argv[]) {
             start_timer(&uri_handler_timer);
         }
 
-#define FILE_DOWNLOAD_TRIGGER_FILE "/home/whist/.teleport/downloaded-file"
-#define FILE_DOWNLOADS_PREFIX "/home/whist/Downloads"
-#define DOWNLOADED_FILENAME_MAXLEN 4096
-        if (get_timer(&downloaded_file_timer) > 50.0 / MS_IN_SECOND) {
-            if (!access(FILE_DOWNLOAD_TRIGGER_FILE, R_OK)) {
-                // If the trigger file exists, read it and delete the file
-                int fd = open(FILE_DOWNLOAD_TRIGGER_FILE, O_RDONLY);
-                char downloaded_filename[DOWNLOADED_FILENAME_MAXLEN + 1] = {0};
-                ssize_t bytes = read(fd, &downloaded_filename, DOWNLOADED_FILENAME_MAXLEN);
-                if (bytes > 0 && strchr(downloaded_filename, '/') == NULL) {
-                    // Begin the file transfer to the client if a file was triggered and
-                    // the filename doesn't include a / (this prevents escalation outside the
-                    // Downloads directory)
-                    char* filename = safe_malloc(strlen(FILE_DOWNLOADS_PREFIX) + 1 +
-                                                 strlen(downloaded_filename) + 1);
-                    snprintf(filename,
-                             strlen(FILE_DOWNLOADS_PREFIX) + 1 + strlen(downloaded_filename) + 1,
-                             "%s/%s", FILE_DOWNLOADS_PREFIX, downloaded_filename);
-                    file_synchronizer_set_file_reading_basic_metadata(
-                        filename, FILE_TRANSFER_CLIENT_DOWNLOAD, NULL);
-                    file_synchronizer_end_type_group(FILE_TRANSFER_CLIENT_DOWNLOAD);
-                    free(filename);
-                } else {
-                    LOG_WARNING("Unable to read downloaded file trigger file: %d", errno);
-                }
-                close(fd);
-                remove(FILE_DOWNLOAD_TRIGGER_FILE);
-            }
-
-            start_timer(&downloaded_file_timer);
-        }
-
 #define FILE_UPLOAD_TRIGGER_FILE "/home/whist/.teleport/uploaded-file"
         if (get_timer(&uploaded_file_timer) > 50.0 / MS_IN_SECOND) {
             if (!access(FILE_UPLOAD_TRIGGER_FILE, R_OK)) {

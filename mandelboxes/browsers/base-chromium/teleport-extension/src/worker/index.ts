@@ -35,9 +35,6 @@ const nativeHostPort = initNativeHostIpc()
 // Disconnects the host native port on command
 initNativeHostDisconnectHandler(nativeHostPort)
 
-// Initialize the file upload/download handler
-initFileSyncHandler(nativeHostPort)
-
 // Enables relative mouse mode
 initCursorLockHandler(nativeHostPort)
 
@@ -56,6 +53,9 @@ initCookieAddedListener(socket)
 initCookieRemovedListener(socket)
 initTabRefreshListener(socket)
 initZoomListener(socket)
+
+// Initialize the file upload/download handler
+initFileSyncHandler(socket)
 
 // Listen for newly created windows
 initWindowCreatedListener(socket)
