@@ -7,7 +7,6 @@ extern "C" {
 #include <mach/mach_vm.h>
 #include <mach/mach.h>
 #include <mach/vm_map.h>
-#include <mach/vm_statistics.h>
 #include <sys/mman.h>
 }
 
@@ -69,9 +68,7 @@ static void* whist_memalign(malloc_zone_t* zone, size_t alignment, size_t size) 
     return mi_malloc_aligned(size, alignment);
 }
 
-static void whist_destroy(malloc_zone_t* zone) {
-    UNUSED(zone);
-}
+static void whist_destroy(malloc_zone_t* zone) { UNUSED(zone); }
 
 static unsigned whist_batch_malloc(malloc_zone_t* zone, size_t size, void** ps, unsigned count) {
     size_t i;
