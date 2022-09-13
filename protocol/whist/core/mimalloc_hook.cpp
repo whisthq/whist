@@ -4,8 +4,15 @@
 #include <iostream>
 extern "C" {
 #include "whist_memory.h"
+#include <mach/mach_vm.h>
+#include <mach/mach.h>
+#include <mach/vm_map.h>
+#include <mach/vm_statistics.h>
+#include <sys/mman.h>
 }
 
+// malloc_zone override
+// save the members just in case
 static size_t page_size;
 static malloc_zone_t* original_zone;
 static size_t (*system_size)(malloc_zone_t* zone, const void* ptr);
@@ -15,21 +22,11 @@ static void* (*system_valloc)(malloc_zone_t* zone, size_t size);
 static void (*system_free)(malloc_zone_t* zone, void* ptr);
 static void* (*system_realloc)(malloc_zone_t* zone, void* ptr, size_t size);
 static void (*system_destroy)(malloc_zone_t* zone);
-
-/* Optional batch callbacks; these may be NULL */
 static unsigned (*system_batch_malloc)(malloc_zone_t* zone, size_t size, void** results,
                                        unsigned num_requested);
 static void (*system_batch_free)(malloc_zone_t* zone, void** to_be_freed, unsigned num_to_be_freed);
-
-/* aligned memory allocation. The callback may be NULL. Present in version >= 5. */
 static void* (*system_memalign)(malloc_zone_t* zone, size_t alignment, size_t size);
-
-/* free a pointer known to be in zone and known to have the given size. The callback may be NULL.
- * Present in version >= 6.*/
 static void (*system_free_definite_size)(malloc_zone_t* zone, void* ptr, size_t size);
-
-/* Empty out caches in the face of memory pressure. The callback may be NULL. Present in version
- * >= 8. */
 static size_t (*system_pressure_relief)(malloc_zone_t* zone, size_t goal);
 
 // Our malloc_zone members
@@ -44,7 +41,6 @@ static size_t whist_size(malloc_zone_t* zone, const void* p) {
 
 static void* whist_malloc(malloc_zone_t* zone, size_t size) {
     UNUSED(zone);
-    // std::cout << "Calling whist_malloc";
     return mi_malloc(size);
 }
 
@@ -75,7 +71,6 @@ static void* whist_memalign(malloc_zone_t* zone, size_t alignment, size_t size) 
 
 static void whist_destroy(malloc_zone_t* zone) {
     UNUSED(zone);
-    // todo: ignore for now?
 }
 
 static unsigned whist_batch_malloc(malloc_zone_t* zone, size_t size, void** ps, unsigned count) {
@@ -111,7 +106,7 @@ static boolean_t whist_claimed_address(malloc_zone_t* zone, void* p) {
     return mi_is_in_heap_region(p);
 }
 
-// Our introspection members (copied from mimalloc)
+// Our introspection members (copied from mimalloc). Comments are copied also from mimalloc.
 static kern_return_t intro_enumerator(task_t task, void* p, unsigned type_mask,
                                       vm_address_t zone_address, memory_reader_t reader,
                                       vm_range_recorder_t recorder) {
@@ -202,9 +197,6 @@ static malloc_zone_t whist_malloc_zone = {
     .claimed_address = &whist_claimed_address,
 };
 
-#define SET_SYSTEM(fun) system_##fun = original_zone->fun
-#define HOOK_WHIST(fun) original_zone->fun = whist_##fun
-
 static inline malloc_zone_t* whist_get_default_zone(void) {
     // The first returned zone is the real default
     malloc_zone_t** zones = NULL;
@@ -218,21 +210,12 @@ static inline malloc_zone_t* whist_get_default_zone(void) {
     }
 }
 
-#include <mach/mach_vm.h>
-#include <mach/mach.h>
-#include <mach/task.h>
-#include <mach/vm_map.h>
-#include <mach/vm_statistics.h>
-#include <sys/mman.h>
+// Helper function for locking statics
 
 // documentation notes: the source code for mach/etc are in https://github.com/apple/darwin-xnu/.
-
-// mlocks statics
-static void mlock_memory() {
-    static int num_mlocked_regions;
+static void mlock_statics() {
     // TODO: better way of mlock'ing static segments
     static mach_vm_address_t max_addr = (mach_vm_address_t)0x20000000000;
-    // VMRegion* region_iter = linked_list_head(&region_list);
     task_t t = mach_task_self();
 
     mach_vm_address_t addr = 1;
@@ -259,7 +242,7 @@ static void mlock_memory() {
             done = 1;
         } else {
             if ((prev_addr == 0 || addr >= prev_addr + prev_size) && addr <= max_addr) {
-                LOG_INFO("mlock'ed %p size %llx", (void*)addr, size);
+                // LOG_INFO("mlock'ed %p size %llx", (void*)addr, size);
                 // update region list data and mlock
                 mlock((void*)addr, size);
                 prev_addr = addr;
@@ -284,34 +267,6 @@ void init_whist_malloc_hook() {
     LOG_INFO("Initializing custom malloc");
     // mlock_context.lock = whist_create_mutex();
     page_size = sysconf(_SC_PAGESIZE);
-    /*
-    original_zone = malloc_default_zone();
-    SET_SYSTEM(size);
-    SET_SYSTEM(malloc);
-    SET_SYSTEM(calloc);
-    SET_SYSTEM(valloc);
-    SET_SYSTEM(free);
-    SET_SYSTEM(realloc);
-    SET_SYSTEM(destroy);
-    SET_SYSTEM(batch_malloc);
-    SET_SYSTEM(batch_free);
-    SET_SYSTEM(memalign);
-    SET_SYSTEM(free_definite_size);
-    SET_SYSTEM(pressure_relief);
-
-    HOOK_WHIST(size);
-    HOOK_WHIST(malloc);
-    HOOK_WHIST(calloc);
-    HOOK_WHIST(valloc);
-    HOOK_WHIST(free);
-    HOOK_WHIST(realloc);
-    HOOK_WHIST(destroy);
-    HOOK_WHIST(batch_malloc);
-    HOOK_WHIST(batch_free);
-    HOOK_WHIST(memalign);
-    HOOK_WHIST(free_definite_size);
-    HOOK_WHIST(pressure_relief);
-    */
     malloc_zone_t* purgeable_zone = NULL;
 
     // force the purgeable zone to exist to avoid strange bugs
@@ -341,5 +296,5 @@ void init_whist_malloc_hook() {
         malloc_zone_register(purgeable_zone);
     }
     LOG_INFO("mlocking statics");
-    mlock_memory();
+    mlock_statics();
 }
