@@ -50,6 +50,12 @@
 #endif  // defined(__has_warning)
 #endif  // defined(__GNUC__)
 
+
+// Supress the "may be used uninitialized" warning for this library.
+// This warning is only a mabybe, and it has been confirmed the code
+// causing the warning is safe.
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 /*
  * The following parameter defines how many bits are used for
  * field elements. The code supports any value from 2 to 16
