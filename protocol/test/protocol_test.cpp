@@ -1914,21 +1914,21 @@ TEST_F(ProtocolTest, QueueTest) {
     EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), -1);
     EXPECT_EQ(fifo_queue_dequeue_item_timeout(fifo_queue, &item, 50), -1);
     item = 1;
-    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item, false), 0);
     item = 2;
-    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item, true), 0);
     EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
     EXPECT_EQ(item, 1);
     item = 3;
-    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item, false), 0);
     item = 4;
-    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item, false), 0);
     item = 5;
-    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item, true), 0);
     item = 6;
-    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item, false), 0);
     item = 7;
-    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), -1);
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item, false), -1);
     EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
     EXPECT_EQ(item, 2);
     EXPECT_EQ(fifo_queue_dequeue_item_timeout(fifo_queue, &item, 100), 0);
@@ -1950,7 +1950,7 @@ TEST_F(ProtocolTest, QueueTest) {
     EXPECT_EQ(item, 6);
     fifo_queue_destroy(fifo_queue);
     EXPECT_EQ(fifo_queue_dequeue_item(NULL, &item), -1);
-    EXPECT_EQ(fifo_queue_enqueue_item(NULL, &item), -1);
+    EXPECT_EQ(fifo_queue_enqueue_item(NULL, &item, false), -1);
 }
 
 int test_virtual_intr(void* arg) {
