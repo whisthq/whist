@@ -259,10 +259,33 @@ void send_message_dimensions(WhistFrontend *frontend) {
     // can change native dimensions for monitor
     WhistClientMessage wcmsg = {0};
     wcmsg.type = MESSAGE_DIMENSIONS;
+
+    // Get dimensions and DPI
     whist_frontend_get_window_pixel_size(frontend, 0, &wcmsg.dimensions.width,
                                          &wcmsg.dimensions.height);
     wcmsg.dimensions.dpi = whist_frontend_get_window_dpi(frontend);
 
+    // Clamp dimensions
+    double w_to_h_ratio = wcmsg.dimensions.width / (double)wcmsg.dimensions.height;
+    if (wcmsg.dimensions.width > MAX_SCREEN_WIDTH || wcmsg.dimensions.height > MAX_SCREEN_HEIGHT) {
+        LOG_WARNING("Note: Required to clamp MESSAGE_DIMENSIONS %dx%d", wcmsg.dimensions.width,
+                    wcmsg.dimensions.height);
+    }
+    if (wcmsg.dimensions.width > MAX_SCREEN_WIDTH) {
+        // Clamp width
+        wcmsg.dimensions.width = MAX_SCREEN_WIDTH;
+        // Scale height down, maintaining the ratio
+        wcmsg.dimensions.height = wcmsg.dimensions.width / w_to_h_ratio;
+    }
+    if (wcmsg.dimensions.height > MAX_SCREEN_HEIGHT) {
+        // Clamp height
+        wcmsg.dimensions.height = MAX_SCREEN_HEIGHT;
+        // Scale width down, maintaining the ratio. Force MAX over floating point inaccuracy
+        wcmsg.dimensions.width =
+            min((int)(wcmsg.dimensions.height * w_to_h_ratio), MAX_SCREEN_WIDTH);
+    }
+
+    // Send the dimensions request to the server
     LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d", wcmsg.dimensions.width,
              wcmsg.dimensions.height, wcmsg.dimensions.dpi);
     send_wcmsg(&wcmsg);
