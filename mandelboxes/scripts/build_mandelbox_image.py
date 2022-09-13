@@ -106,7 +106,7 @@ while i < len(image_paths):
 
 def build_image_path(img_path, running_processes=None, ret=None, root_image=False):
     # Build image path
-    print("Building " + img_path + "...")
+    print("Building " + img_path + " Docker container (this can take several minutes)...")
 
     # Default is the build asset package without the protocol. By
     # choosing the correct build asset package and passing it as a
