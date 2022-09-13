@@ -179,9 +179,9 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet);
  *                                 on the same thread.
  *                                 This prevents garbled TCP messages from
  *                                 being sent since large TCP sends are not atomic.
- * 
+ *
  * @param opaque                   Pointer to associated socket context
- * 
+ *
  * @returns                        0 on exit
  */
 int multithreaded_tcp_send(void* opaque);
@@ -619,12 +619,12 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     context->run_sender = true;
     if ((context->send_queue = fifo_queue_create(sizeof(TCPQueueItem), 16)) == NULL ||
         (context->send_semaphore = whist_create_semaphore(0)) == NULL ||
-        (context->send_thread = whist_create_thread(multithreaded_tcp_send, "multithreaded_tcp_send", context)) == NULL) {
-        // If any of the created resources are NULL, there was a failure and we need to clean up and return false
-        if (context->send_queue)
-            fifo_queue_destroy(context->send_queue);
-        if (context->send_semaphore)
-            whist_destroy_semaphore(context->send_semaphore);
+        (context->send_thread = whist_create_thread(multithreaded_tcp_send,
+                                                    "multithreaded_tcp_send", context)) == NULL) {
+        // If any of the created resources are NULL, there was a failure and we need to clean up and
+        //     return false
+        if (context->send_queue) fifo_queue_destroy(context->send_queue);
+        if (context->send_semaphore) whist_destroy_semaphore(context->send_semaphore);
         free(context);
         network_context->context = NULL;
         return false;
@@ -819,8 +819,7 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
     TCPQueueItem queue_item;
     queue_item.packet = network_packet;
     queue_item.packet_size = packet_size;
-    if (fifo_queue_enqueue_item(context->send_queue, &queue_item, false) < 0)
-        return -1;
+    if (fifo_queue_enqueue_item(context->send_queue, &queue_item, false) < 0) return -1;
     whist_post_semaphore(context->send_semaphore);
     return 0;
 }
@@ -828,12 +827,11 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
 int multithreaded_tcp_send(void* opaque) {
     TCPQueueItem queue_item;
     TCPNetworkPacket* network_packet = NULL;
-    TCPContext* context = (TCPContext*) opaque;
+    TCPContext* context = (TCPContext*)opaque;
     while (true) {
         whist_wait_semaphore(context->send_semaphore);
         // Check to see if the sender thread needs to stop running
-        if (!context->run_sender)
-            break;
+        if (!context->run_sender) break;
         // If the connection is lost, re-increment the semaphore and continue
         // to try again later
         if (context->connection_lost) {
@@ -841,8 +839,7 @@ int multithreaded_tcp_send(void* opaque) {
             continue;
         }
         // If there is no item to be dequeued, continue
-        if (fifo_queue_dequeue_item(context->send_queue, &queue_item) < 0)
-            continue;
+        if (fifo_queue_dequeue_item(context->send_queue, &queue_item) < 0) continue;
 
         network_packet = queue_item.packet;
 
@@ -852,13 +849,15 @@ int multithreaded_tcp_send(void* opaque) {
         network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
 
         // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
-        LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", queue_item.packet_size,
-                 tcp_packet_size);
+        LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP",
+                 queue_item.packet_size, tcp_packet_size);
 
-        // Send the packet. If a partial packet is sent, keep sending until full packet has been sent.
+        // Send the packet. If a partial packet is sent, keep sending until full packet has been
+        //     sent.
         int total_sent = 0;
         while (total_sent < tcp_packet_size) {
-            int ret = send(context->socket, (const char*)(network_packet + total_sent), tcp_packet_size, 0);
+            int ret = send(context->socket, (const char*)(network_packet + total_sent),
+                           tcp_packet_size, 0);
             if (ret < 0) {
                 int error = get_last_network_error();
                 if (error == WHIST_ECONNRESET) {

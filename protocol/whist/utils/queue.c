@@ -95,8 +95,7 @@ int fifo_queue_enqueue_item(QueueContext *context, const void *item, bool blocki
     // If this enqueue call is not blocking, we still need to decrement the semaphore.
     //     Since we just successfully dequeued an element, we know that the semaphore
     //     count is greater than 0 and that this wait will be successful.
-    if (!blocking)
-        whist_wait_timeout_semaphore(context->sem, 0);
+    if (!blocking) whist_wait_timeout_semaphore(context->sem, 0);
     return 0;
 }
 
