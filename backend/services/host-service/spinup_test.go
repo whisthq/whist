@@ -17,11 +17,9 @@ import (
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
-	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
-	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 var testMandelboxChrome mandelbox.Mandelbox
@@ -39,9 +37,9 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	dockerClient := mockClient{
 		browserImage: utils.MandelboxApp,
 	}
-	mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
+	mandelboxID := types.MandelboxID(uuid.New())
 	mandelboxDieChan := make(chan bool, 10)
-	var appName mandelboxtypes.AppName = "chrome"
+	var appName types.AppName = "chrome"
 	testMandelbox, _ := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, appName, mandelboxDieChan)
 
 	// Check that container would have been started
@@ -158,20 +156,17 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	goroutineTracker := sync.WaitGroup{}
 
 	var (
-		instanceID    aws.InstanceID
+		instanceID    types.InstanceID
 		testMandelbox mandelbox.Mandelbox
-		userID        mandelboxtypes.UserID
+		userID        types.UserID
 		err           error
 	)
 
 	if metadata.IsRunningInCI() {
 		userID = "localdev_host_service_CI"
 	} else {
-		instanceID, err = aws.GetInstanceID()
-		if err != nil {
-			logger.Errorf("can't get AWS Instance name for localdev user config userID")
-		}
-		userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceID))
+		instanceID = metadata.CloudMetadata.GetInstanceID()
+		userID = types.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceID))
 	}
 
 	// Get the test mandelbox
@@ -195,16 +190,16 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		AppName:               mandelboxtypes.AppName(utils.MandelboxApp),
+		AppName:               types.AppName(utils.MandelboxApp),
 		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           testMandelbox.GetID(),
-		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
+		JSONData:              types.JSONData(deflatedJSONData),
 		ResultChan:            make(chan httputils.RequestResult),
 	}
 
 	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
+	testTransportRequestMap := make(map[types.MandelboxID]chan *httputils.JSONTransportRequest)
 
 	dockerClient := mockClient{
 		browserImage: utils.MandelboxApp,

@@ -16,6 +16,7 @@ cd "$DIR"
 mode=dev
 cmake_build_type_opt=""
 beta="false"
+provider="AWS"
 for arg in "$@"; do
   case $arg in
     --dev|-d)
@@ -38,6 +39,9 @@ for arg in "$@"; do
       ;;
     --beta|-b)
       beta="true"
+      ;;
+    --gcloud|-gc)
+      provider="GCP"
       ;;
     *)
       python_args+=("$arg")
@@ -83,6 +87,7 @@ fi
 # Copy the Nvidia driver installer
 echo "Fetching Nvidia driver installer..."
 mkdir -p base/build-assets/build-temp/nvidia-driver
+export CLOUD_PROVIDER="$provider"
 ../host-setup/get-nvidia-driver-installer.sh
 mv nvidia-driver-installer.run base/build-assets/build-temp/nvidia-driver
 
