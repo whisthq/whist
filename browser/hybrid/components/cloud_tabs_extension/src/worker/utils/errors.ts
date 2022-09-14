@@ -1,4 +1,4 @@
-import { CloudTabError } from "@app/constants/errors"
+import { PopupError } from "@app/constants/errors"
 import {
   videoChatUrls,
   videoUrls,
@@ -20,21 +20,21 @@ const isWhistUrl = (url: URL) =>
 
 const cannotStreamError = (tab: chrome.tabs.Tab | undefined) => {
   if (tab === undefined || tab.id === undefined || tab.url === undefined)
-    return CloudTabError.IS_INVALID_URL
+    return PopupError.IS_INVALID_URL
 
   if (isCloudTab(tab)) return undefined
 
-  if (tab.incognito) return CloudTabError.IS_INCOGNITO
+  if (tab.incognito) return PopupError.IS_INCOGNITO
 
-  if (!tab.url.startsWith("http")) return CloudTabError.IS_INVALID_SCHEME
+  if (!tab.url.startsWith("http")) return PopupError.IS_INVALID_SCHEME
 
   const url = new URL(stripCloudUrl(tab.url))
 
-  if (isInvalidScheme(url)) return CloudTabError.IS_INVALID_SCHEME
-  if (isVideoChatUrl(url)) return CloudTabError.IS_VIDEO_CHAT
-  if (isVideoUrl(url)) return CloudTabError.IS_VIDEO
-  if (isUnsupportedUrl(url)) return CloudTabError.IS_UNSUPPORTED_URL
-  if (isWhistUrl(url)) return CloudTabError.IS_WHIST_URL
+  if (isInvalidScheme(url)) return PopupError.IS_INVALID_SCHEME
+  if (isVideoChatUrl(url)) return PopupError.IS_VIDEO_CHAT
+  if (isVideoUrl(url)) return PopupError.IS_VIDEO
+  if (isUnsupportedUrl(url)) return PopupError.IS_UNSUPPORTED_URL
+  if (isWhistUrl(url)) return PopupError.IS_WHIST_URL
 
   return undefined
 }

@@ -8,6 +8,7 @@ import { MandelboxInfo, HostInfo } from "@app/@types/payload"
 const _stateDidChange = new ReplaySubject()
 
 const _whistState = {
+  isLoggedIn: false,
   waitingCloudTabs: [] as chrome.tabs.Tab[],
   activeCloudTabs: [] as chrome.tabs.Tab[],
   mandelboxState: MandelboxState.MANDELBOX_NONEXISTENT as MandelboxState,

@@ -1,5 +1,3 @@
-
-
 /* scripts/lint.js
  *
  * This script triggers lint checking and/or fixing for all of

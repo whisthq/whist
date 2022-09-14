@@ -1,5 +1,5 @@
-import { merge, from, timer } from "rxjs"
-import { filter, share, switchMap, take } from "rxjs/operators"
+import { merge, from, timer, interval } from "rxjs"
+import { filter, share, switchMap, take, throttle } from "rxjs/operators"
 
 import { webpageLoaded } from "@app/worker/events/webRequest"
 import { activatedFromSleep } from "@app/worker/events/idle"
@@ -13,15 +13,19 @@ import {
 
 import { AuthInfo } from "@app/@types/payload"
 
-const DAY_MS = 86400000 // The number of milliseconds in a day
+const SEC_MS = 1000 // Number of ms in a second
+const DAY_MS = 86400 * SEC_MS // Number of ms in a day
 
 const authInfo = merge(
-  webpageLoaded.pipe(
-    take(1),
+  merge(
+    webpageLoaded.pipe(take(1)),
+    activatedFromSleep,
+    timer(0, DAY_MS / 2)
+  ).pipe(
+    // We throttle by 10s so there's no race condition of two simultaneous auth refresh requests
+    throttle(() => interval(SEC_MS * 10)),
     switchMap(() => from(initWhistAuth()))
   ),
-  activatedFromSleep.pipe(switchMap(() => from(initWhistAuth()))),
-  timer(0, DAY_MS / 2).pipe(switchMap(() => from(initWhistAuth()))),
   from(initGoogleAuthHandler())
 ).pipe(share())
 

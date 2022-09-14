@@ -208,7 +208,8 @@ merge(
   if (
     waitlisted ||
     cannotStreamError(activeTab) !== undefined ||
-    isCloudTab(activeTab)
+    isCloudTab(activeTab) ||
+    !whistState.isLoggedIn
   ) {
     chrome.browserAction.setPopup({ popup: "../popup.html" })
   } else {

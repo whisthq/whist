@@ -9,18 +9,18 @@ import stringify from "json-stringify-safe"
 const httpConfig =
   (method: string) =>
   async (args: { body: object; url: string; accessToken?: string }) => {
-    try {
-      const response = await fetch(args.url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          ...(args.accessToken !== undefined && {
-            Authorization: `Bearer ${args.accessToken}`,
-          }),
-        },
-        body: stringify(args.body),
-      })
+    const response = await fetch(args.url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(args.accessToken !== undefined && {
+          Authorization: `Bearer ${args.accessToken}`,
+        }),
+      },
+      body: stringify(args.body),
+    })
 
+    try {
       const json = await response.json()
 
       return {
@@ -29,7 +29,7 @@ const httpConfig =
       }
     } catch (err) {
       return {
-        status: 500,
+        status: response.status,
         json: {},
       }
     }

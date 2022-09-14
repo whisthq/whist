@@ -11,10 +11,12 @@
     "scripts": ["out/whist_worker.bundle.js"],
     "persistent": true
   },
+  "web_accessible_resources": ["/css/content.css"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["out/whist_content_script.bundle.js"],
+      "css": ["/css/content.css"],
       "run_at": "document_start",
       "all_frames": true
     }
@@ -32,7 +34,10 @@
     "webRequestBlocking",
     "webNavigation",
     "runtime",
-    "*://*/*"
+    "*://*/*",
+    "*://fractal-dev.us.auth0.com/*",
+    "*://fractal-staging.us.auth0.com/*",
+    "*://auth.whist.com/*"
   ],
   "host_permissions": ["*://*/*"],
   "icons": {

@@ -21,7 +21,6 @@ namespace {
 
   WebUIFactoryFunction GetWebUIFactoryFunction(WebUI* web_ui, const GURL& url) {
     if (url.SchemeIs(content::kCloudScheme)) {
-      LOG(ERROR) << "URL IS " << url;
       return &NewWebUI;
     }
 
