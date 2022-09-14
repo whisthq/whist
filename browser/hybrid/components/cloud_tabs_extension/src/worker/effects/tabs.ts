@@ -22,6 +22,7 @@ import {
   unmarkActiveCloudTab,
   stripCloudUrl,
   updateTabUrl,
+  getTab,
 } from "@app/worker/utils/tabs"
 import { toBase64 } from "@app/worker/utils/encode"
 import { cannotStreamError } from "@app/worker/utils/errors"
@@ -45,7 +46,7 @@ authSuccess.subscribe(() => {
       })
     } else {
       cloudTabs.forEach((tab) => {
-        addTabToQueue(tab)
+        if (!isActiveCloudTab(tab)) addTabToQueue(tab)
       })
     }
   })
@@ -53,17 +54,15 @@ authSuccess.subscribe(() => {
 
 // If a tab is created or updated and it's a cloud tab, add it to the queue
 merge(tabCreated, tabUpdated).subscribe((tab: chrome.tabs.Tab) => {
-  if (isCloudTab(tab) && !isActiveCloudTab(tab)) {
-    addTabToQueue(tab)
-  }
+  if (isCloudTab(tab) && !isActiveCloudTab(tab)) addTabToQueue(tab)
 })
 
 // If a tab is activated or changed, update its info in the cloud tab queue
 merge(tabActivated, tabUpdated, tabFocused).subscribe(
-  (tab: chrome.tabs.Tab) => {
-    chrome.tabs.query({ url: "cloud:*" }, (tabs) => {
-      whistState.waitingCloudTabs = tabs
-    })
+  async (tab: chrome.tabs.Tab) => {
+    whistState.waitingCloudTabs = await Promise.all(
+      whistState.waitingCloudTabs.map(async (tab) => await getTab(tab.id))
+    )
 
     if (!isCloudTab(tab)) unmarkActiveCloudTab(tab)
   }

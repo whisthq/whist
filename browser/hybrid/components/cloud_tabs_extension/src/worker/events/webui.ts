@@ -43,4 +43,12 @@ const webuiMandelboxNeeded = fromEventPattern(
   share()
 )
 
+chrome.runtime.onMessage.addListener((message: any) => {
+  if (message.type === "SHOW_UPDATE_PAGE") {
+    chrome.tabs.create({
+      url: "whist://settings/help",
+    })
+  }
+})
+
 export { webuiNavigate, webuiOpenSupport, webuiRefresh, webuiMandelboxNeeded }

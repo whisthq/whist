@@ -32,8 +32,6 @@ const Main = (props: {
     networkInfo,
   } = props
 
-  console.log("main got network info", networkInfo)
-
   return (
     <div className="w-screen bg-gray-100 dark:bg-gray-800">
       <div className="rounded-3xl rounded-t-none bg-white dark:bg-gray-900 px-6">

@@ -7,13 +7,23 @@ const element = (html: string) => {
   return template.content.firstChild as HTMLElement
 }
 
-const createWarningNotification = ({
+const createNotification = ({
   text,
   duration,
+  type,
 }: {
   text: string
+  type?: string
   duration?: number
 }) => {
+  let background = "#bae6fd"
+  let color = "#1d4ed8"
+
+  if (type === "warning") {
+    background = "#fee2e2"
+    color = "#c2410c"
+  }
+
   // Create the notification HTMLElement
   const notification = element(`
     <div style="
@@ -26,8 +36,8 @@ const createWarningNotification = ({
       top: 10px;
       right: 10px;
       border-radius: 5px;
-      background: #fee2e2;
-      color: #c2410c;
+      background: ${background};
+      color: ${color};
       display: flex;
       align-items: center;
       backdrop-filter: blur(5px);
@@ -42,7 +52,7 @@ const createWarningNotification = ({
 
         @keyframes fadeOut {
             0% { opacity: 1; }
-            100% { opacity: 0; }
+            100% { opacity: 0; visibility: hidden; }
         }
       }
     </style>
@@ -67,11 +77,26 @@ const initNotificationListener = () => {
   chrome.runtime.onMessage.addListener((message: any) => {
     if (message.type === "SERVER_ERROR" && !shown) {
       shown = true
-      createWarningNotification({
+      createNotification({
         text: "Cloud tabs are unavailable because Whist servers are full. Please try again in a few minutes!",
         duration: 7500,
+        type: "warning",
       })
     }
+
+    if (message.type === "UPDATE_NEEDED" && !shown) {
+      shown = true
+
+      const notification = createNotification({
+        text: `<span style="cursor: pointer;">🎉 &nbsp; An update is available! Click here to download the update and access cloud tabs.</span>`,
+        duration: 10000,
+      })
+
+      notification.addEventListener("click", () => {
+        chrome.runtime.sendMessage({ type: "SHOW_UPDATE_PAGE" })
+      })
+    }
+
     return true
   })
 }

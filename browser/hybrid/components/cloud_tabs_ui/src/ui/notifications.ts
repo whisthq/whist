@@ -31,6 +31,7 @@ const createNotification = ({
   duration !== undefined &&
     setTimeout(() => {
       notification.style.animation = "fadeOut 1.5s"
+      notification.style.animationFillMode = "forwards"
       shown = false
     }, duration)
 
@@ -70,7 +71,6 @@ export const createDisconnectNotification = () => {
       })
     }
   }, 100)
-
   ;(chrome as any).whist.onMessage.addListener((message: string) => {
     const parsed = JSON.parse(message)
 
@@ -88,6 +88,7 @@ export const createDisconnectNotification = () => {
       notification !== null
     ) {
       notification.style.animation = "fadeOut 1.5s"
+      notification.style.animationFillMode = "forwards"
       shown = false
     }
   })
