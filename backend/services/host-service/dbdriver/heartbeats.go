@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgtype"
-	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
@@ -67,7 +67,10 @@ func writeHeartbeat() error {
 
 	q := queries.NewQuerier(dbpool)
 
-	instanceID := metadata.CloudMetadata.GetInstanceID()
+	instanceID, err := aws.GetInstanceID()
+	if err != nil {
+		return utils.MakeError("couldn't write heartbeat: couldn't get instance name: %s", err)
+	}
 
 	result, err := q.WriteHeartbeat(context.Background(), pgtype.Timestamptz{
 		Time:   time.Now(),

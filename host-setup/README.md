@@ -8,7 +8,7 @@ The `setup_host.sh` script lets you set up an EC2 instance host either for devel
 
 This folder also contains our configuration files for Filebeat, which we use for sending logs to Logz.io, our ELK platform, and for Docker, which we use to enforce strict container security.
 
-## Setting Up a Personal Development Instance in AWS
+## Setting Up a Personal Development Instance
 
 To set up your personal Whist development instance:
 
@@ -60,44 +60,6 @@ sudo reboot
 # to run a Whist Chromium mandelbox, you need to build it first
 cd ~/whist/mandelboxes
 ./build.sh browsers/whistium
-
-# build and run the Whist Host Service
-cd ~/whist/backend/services
-make run_host_service # keep this open in a separate terminal
-
-# run the Whist Chromium container image (swap base to browsers/chrome to run the Whist Brave container, for instance)
-# Note: this will give you a root shell inside the container; when the shell exits, the container will close as well
-cd ~/whist/mandelboxes
-./run.sh browsers/whistium
-```
-
-### Setting Up a Personal Development Instance in GCP
-
-Support for Google Cloud is still a work in progress, but at this point its possible to run the host service on a GCP instance and use it for development. To do so, follow the steps:
-
-- Sign in to the [Google Cloud console](https://console.cloud.google.com/compute/instances?project=multi-cloud-test-357621). This link should get you to the Compute Engine console, if not navigate to Compute Engine and if prompted, select the Multi-Cloud Test project.
-- Click on "Create Instance", name your instance to whatever you want, and select the `us-central-1a` zone. Support for more zones is still in progress.
-- Under General-Purpose instances, select the N1 series. Select a n1-standard-4 machine type. Then, expand the "CPU Platform and GPU" section, add a single NVIDIA Tesla T4 GPU, and check "Enable the NVIDIA workstation".
-- Click on "Change" in the Boot Disk section, change the OS to Ubuntu, use the Ubuntu Server 20.04 LTS image for x86/64. Make sure to use at least 32 GB for the boot disk. This is to make sure there is enough space for building the mandelboxes.
-- Go to Advanced options -> Networking and add the mandelboxes tag to the Network tags. Once this is done, you can create the instance.
-- Your instance should appear on the console, once its ready click the SSH button. This will open a managed ssh shell window you can use to connect. Support for non-managed SSH keys is still in progress.
-- Run the following commands, note the different flags for the setup script and build script.
-
-```bash
-# clones `dev` by default
-git clone git@github.com:whisthq/whist.git # via SSH, highly preferable
-git clone https://github.com/whisthq/whist.git # via HTTPS, type password on every push
-
-# set up the EC2 host for development
-cd ~/whist/host-setup
-./setup_host.sh --localdevelopment --provider GCP
-
-# before moving to the next step, make sure to reboot as prompted
-sudo reboot
-
-# to run a Whist Chromium mandelbox, you need to build it first
-cd ~/whist/mandelboxes
-./build.sh browsers/whistium --gcloud
 
 # build and run the Whist Host Service
 cd ~/whist/backend/services
