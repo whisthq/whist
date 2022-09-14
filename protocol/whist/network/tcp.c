@@ -523,7 +523,6 @@ static void tcp_destroy_socket_context(void* raw_context) {
 
     // Any pending TCP packets will be dropped
     whist_wait_thread(context->send_thread, NULL);
-    TCPQueueItem queue_item;
     fifo_queue_destroy(context->send_queue);
 
     closesocket(context->socket);
