@@ -39,7 +39,7 @@ int fifo_queue_enqueue_item(QueueContext *queue_context, const void *item);
  *
  * @returns                        0 on success, -1 on failure
  */
-int fifo_queue_enqueue_item_blocking(QueueContext *queue_context, const void *item, int timeout);
+int fifo_queue_enqueue_item_timeout(QueueContext *queue_context, const void *item, int timeout_ms);
 
 /**
  * @brief                          Dequeue an item from the FIFO queue. If an item is not available,

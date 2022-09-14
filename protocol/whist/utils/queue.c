@@ -135,7 +135,6 @@ int fifo_queue_dequeue_item(QueueContext *context, void *item) {
     }
     dequeue_item(context, item);
     whist_unlock_mutex(context->mutex);
-    whist_post_semaphore(context->sem);
     return 0;
 }
 
@@ -187,8 +186,11 @@ void fifo_queue_destroy(QueueContext *context) {
     if (context->mutex != NULL) {
         whist_destroy_mutex(context->mutex);
     }
-    if (context->cond != NULL) {
-        whist_destroy_cond(context->cond);
+    if (context->avail_items_cond != NULL) {
+        whist_destroy_cond(context->avail_items_cond);
+    }
+    if (context->avail_space_cond != NULL) {
+        whist_destroy_cond(context->avail_space_cond);
     }
     free(context);
 }
