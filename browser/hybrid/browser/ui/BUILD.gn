@@ -1,0 +1,14 @@
+source_set("ui") {
+  sources = [
+    "webui/cloud_tabs_ui/cloud_tabs_ui.cc",
+    "webui/cloud_tabs_ui/cloud_tabs_ui.h",
+    "webui/whist_web_ui_controller_factory.cc",
+    "webui/whist_web_ui_controller_factory.h",
+  ]
+
+  deps = [
+    "//base",
+    "//brave/browser/ui",
+    "//whist/browser/hybrid/components/cloud_tabs_ui:generated_resources",
+  ]
+}

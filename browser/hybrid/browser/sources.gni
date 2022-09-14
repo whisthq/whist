@@ -1,0 +1,7 @@
+import("//extensions/buildflags/buildflags.gni")
+
+whist_chrome_browser_deps = [ "//whist/browser/hybrid/browser/ui" ]
+
+if (enable_extensions) {
+  whist_chrome_browser_deps += [ "//whist/browser/hybrid/browser/extensions" ]
+}

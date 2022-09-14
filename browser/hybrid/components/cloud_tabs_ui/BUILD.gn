@@ -1,0 +1,17 @@
+import("//brave/components/common/typescript.gni")
+
+transpile_web_ui("cloud_tabs_ui") {
+  entry_points = [ [
+        "cloud_tabs_ui",
+        rebase_path("src/index.ts"),
+      ] ]
+
+  resource_name = "cloud_tabs_ui"
+}
+
+pack_web_resources("generated_resources") {
+  resource_name = "cloud_tabs_ui"
+  output_dir =
+      "$root_gen_dir/whist/browser/hybrid/components/cloud_tabs_ui/resources"
+  deps = [ ":cloud_tabs_ui" ]
+}

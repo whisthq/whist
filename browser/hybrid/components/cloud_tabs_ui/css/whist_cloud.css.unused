@@ -1,0 +1,103 @@
+body {
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: none;
+}
+
+.background {
+  background-color: #f3f3f3;
+}
+
+.fullScreen {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  width: 100vw;
+  height: 100vh;
+  outline: none !important;
+  border: none !important;
+  z-index: 2;
+}
+
+.spinner {
+  stroke: rgba(0,0,0,0.3);
+  stroke-width: 8;
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+.spinner-dark {
+  stroke: rgba(0,0,0,0.3);
+}
+
+.notification {
+  animation: fadeIn 1.5s;
+  animation-duration: 1.5s;
+  animation-fill-mode: both;
+  opacity: 0;
+  font-family: BlinkMacSystemFont, Helvetica, Arial;
+  z-index: 3;
+  padding: 15px 20px;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  border-radius: 5px;
+  background: rgba(220, 252, 231, 0.9);
+  color: #22c55e;
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(5px);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .background {
+    background-color: #35363a;
+  }
+  .spinner-dark {
+    stroke: rgba(255,255,255,0.2);
+  }
+  
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  0% {opacity: 1;}
+  100% {opacity: 0;}
+}
