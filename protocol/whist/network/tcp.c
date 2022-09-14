@@ -15,6 +15,7 @@ Includes
 #include <whist/utils/clock.h>
 #include <whist/network/throttle.h>
 #include "whist/core/features.h"
+#include "whist/utils/queue.h"
 
 #if !OS_IS(OS_WIN32)
 #include <fcntl.h>
@@ -29,6 +30,11 @@ Defines
 // Create a hard-cap on the size of a TCP Packet,
 // Currently set to the "large enough" 1GB
 #define MAX_TCP_PAYLOAD_SIZE 1000000000
+
+// How many packets to allow to be queued up on
+// a single TCP sending thread before queueing
+// up the next packet will block.
+#define TCP_SEND_QUEUE_SIZE 16
 
 typedef enum {
     TCP_PING,
@@ -88,7 +94,19 @@ typedef struct {
     // Only recvp every RECV_INTERVAL_MS, to keep CPU usage low.
     // This is because a recvp takes ~8ms sometimes
     WhistTimer last_recvp;
+
+    // TCP send is not atomic, so we have to hold packets in a queue and send on a separate thread
+    WhistThread send_thread;
+    QueueContext* send_queue;
+    WhistSemaphore send_semaphore;
+    bool run_sender;
 } TCPContext;
+
+// Struct for holding packets on queue
+typedef struct TCPQueueItem {
+    TCPNetworkPacket* packet;
+    int packet_size;
+} TCPQueueItem;
 
 // Time between consecutive pings
 #define TCP_PING_INTERVAL_SEC 2.0
@@ -159,6 +177,19 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
  *                                 error
  */
 int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet);
+
+/**
+ * @brief                          Multithreaded function to asynchronously
+ *                                 send all TCP packets for one socket context
+ *                                 on the same thread.
+ *                                 This prevents garbled TCP messages from
+ *                                 being sent since large TCP sends are not atomic.
+ *
+ * @param opaque                   Pointer to associated socket context
+ *
+ * @returns                        0 on exit
+ */
+int multithreaded_tcp_send(void* opaque);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -492,6 +523,13 @@ static void tcp_destroy_socket_context(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
 
+    // Destroy TCP send queue resources
+    context->run_sender = false;
+
+    // Any pending TCP packets will be dropped
+    whist_wait_thread(context->send_thread, NULL);
+    fifo_queue_destroy(context->send_queue);
+
     closesocket(context->socket);
     closesocket(context->listen_socket);
     whist_destroy_mutex(context->mutex);
@@ -560,6 +598,9 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     context->last_pong_id = -1;
     start_timer(&context->last_ping_timer);
     context->connection_lost = false;
+    context->send_queue = NULL;
+    context->send_semaphore = NULL;
+    context->send_thread = NULL;
     start_timer(&context->last_recvp);
 
     int ret;
@@ -573,6 +614,22 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     }
 
     if (ret == -1) {
+        free(context);
+        network_context->context = NULL;
+        return false;
+    }
+
+    // Set up TCP send queue
+    context->run_sender = true;
+    if ((context->send_queue = fifo_queue_create(sizeof(TCPQueueItem), TCP_SEND_QUEUE_SIZE)) ==
+            NULL ||
+        (context->send_semaphore = whist_create_semaphore(0)) == NULL ||
+        (context->send_thread = whist_create_thread(multithreaded_tcp_send,
+                                                    "multithreaded_tcp_send", context)) == NULL) {
+        // If any of the created resources are NULL, there was a failure and we need to clean up and
+        //     return false
+        if (context->send_queue) fifo_queue_destroy(context->send_queue);
+        if (context->send_semaphore) whist_destroy_semaphore(context->send_semaphore);
         free(context);
         network_context->context = NULL;
         return false;
@@ -763,33 +820,75 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
         memcpy(network_packet->payload, packet, packet_size);
     }
 
-    int tcp_packet_size = get_tcp_network_packet_size(network_packet);
+    // Add TCPNetworkPacket to the queue to be sent on the TCP send thread
+    TCPQueueItem queue_item;
+    queue_item.packet = network_packet;
+    queue_item.packet_size = packet_size;
+    if (fifo_queue_enqueue_item_timeout(context->send_queue, &queue_item, -1) < 0) return -1;
+    whist_post_semaphore(context->send_semaphore);
+    return 0;
+}
 
-    // For now, the TCP network throttler is NULL, so this is a no-op.
-    network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
-
-    // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
-    LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", packet_size,
-             tcp_packet_size);
-
-    // Send the packet
-    bool failed = false;
-    int ret = send(context->socket, (const char*)network_packet, tcp_packet_size, 0);
-    if (ret < 0) {
-        int error = get_last_network_error();
-        if (error == WHIST_ECONNRESET) {
-            LOG_WARNING("TCP Connection reset by peer");
-            context->connection_lost = true;
-        } else {
-            LOG_WARNING("Unexpected TCP Packet Error: %d", error);
+int multithreaded_tcp_send(void* opaque) {
+    TCPQueueItem queue_item;
+    TCPNetworkPacket* network_packet = NULL;
+    TCPContext* context = (TCPContext*)opaque;
+    while (true) {
+        whist_wait_semaphore(context->send_semaphore);
+        // Check to see if the sender thread needs to stop running
+        if (!context->run_sender) break;
+        // If connection is lost, then wait for up to TCP_PING_MAX_RECONNECTION_TIME_SEC
+        //     before continuing.
+        if (context->connection_lost) {
+            // Need to re-increment semaphore because wait_semaphore at the top of the loop
+            //     will have decremented semaphore for a packet we are not sending yet.
+            whist_post_semaphore(context->send_semaphore);
+            // If the wait for another packet times out, then we return to the top of the loop
+            if (!whist_wait_timeout_semaphore(context->send_semaphore,
+                                              TCP_PING_MAX_RECONNECTION_TIME_SEC * 1000))
+                continue;
         }
-        failed = true;
+
+        // If there is no item to be dequeued, continue
+        if (fifo_queue_dequeue_item(context->send_queue, &queue_item) < 0) continue;
+
+        network_packet = queue_item.packet;
+
+        int tcp_packet_size = get_tcp_network_packet_size(network_packet);
+
+        // For now, the TCP network throttler is NULL, so this is a no-op.
+        network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
+
+        // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
+        LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP",
+                 queue_item.packet_size, tcp_packet_size);
+
+        // Send the packet. If a partial packet is sent, keep sending until full packet has been
+        //     sent.
+        int total_sent = 0;
+        while (total_sent < tcp_packet_size) {
+            int ret = send(context->socket, (const char*)(network_packet + total_sent),
+                           tcp_packet_size, 0);
+            if (ret < 0) {
+                int error = get_last_network_error();
+                if (error == WHIST_ECONNRESET) {
+                    LOG_WARNING("TCP Connection reset by peer");
+                    context->connection_lost = true;
+                } else {
+                    LOG_WARNING("Unexpected TCP Packet Error: %d", error);
+                }
+                // Don't attempt to send the rest of the packet if there was a failure
+                break;
+            } else {
+                total_sent += ret;
+            }
+        }
+
+        // Free the encrypted allocation
+        deallocate_region(network_packet);
     }
 
-    // Free the encrypted allocation
-    deallocate_region(network_packet);
-
-    return failed ? -1 : 0;
+    return 0;
 }
 
 int get_tcp_packet_size(TCPPacket* tcp_packet) {

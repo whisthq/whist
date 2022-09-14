@@ -54,7 +54,7 @@ bool create_tcp_socket_context(SocketContext* context, char* destination, int po
                                char* binary_aes_private_key);
 
 /**
- * @brief Creates a tcp listen socket, that can be used in SocketContext
+ * @brief                           Creates a tcp listen socket, that can be used in SocketContext
  *
  * @param sock                      The socket that will be initialized
  * @param port                      The port to listen on
