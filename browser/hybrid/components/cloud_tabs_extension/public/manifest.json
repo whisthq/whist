@@ -1,0 +1,43 @@
+{
+  "name": "Cloud Tabs",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "description": "The Whist Extension enables creating cloud tabs.",
+  "browser_action": {
+    "default_title": "Cloud Tabs",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": ["out/whist_worker.bundle.js"],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["out/whist_content_script.bundle.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "permissions": [
+    "browserAction",
+    "cookies",
+    "downloads",
+    "history",
+    "identity",
+    "idle",
+    "storage",
+    "tabs",
+    "webRequest",
+    "webRequestBlocking",
+    "webNavigation",
+    "runtime",
+    "*://*/*"
+  ],
+  "host_permissions": ["*://*/*"],
+  "icons": {
+    "48": "/icons/cloud-off.png"
+  },
+  "content_security_policy": "script-src-elem 'self' https:",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAi18w/rnQgTy3EP1V7ciHpDA2ORMq/wzNCbBfrbfvem3n8eWVgfbpnnDmIIWJookv/2Ob5P4Cov2gj9R2nTn0TGoJT/btdDngd4mUOJhrdJ/gJakP7Z5aaM2dE4fQO2To8ggdyqnXjjqvkVUYvzWdi/5ozun9FrAdzyb3SqjvlmwtcbxdOSPCKujxkKh05+YS+c8FAd5sQLdNHNtvdLU0qSkSL37s9/kUr6wAzZcA/bJGAhLvzF8wjFUGbbxRzlfB+AoUArVsOs7t8ss1a974nP3mVdGRKtNCNPaBIASHLp/rcycyQcWj3QwU2w7yV9RTP0noZlB9Uen3wWxENwj70QIDAQAB"
+}

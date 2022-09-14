@@ -1,0 +1,6 @@
+# General
+src/generated_config.json
+src/config.json
+public/css/tailwind.css
+node_modules
+build

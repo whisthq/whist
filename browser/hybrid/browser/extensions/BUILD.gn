@@ -1,0 +1,19 @@
+source_set("extensions") {
+  sources = [
+    "//whist/browser/hybrid/browser/extensions/whist_component_loader.cc",
+    "//whist/browser/hybrid/browser/extensions/whist_component_loader.h",
+  ]
+
+  deps = [
+    ":resources",
+    "//base",
+    "//brave/browser/extensions",
+  ]
+}
+
+group("resources") {
+  deps = [
+    "//brave/components/whist_extension:generated_resources",
+    "//brave/components/whist_extension:static_resources",
+  ]
+}

@@ -1,0 +1,37 @@
+import("//brave/components/common/typescript.gni")
+
+transpile_web_ui("whist_extension") {
+  # This needs to fire re-pack if changed, nevertheless the extension
+  # is repacked on each 2nd build
+
+  # Define what the output bundle is called and what the entry point file is
+  entry_points = [
+    [
+      "whist_popup",
+      rebase_path("popup.js"),
+    ],
+    [
+      "whist_worker",
+      rebase_path("worker.js"),
+    ],
+    [
+      "whist_content_script",
+      rebase_path("content.js"),
+    ],
+    [
+      "whist_tab",
+      rebase_path("tab.js"),
+    ],
+  ]
+
+  # The directory / pack name
+  resource_name = "whist_extension"
+
+  # Must match the relative path from the static GRD to the manifest.json
+  # plus any other relative path we want these files to live in the extension
+  extra_relative_path = "/whist_extension/out"
+
+  public_asset_path = "/out/"
+
+  deps = []
+}
