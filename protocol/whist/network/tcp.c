@@ -31,6 +31,11 @@ Defines
 // Currently set to the "large enough" 1GB
 #define MAX_TCP_PAYLOAD_SIZE 1000000000
 
+// How many packets to allow to be queued up on
+// a single TCP sending thread before queueing
+// up the next packet will block.
+#define TCP_SEND_QUEUE_SIZE 16
+
 typedef enum {
     TCP_PING,
     TCP_PONG,
@@ -616,7 +621,7 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
 
     // Set up TCP send queue
     context->run_sender = true;
-    if ((context->send_queue = fifo_queue_create(sizeof(TCPQueueItem), 16)) == NULL ||
+    if ((context->send_queue = fifo_queue_create(sizeof(TCPQueueItem), TCP_SEND_QUEUE_SIZE)) == NULL ||
         (context->send_semaphore = whist_create_semaphore(0)) == NULL ||
         (context->send_thread = whist_create_thread(multithreaded_tcp_send,
                                                     "multithreaded_tcp_send", context)) == NULL) {
@@ -831,12 +836,17 @@ int multithreaded_tcp_send(void* opaque) {
         whist_wait_semaphore(context->send_semaphore);
         // Check to see if the sender thread needs to stop running
         if (!context->run_sender) break;
-        // If the connection is lost, re-increment the semaphore and continue
-        // to try again later
+        // If connection is lost, then wait for up to TCP_PING_MAX_RECONNECTION_TIME_SEC
+        //     before continuing.
         if (context->connection_lost) {
+            // Need to re-increment semaphore because wait_semaphore at the top of the loop
+            //     will have decremented semaphore for a packet we are not sending yet.
             whist_post_semaphore(context->send_semaphore);
-            continue;
+            // If the wait for another packet times out, then we return to the top of the loop
+            if (!whist_wait_timeout_semaphore(context->send_semaphore, TCP_PING_MAX_RECONNECTION_TIME_SEC * 1000))
+                continue;
         }
+
         // If there is no item to be dequeued, continue
         if (fifo_queue_dequeue_item(context->send_queue, &queue_item) < 0) continue;
 
