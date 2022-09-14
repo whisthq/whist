@@ -34,7 +34,7 @@ static void dequeue_item(QueueContext *context, void *item) {
     whist_broadcast_cond(context->avail_space_cond);
 }
 
-static void enqueue_item(QueueContext *context, void *item) {
+static void enqueue_item(QueueContext *context, const void *item) {
     context->num_items++;
     void *target_item = (uint8_t *)context->data + (context->item_size * context->write_idx);
     memcpy(target_item, item, context->item_size);
