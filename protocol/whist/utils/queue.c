@@ -106,7 +106,8 @@ int fifo_queue_enqueue_item_timeout(QueueContext *context, const void *item, int
             return -1;
         }
         if (timeout_ms >= 0) {
-            bool res = whist_timedwait_cond(context->avail_space_cond, context->mutex, current_timeout_ms);
+            bool res =
+                whist_timedwait_cond(context->avail_space_cond, context->mutex, current_timeout_ms);
             if (res == false) {  // In case of a timeout simply exit
                 whist_unlock_mutex(context->mutex);
                 return -1;
@@ -152,7 +153,8 @@ int fifo_queue_dequeue_item_timeout(QueueContext *context, void *item, int timeo
             return -1;
         }
         if (timeout_ms >= 0) {
-            bool res = whist_timedwait_cond(context->avail_items_cond, context->mutex, current_timeout_ms);
+            bool res =
+                whist_timedwait_cond(context->avail_items_cond, context->mutex, current_timeout_ms);
             if (res == false) {  // In case of a timeout simply exit
                 whist_unlock_mutex(context->mutex);
                 return -1;

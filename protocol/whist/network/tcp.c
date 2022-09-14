@@ -621,7 +621,8 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
 
     // Set up TCP send queue
     context->run_sender = true;
-    if ((context->send_queue = fifo_queue_create(sizeof(TCPQueueItem), TCP_SEND_QUEUE_SIZE)) == NULL ||
+    if ((context->send_queue = fifo_queue_create(sizeof(TCPQueueItem), TCP_SEND_QUEUE_SIZE)) ==
+            NULL ||
         (context->send_semaphore = whist_create_semaphore(0)) == NULL ||
         (context->send_thread = whist_create_thread(multithreaded_tcp_send,
                                                     "multithreaded_tcp_send", context)) == NULL) {
@@ -843,7 +844,8 @@ int multithreaded_tcp_send(void* opaque) {
             //     will have decremented semaphore for a packet we are not sending yet.
             whist_post_semaphore(context->send_semaphore);
             // If the wait for another packet times out, then we return to the top of the loop
-            if (!whist_wait_timeout_semaphore(context->send_semaphore, TCP_PING_MAX_RECONNECTION_TIME_SEC * 1000))
+            if (!whist_wait_timeout_semaphore(context->send_semaphore,
+                                              TCP_PING_MAX_RECONNECTION_TIME_SEC * 1000))
                 continue;
         }
 
