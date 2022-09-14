@@ -57,6 +57,7 @@ QueueContext *fifo_queue_create(size_t item_size, int max_items) {
         return NULL;
     }
 
+    // The semaphore value corresponds to the number of available spaces in the queue
     context->sem = whist_create_semaphore(max_items);
     if (context->sem == NULL) {
         fifo_queue_destroy(context);
@@ -93,8 +94,9 @@ int fifo_queue_enqueue_item(QueueContext *context, const void *item, bool blocki
     whist_broadcast_cond(context->cond);
     whist_unlock_mutex(context->mutex);
     // If this enqueue call is not blocking, we still need to decrement the semaphore.
-    //     Since we just successfully dequeued an element, we know that the semaphore
-    //     count is greater than 0 and that this wait will be successful.
+    //     Since we just successfully enqueued an element without decrementing the 
+    //     semaphore, we know that the semaphore count is greater than 0 and that this 
+    //     wait will be successful.
     if (!blocking) whist_wait_timeout_semaphore(context->sem, 0);
     return 0;
 }
