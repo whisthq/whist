@@ -23,11 +23,23 @@ QueueContext *fifo_queue_create(size_t item_size, int max_items);
  *
  * @param queue_context            Queue's context pointer
  * @param item                     Pointer to the item that needs to be enqueued
- * @param blocking                 Whether the enqueue operation should be blocking
  *
  * @returns                        0 on success, -1 on failure
  */
-int fifo_queue_enqueue_item(QueueContext *queue_context, const void *item, bool blocking);
+int fifo_queue_enqueue_item(QueueContext *queue_context, const void *item);
+
+/**
+ * @brief                          Enqueue an item to the FIFO queue, If an item is not available,
+ *                                 then wait till a timeout.
+ *
+ * @param queue_context            Queue's context pointer
+ * @param item                     Pointer to the item that needs to be enqueued
+ * @param timeout_ms               The number of milliseconds to wait for. -1 for wait without 
+ *                                 timeout.
+ *
+ * @returns                        0 on success, -1 on failure
+ */
+int fifo_queue_enqueue_item_blocking(QueueContext *queue_context, const void *item, int timeout);
 
 /**
  * @brief                          Dequeue an item from the FIFO queue. If an item is not available,
@@ -46,7 +58,8 @@ int fifo_queue_dequeue_item(QueueContext *queue_context, void *item);
  *
  * @param queue_context            Queue's context pointer
  * @param item                     Pointer to the memory where dequeued item will be stored
- * @param timeout_ms               The number of milliseconds to wait for.
+ * @param timeout_ms               The number of milliseconds to wait for. -1 for wait without 
+ *                                 timeout.
  *
  * @returns                        0 on success, -1 on failure
  */

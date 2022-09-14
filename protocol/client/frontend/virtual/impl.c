@@ -223,7 +223,7 @@ bool virtual_wait_event(WhistFrontend* frontend, WhistFrontendEvent* event, int 
 void virtual_interrupt(WhistFrontend* frontend) {
     WhistFrontendEvent event;
     event.type = FRONTEND_EVENT_INTERRUPT;
-    if (fifo_queue_enqueue_item(events_queue, &event, false) != 0) {
+    if (fifo_queue_enqueue_item(events_queue, &event) != 0) {
         LOG_ERROR("Virtual frontend interrupt failed");
     }
 }

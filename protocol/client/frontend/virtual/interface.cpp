@@ -209,7 +209,7 @@ static void vi_api_send_event(const WhistFrontendEvent* frontend_event) {
         requested_width = frontend_event->resize.width;
         requested_height = frontend_event->resize.height;
     }
-    if (fifo_queue_enqueue_item(events_queue, frontend_event, false) != 0) {
+    if (fifo_queue_enqueue_item(events_queue, frontend_event) != 0) {
         LOG_ERROR("Virtual event queuing failed");
     }
 }

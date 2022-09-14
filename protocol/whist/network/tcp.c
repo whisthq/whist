@@ -818,7 +818,7 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
     TCPQueueItem queue_item;
     queue_item.packet = network_packet;
     queue_item.packet_size = packet_size;
-    if (fifo_queue_enqueue_item(context->send_queue, &queue_item, false) < 0) return -1;
+    if (fifo_queue_enqueue_item_timeout(context->send_queue, &queue_item, -1) < 0) return -1;
     whist_post_semaphore(context->send_semaphore);
     return 0;
 }

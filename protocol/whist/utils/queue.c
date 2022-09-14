@@ -14,8 +14,8 @@ typedef struct QueueContext {
     int num_items;
     int max_items;
     WhistMutex mutex;
-    WhistCondition cond;
-    WhistSemaphore sem;
+    WhistCondition avail_items_cond;
+    WhistCondition avail_space_cond;
     void *data;
     bool destroying;
 } QueueContext;
@@ -31,6 +31,15 @@ static void dequeue_item(QueueContext *context, void *item) {
     void *source_item = (uint8_t *)context->data + (context->item_size * context->read_idx);
     memcpy(item, source_item, context->item_size);
     increment_idx(context, &context->read_idx);
+    whist_broadcast_cond(context->avail_space_cond);
+}
+
+static void enqueue_item(QueueContext *context, void *item) {
+    context->num_items++;
+    void *target_item = (uint8_t *)context->data + (context->item_size * context->write_idx);
+    memcpy(target_item, item, context->item_size);
+    increment_idx(context, &context->write_idx);
+    whist_broadcast_cond(context->avail_items_cond);
 }
 
 QueueContext *fifo_queue_create(size_t item_size, int max_items) {
@@ -51,15 +60,14 @@ QueueContext *fifo_queue_create(size_t item_size, int max_items) {
         return NULL;
     }
 
-    context->cond = whist_create_cond();
-    if (context->cond == NULL) {
+    context->avail_items_cond = whist_create_cond();
+    if (context->avail_items_cond == NULL) {
         fifo_queue_destroy(context);
         return NULL;
     }
 
-    // The semaphore value corresponds to the number of available spaces in the queue
-    context->sem = whist_create_semaphore(max_items);
-    if (context->sem == NULL) {
+    context->avail_space_cond = whist_create_cond();
+    if (context->avail_space_cond == NULL) {
         fifo_queue_destroy(context);
         return NULL;
     }
@@ -70,34 +78,48 @@ QueueContext *fifo_queue_create(size_t item_size, int max_items) {
     return context;
 }
 
-int fifo_queue_enqueue_item(QueueContext *context, const void *item, bool blocking) {
+int fifo_queue_enqueue_item(QueueContext *context, const void *item) {
     if (context == NULL) {
         return -1;
     }
     whist_lock_mutex(context->mutex);
-    while (context->num_items >= context->max_items) {
+    if (context->num_items >= context->max_items) {
         whist_unlock_mutex(context->mutex);
-        if (blocking) {
-            whist_wait_semaphore(context->sem);
-            if (context->destroying) {
-                return -1;
-            }
-            whist_lock_mutex(context->mutex);
-        } else {
+        return -1;
+    }
+    enqueue_item(context, item);
+    whist_unlock_mutex(context->mutex);
+    return 0;
+}
+
+int fifo_queue_enqueue_item_timeout(QueueContext *context, const void *item, int timeout_ms) {
+    if (context == NULL) {
+        return -1;
+    }
+    WhistTimer timer;
+    start_timer(&timer);
+    int current_timeout_ms = timeout_ms;
+    whist_lock_mutex(context->mutex);
+    while (context->num_items >= context->max_items) {
+        if (context->destroying) {
+            whist_unlock_mutex(context->mutex);
             return -1;
         }
+        if (timeout_ms >= 0) {
+            bool res = whist_timedwait_cond(context->avail_space_cond, context->mutex, current_timeout_ms);
+            if (res == false) {  // In case of a timeout simply exit
+                whist_unlock_mutex(context->mutex);
+                return -1;
+            }
+            int elapsed_ms = (int)(get_timer(&timer) * MS_IN_SECOND);
+            current_timeout_ms = max(timeout_ms - elapsed_ms, 0);
+        } else {
+            // Negative timeout_ms indicates block until available, not timeout
+            whist_wait_cond(context->avail_space_cond, context->mutex);
+        }
     }
-    context->num_items++;
-    void *target_item = (uint8_t *)context->data + (context->item_size * context->write_idx);
-    memcpy(target_item, item, context->item_size);
-    increment_idx(context, &context->write_idx);
-    whist_broadcast_cond(context->cond);
+    enqueue_item(context, item);
     whist_unlock_mutex(context->mutex);
-    // If this enqueue call is not blocking, we still need to decrement the semaphore.
-    //     Since we just successfully enqueued an element without decrementing the 
-    //     semaphore, we know that the semaphore count is greater than 0 and that this 
-    //     wait will be successful.
-    if (!blocking) whist_wait_timeout_semaphore(context->sem, 0);
     return 0;
 }
 
@@ -125,13 +147,22 @@ int fifo_queue_dequeue_item_timeout(QueueContext *context, void *item, int timeo
     int current_timeout_ms = timeout_ms;
     whist_lock_mutex(context->mutex);
     while (context->num_items <= 0) {
-        bool res = whist_timedwait_cond(context->cond, context->mutex, current_timeout_ms);
-        if (res == false) {  // In case of a timeout simply exit
+        if (context->destroying) {
             whist_unlock_mutex(context->mutex);
             return -1;
         }
-        int elapsed_ms = (int)(get_timer(&timer) * MS_IN_SECOND);
-        current_timeout_ms = max(timeout_ms - elapsed_ms, 0);
+        if (timeout_ms >= 0) {
+            bool res = whist_timedwait_cond(context->avail_items_cond, context->mutex, current_timeout_ms);
+            if (res == false) {  // In case of a timeout simply exit
+                whist_unlock_mutex(context->mutex);
+                return -1;
+            }
+            int elapsed_ms = (int)(get_timer(&timer) * MS_IN_SECOND);
+            current_timeout_ms = max(timeout_ms - elapsed_ms, 0);
+        } else {
+            // Negative timeout_ms indicates block until available, not timeout
+            whist_wait_cond(context->avail_items_cond, context->mutex);
+        }
     }
     dequeue_item(context, item);
     whist_unlock_mutex(context->mutex);
@@ -142,12 +173,12 @@ void fifo_queue_destroy(QueueContext *context) {
     if (context == NULL) {
         return;
     }
+
+    // Make sure that all blocking calls release
     context->destroying = true;
-    if (context->sem != NULL) {
-        // This ensures that a blocking enqueue will release
-        whist_post_semaphore(context->sem);
-        whist_destroy_semaphore(context->sem);
-    }
+    whist_broadcast_cond(context->avail_items_cond);
+    whist_broadcast_cond(context->avail_space_cond);
+
     if (context->data != NULL) {
         free(context->data);
     }
