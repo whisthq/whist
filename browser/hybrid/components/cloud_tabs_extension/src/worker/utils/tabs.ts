@@ -67,7 +67,7 @@ const getNumberOfCloudTabs = async () => {
 
 const convertToCloudTab = (tab: chrome.tabs.Tab) => {
   if (!isCloudTab(tab) && tab.url !== undefined)
-    updateTabUrl(tab.id, `cloud:${tab.url}`)
+    void updateTabUrl(tab.id, `cloud:${tab.url}`)
 }
 
 const addTabToQueue = (tab: chrome.tabs.Tab) => {

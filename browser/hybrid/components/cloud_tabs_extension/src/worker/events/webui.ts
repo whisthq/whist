@@ -43,4 +43,20 @@ const webuiMandelboxNeeded = fromEventPattern(
   share()
 )
 
-export { webuiNavigate, webuiOpenSupport, webuiRefresh, webuiMandelboxNeeded }
+const welcomePageOpened = fromEventPattern(
+  (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
+  (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
+  (message: any) => message
+).pipe(
+  map((message: string) => JSON.parse(message)),
+  filter((message: any) => message.type === "WELCOME_PAGE_OPENED"),
+  share()
+)
+
+export {
+  webuiNavigate,
+  webuiOpenSupport,
+  webuiRefresh,
+  webuiMandelboxNeeded,
+  welcomePageOpened,
+}

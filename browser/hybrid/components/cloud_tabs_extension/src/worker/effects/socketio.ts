@@ -51,7 +51,7 @@ merge(
 
       void getActiveTab().then((activeTab) => {
         if (activeTab.id === tab?.id) {
-          chrome.runtime.sendMessage(<PopupMessage>{
+          void chrome.runtime.sendMessage(<PopupMessage>{
             type: PopupMessageType.SEND_POPUP_DATA,
             value: {
               isWaiting: false,

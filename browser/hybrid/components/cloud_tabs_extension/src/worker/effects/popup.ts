@@ -128,7 +128,7 @@ popupDeactivateCloudTab.subscribe((event: any) => {
         Storage.SAVED_CLOUD_URLS,
         savedCloudUrls?.filter((h: string) => h !== host)
       ).then(() => {
-        updateTabUrl(tab.id, stripCloudUrl(tab.url ?? ""))
+        void updateTabUrl(tab.id, stripCloudUrl(tab.url ?? ""))
         event.sendResponse()
       })
     }
@@ -169,12 +169,12 @@ popupUrlUnsaved.subscribe((event: any) => {
 
 // If the user clicks the popup login button
 popupOpenLogin.subscribe(() => {
-  chrome.tabs.create({ url: "chrome://welcome" })
+  void chrome.tabs.create({ url: "chrome://welcome" })
 })
 
 // If the user clicks the popup help button
 popupOpenIntercom.subscribe(() => {
-  chrome.tabs.create({ url: chrome.runtime.getURL("intercom.html") })
+  void chrome.tabs.create({ url: chrome.runtime.getURL("intercom.html") })
 })
 
 popupInviteCode.subscribe((event: any) => {
@@ -211,8 +211,8 @@ merge(
     isCloudTab(activeTab) ||
     !whistState.isLoggedIn
   ) {
-    chrome.browserAction.setPopup({ popup: "../popup.html" })
+    void chrome.browserAction.setPopup({ popup: "../popup.html" })
   } else {
-    chrome.browserAction.setPopup({ popup: "" })
+    void chrome.browserAction.setPopup({ popup: "" })
   }
 })
