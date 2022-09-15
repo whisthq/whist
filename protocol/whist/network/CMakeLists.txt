@@ -7,6 +7,10 @@ add_library(whistNetwork STATIC
         network_algorithm.c
     )
 
+add_subdirectory(congestion_control)
+
+target_link_libraries(whistNetwork whistCC)
+
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(whistNetwork curl)
 else()
