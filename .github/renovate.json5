@@ -41,7 +41,7 @@
     },
     {
       matchPaths: ["browser/hybrid/components/cloud_tabs_extension/"],
-      groupName: "browser/hybrid/components/cloud_tabs_extension/",
+      groupName: "browser/hybrid/components/cloud_tabs_extension",
     },
     {
       matchPaths: ["mandelboxes/"],
