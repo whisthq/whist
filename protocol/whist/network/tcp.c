@@ -527,6 +527,7 @@ static void tcp_destroy_socket_context(void* raw_context) {
     context->run_sender = false;
 
     // Any pending TCP packets will be dropped
+    whist_post_semaphore(context->send_semaphore);
     whist_wait_thread(context->send_thread, NULL);
     fifo_queue_destroy(context->send_queue);
 
