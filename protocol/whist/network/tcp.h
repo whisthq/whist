@@ -49,9 +49,9 @@ tcp_context->free_packet(...);
  * @returns                         The TCP network context on success, NULL
  *                                  on failure
  */
-bool create_tcp_socket_context(SocketContext* context, char* destination, int port,
+bool create_tcp_socket_context(SocketContext* context, const char* destination, int port,
                                int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key);
+                               const char* binary_aes_private_key);
 
 /**
  * @brief                           Creates a tcp listen socket, that can be used in SocketContext

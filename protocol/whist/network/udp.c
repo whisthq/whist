@@ -372,7 +372,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
  * @note                           This may overwrite the timeout on context->socket,
  *                                 Use set_timeout to restore it
  */
-int create_udp_client_context(UDPContext* context, char* destination, int port,
+int create_udp_client_context(UDPContext* context, const char* destination, int port,
                               int connection_timeout_ms);
 
 /**
@@ -1060,9 +1060,9 @@ Public Function Implementations
 ============================
 */
 
-bool create_udp_socket_context(SocketContext* network_context, char* destination, int port,
+bool create_udp_socket_context(SocketContext* network_context, const char* destination, int port,
                                int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key) {
+                               const char* binary_aes_private_key) {
     // STUN isn't implemented
     FATAL_ASSERT(using_stun == false);
 
@@ -1441,7 +1441,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
     return 0;
 }
 
-int create_udp_client_context(UDPContext* context, char* destination, int port,
+int create_udp_client_context(UDPContext* context, const char* destination, int port,
                               int connection_timeout_ms) {
     // Track the time we spend in this function, to keep it under connection_timeout_ms
     WhistTimer client_creation_timer;

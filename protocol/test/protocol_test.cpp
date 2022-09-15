@@ -2545,6 +2545,40 @@ TEST_F(ProtocolTest, EmbedFileTest) {
     EXPECT_EQ(found, 1);
 }
 
+TEST_F(ProtocolTest, TCPSocketPairTest) {
+    whist_init_logger();
+    whist_init_networking();
+    SocketContext server, client;
+    const char* aes_key = "9d3ff73c663e13bce0780d1b95c89582";
+    WhistThread server_thread = whist_create_thread(
+        [](void* server) {
+            const char* aes_key = "9d3ff73c663e13bce0780d1b95c89582";
+            return (int)create_tcp_socket_context((SocketContext*)server, NULL, BASE_TCP_PORT, 1,
+                                                  1000, false, aes_key);
+        },
+        "tcp_server_thread", &server);
+    EXPECT_TRUE(
+        create_tcp_socket_context(&client, "0.0.0.0", BASE_TCP_PORT, 1, 1000, false, aes_key));
+    int server_ret;
+    whist_wait_thread(server_thread, &server_ret);
+    EXPECT_EQ(server_ret, 1);
+
+    // TODO: Play around with sending different lengths or types of data.
+    const char* data = "This is an unguessable string.";
+    send_packet(&client, PACKET_MESSAGE, (uint8_t*)data, (int)strlen(data) + 1, -1, false);
+    WhistPacket* packet = NULL;
+    while (!packet) {
+        packet = (WhistPacket*)get_packet(&server, PACKET_MESSAGE);
+    }
+
+    EXPECT_STREQ(data, (char*)packet->data);
+
+    free_packet(&server, packet);
+
+    destroy_socket_context(&server);
+    destroy_socket_context(&client);
+}
+
 /*
 ============================
 Run Tests
