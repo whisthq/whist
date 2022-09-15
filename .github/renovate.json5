@@ -1,59 +1,62 @@
-{
-  labels: ["dependencies"],
-
-  dependencyDashboard: true,
-  dependencyDashboardApproval: true,
-
-  // We want at most 10 PRs per hour, at most 2 at a time
-  prHourlyLimit: 10,
-  prConcurrentLimit: 2,
-
-  // We target various path prefixes to group those PRs together
-  packageRules: [
-    {
-      matchPaths: [".github/workflows"],
-      groupName: ".github/workflows",
-    },
-    {
-      matchPaths: [".github/actions/db-migration"],
-      groupName: ".github/actions/db-migration",
-    },
-    {
-      matchPaths: [".github/actions/generate-auth0-token"],
-      groupName: ".github/actions/generate-auth0-token",
-    },
-    {
-      matchPaths: [".github/actions/set-environment"],
-      groupName: ".github/actions/set-environment",
-    },
-    {
-      matchPaths: ["backend/auth0/"],
-      groupName: "backend/auth0",
-      ignoreDeps: ["ie8"], // This package version is specified by Auth0 and cannot be upgraded
-    },
-    {
-      matchPaths: ["backend/infrastructure/"],
-      groupName: "backend/infrastructure",
-    },
-    {
-      matchPaths: ["backend/services/"],
-      groupName: "backend/services",
-    },
-    {
-      matchPaths: ["browser/hybrid/components/cloud_tabs_extension/"],
-      groupName: "browser/hybrid/components/cloud_tabs_extension",
-    },
-    {
-      matchPaths: ["mandelboxes/"],
-      groupName: "mandelboxes",
-    },
-    {
-      matchPaths: ["host-setup/"],
-      groupName: "host-setup",
-    },
-    {
-      matchPaths: ["protocol/"],
-      groupName: "protocol",
-    },
-  ],
-}
+// Note: Once we are ready to reenable dependencies upgrade, uncomment this file. It has been
+// commented out as dependencies upgrade would frequently cause issues with the builds.
+//
+// {
+//  labels: ["dependencies"],
+//
+//  dependencyDashboard: true,
+//  dependencyDashboardApproval: true,
+//
+//  // We want at most 10 PRs per hour, at most 2 at a time
+//  prHourlyLimit: 10,
+//  prConcurrentLimit: 2,
+//
+//  // We target various path prefixes to group those PRs together
+//  packageRules: [
+//    {
+//      matchPaths: [".github/workflows"],
+//      groupName: ".github/workflows",
+//    },
+//    {
+//      matchPaths: [".github/actions/db-migration"],
+//      groupName: ".github/actions/db-migration",
+//    },
+//    {
+//      matchPaths: [".github/actions/generate-auth0-token"],
+//      groupName: ".github/actions/generate-auth0-token",
+//    },
+//    {
+//      matchPaths: [".github/actions/set-environment"],
+//      groupName: ".github/actions/set-environment",
+//    },
+//    {
+//      matchPaths: ["backend/auth0/"],
+//      groupName: "backend/auth0",
+//      ignoreDeps: ["ie8"], // This package version is specified by Auth0 and cannot be upgraded
+//    },
+//    {
+//      matchPaths: ["backend/infrastructure/"],
+//      groupName: "backend/infrastructure",
+//    },
+//    {
+//      matchPaths: ["backend/services/"],
+//      groupName: "backend/services",
+//    },
+//    {
+//      matchPaths: ["browser/hybrid/components/cloud_tabs_extension/"],
+//      groupName: "browser/hybrid/components/cloud_tabs_extension",
+//    },
+//    {
+//      matchPaths: ["mandelboxes/"],
+//      groupName: "mandelboxes",
+//    },
+//    {
+//      matchPaths: ["host-setup/"],
+//      groupName: "host-setup",
+//    },
+//    {
+//      matchPaths: ["protocol/"],
+//      groupName: "protocol",
+//    },
+//  ],
+//}
