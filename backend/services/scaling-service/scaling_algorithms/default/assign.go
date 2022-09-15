@@ -22,7 +22,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	contextFields := []interface{}{
 		zap.String("id", event.ID),
 		zap.Any("type", event.Type),
-		zap.String("region", event.Region),
+		zap.String("scaling_region", event.Region),
 	}
 	logger.Infow("Starting mandelbox assign action.", contextFields)
 	defer logger.Infow("Finished mandelbox assign action.", contextFields)
@@ -67,6 +67,9 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		assignedInstance   subscriptions.Instance     // The instance that is assigned to the user.
 	)
 
+	// The number of elements  to truncate a slice of regions to. Used when logging unavailable region errors.
+	const truncateTo = 3
+
 	// Populate availableRegions
 	for _, requestedRegion := range requestedRegions {
 		var regionFound bool
@@ -86,14 +89,14 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// but could still be allocated to a region that is relatively close.
 	if len(unavailableRegions) != 0 && len(unavailableRegions) != len(requestedRegions) {
 		if metadata.GetAppEnvironment() == metadata.EnvProd {
-			logger.Errorf("user %s requested access to the following unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions))
+			logger.Errorf("user %s requested access to the following unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
 		}
 	}
 
 	// The user requested access to only unavailable regions. The last resort is to default to us-east-1.
 	if len(unavailableRegions) == len(requestedRegions) {
 		if metadata.GetAppEnvironment() == metadata.EnvProd {
-			logger.Errorf("user %s requested access to only unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions))
+			logger.Errorf("user %s requested access to only unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
 		}
 		availableRegions = []string{"us-east-1"}
 	}
@@ -120,21 +123,24 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		mandelboxRequest.CommitHash = string(latestImage.ClientSHA)
 	}
 
+	var instanceFound bool
+
 	// This is the "main" loop that does all the work and tries to find an instance for a user. first, it will iterate
 	// over the list of regions provided on the request, and will query the database on each to return the list of
 	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
 	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
 	for _, region := range availableRegions {
+		contextFields = append(contextFields, zap.String("assign_region", region))
 		logger.Infow(utils.Sprintf("Trying to find instance in region %s, with commit hash %s.",
 			region, mandelboxRequest.CommitHash), contextFields)
 
 		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region)
 		if err != nil {
-			return utils.MakeError("failed to query for instance with capacity: %s", err)
+			return utils.MakeError("failed to query for instances with capacity in %s: %s", region, err)
 		}
 
 		if len(instanceResult) == 0 {
-			logger.Warningf("Failed to find an instance in %s for commit hash %s. Trying on next region.", region, mandelboxRequest.CommitHash)
+			logger.Warningw(utils.Sprintf("Failed to find an instance in %s for commit hash %s. Trying on next region.", region, mandelboxRequest.CommitHash), contextFields)
 			continue
 		}
 
@@ -150,6 +156,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 				instanceFound = true
 				break
 			}
+			logger.Warningw(utils.Sprintf("Found an instance in %s but it has a different commit hash %s. Trying on next region.", region, mandelboxRequest.CommitHash), contextFields)
 		}
 
 		// Break of outer loop if instance was found. If no instance with
@@ -160,9 +167,9 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	}
 
 	// No instances with capacity were found
-	if assignedInstance == (subscriptions.Instance{}) {
+	if !instanceFound {
 		serviceUnavailable = false
-		err := utils.MakeError("did not find an instance with capacity for user %s and commit hash %s.", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
+		err := utils.MakeError("did not find an instance with capacity for user %s and commit hash %s", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: NO_INSTANCE_AVAILABLE,
 		}, err)
@@ -184,7 +191,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// Parse the version with the `hashicorp/go-version` package so we can compare.
 	parsedFrontendVersion, err = hashicorp.NewVersion(frontendVersion)
 	if err != nil {
-		logger.Errorf("ailed parsing frontend version from scaling algorithm config: %s", err)
+		logger.Errorf("failed parsing frontend version from scaling algorithm config: %s", err)
 	}
 
 	// Parse the version we got in the request.
@@ -207,8 +214,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	// There are instances with capacity available, but none of them with the desired commit hash.
 	// We only consider this error in cases when the frontend has a version greater or equal than
-	// the one in the config database. This is because when the client version is lesser (outdated client),
-	// it will automatically update itself to the most recent version and send another request.
+	// the one in the config database.
 	if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
 		var msg error
 
@@ -216,8 +222,6 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		// (major, minor, micro) on the config database when deploying to prod, so this is only a real error in that case.
 		if metadata.GetAppEnvironment() == metadata.EnvProd && !isOutdatedFrontend {
 			msg = utils.MakeError("found instance with capacity but different commit hash")
-		} else {
-			logger.Infow(utils.Sprintf("Did not find instance with commit hash %s, but expect frontend to autoupdate and send another request with commit hash %s.", mandelboxRequest.CommitHash, assignedInstance.ClientSHA), contextFields)
 		}
 
 		// Regardless if we log the error, its necessary to return an appropiate response.
