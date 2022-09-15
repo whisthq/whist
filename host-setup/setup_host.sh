@@ -97,7 +97,7 @@ GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
 
   # Install NVIDIA GRID (virtualized GPU) drivers
-  ./get-nvidia-driver-installer.sh
+  CLOUD_PROVIDER="$CLOUD_PROVIDER" ./get-nvidia-driver-installer.sh
   sudo chmod +x nvidia-driver-installer.run
   sudo ./nvidia-driver-installer.run --silent
   sudo rm nvidia-driver-installer.run
