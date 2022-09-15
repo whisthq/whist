@@ -346,7 +346,6 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
   } else if (event_type == event_type_names::kDragleave) {
     auto* drag_event = DynamicTo<DragEvent>(&event);
     SendFileDragEvent({}, true, group_id, drag_event);
-    SendFileDragEvent({}, true, group_id, drag_event);
     drag_event->SetDefaultHandled();
   } else if (event_type == event_type_names::kDrop) {
     auto* drag_event = DynamicTo<DragEvent>(&event);

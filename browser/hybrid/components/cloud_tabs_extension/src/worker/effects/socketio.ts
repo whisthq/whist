@@ -16,7 +16,11 @@ import {
   tabFocused,
   tabZoomed,
 } from "@app/worker/events/tabs"
-import { webuiNavigate, webuiRefresh } from "@app/worker/events/webui"
+import { 
+  webuiNavigate, 
+  webuiRefresh,
+  webuiDragEntered
+} from "@app/worker/events/webui"
 import {
   getActiveTab,
   isCloudTab,
@@ -115,6 +119,13 @@ webuiRefresh
   .pipe(withLatestFrom(socket))
   .subscribe(([message, socket]: [any, Socket]) => {
     socket.emit("refresh-tab", message)
+  })
+
+webuiDragEntered
+  .pipe(withLatestFrom(socketConnected))
+  .subscribe(async ([message, socket]: [any, Socket]) => {
+    const tab = await getTab(message.id)
+    socket.emit("activate-tab", { ...tab, url: message.url }, true)
   })
 
 socketDisconnected.subscribe((socket: Socket) => {

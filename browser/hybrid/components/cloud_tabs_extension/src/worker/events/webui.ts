@@ -53,10 +53,22 @@ const welcomePageOpened = fromEventPattern(
   share()
 )
 
+const webuiDragEntered = fromEventPattern(
+  (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
+  (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
+  (message: any) => message
+).pipe(
+  map((message: string) => JSON.parse(message)),
+  filter((message: any) => message.type === "DRAG_ENTERED"),
+  map((message: any) => message.value),
+  share()
+)
+
 export {
   webuiNavigate,
   webuiOpenSupport,
   webuiRefresh,
   webuiMandelboxNeeded,
   welcomePageOpened,
+  webuiDragEntered
 }

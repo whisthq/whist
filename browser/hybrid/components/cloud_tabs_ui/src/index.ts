@@ -15,6 +15,7 @@ import {
   initializeRequestMandelbox,
 } from "./controls/whist"
 import { initializePageRefreshHandler } from "./controls/refresh"
+import { initializeDragHandler } from "./controls/drag"
 
 import {
   createStartNotification,
@@ -33,6 +34,7 @@ window.onload = () => {
     initializeTitleUpdater()
     initializeFaviconUpdater()
     initializePageRefreshHandler()
+    initializeDragHandler()
   })
 
   initializeLoadingScreen()
