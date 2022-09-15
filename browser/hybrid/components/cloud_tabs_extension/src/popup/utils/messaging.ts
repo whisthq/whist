@@ -5,13 +5,13 @@ const sendMessageToBackground = (
   value?: any,
   callback?: (response: any) => void
 ) => {
-  chrome.runtime.sendMessage(
-    <PopupMessage>{
-      type,
-      value,
-    },
-    callback
-  )
+  const popupMessage = <PopupMessage>{ type, value }
+
+  if (callback !== undefined) {
+    chrome.runtime.sendMessage(popupMessage, callback)
+  } else {
+    chrome.runtime.sendMessage(popupMessage)
+  }
 }
 
 export { sendMessageToBackground }
