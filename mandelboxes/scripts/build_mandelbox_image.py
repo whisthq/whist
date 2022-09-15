@@ -8,8 +8,11 @@
 import argparse
 import re
 import threading
+import time
 import subprocess
 import sys
+
+from progress.spinner import PixelSpinner
 
 # Argument parser
 parser = argparse.ArgumentParser(description="Build Whist mandelbox image(s).")
@@ -105,9 +108,6 @@ while i < len(image_paths):
 
 
 def build_image_path(img_path, running_processes=None, ret=None, root_image=False):
-    # Build image path
-    print("Building " + img_path + " Docker container (this can take several minutes)...")
-
     # Default is the build asset package without the protocol. By
     # choosing the correct build asset package and passing it as a
     # docker build argument, we can control which dockerfiles copy the
@@ -146,13 +146,18 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
             stderr=None if show_output else subprocess.STDOUT,
         ) as build_process:
             running_processes.append(build_process)
-            build_process.wait()
+
+            spinner = PixelSpinner(f"Building {img_path} ")
+            while build_process.poll() is None:
+                spinner.next()
+                time.sleep(0.1)
+
             status = build_process.returncode
             if status is None:
-                print(f"Error: Waited for {img_path} but got a return code of `None`")
+                print(f"\nError: Waited for {img_path} but got a return code of `None`")
                 status = 1
             if status != 0:
-                print(f"Failed to build {img_path}")
+                print(f"\nFailed to build {img_path}")
                 print("Cancelling running builds...")
                 for process in running_processes:
                     process.terminate()
@@ -164,7 +169,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
                 return ret["status"]
 
     # Notify successful build
-    print(f"Building {img_path}... -- Done!")
+    print(f"\nBuilding {img_path}... -- Done!")
 
     # Take all of the image_paths that depended on this img_path, and save them
     # as the next layer of image_paths to build
