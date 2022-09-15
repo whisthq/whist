@@ -53,6 +53,7 @@ OnFileDownloadUpdate on_file_download_update = NULL;
 OnFileDownloadComplete on_file_download_complete = NULL;
 OnNotificationCallback on_notification_callback_ptr = NULL;
 GetModifierKeyState get_modifier_key_state = NULL;
+OnWhistError on_whist_error = NULL;
 }
 
 static WhistSemaphore connection_semaphore = whist_create_semaphore(0);
@@ -252,6 +253,8 @@ static void vi_api_set_get_modifier_key_state(GetModifierKeyState cb) {
     get_modifier_key_state = cb;
 }
 
+static void vi_api_set_on_whist_error_callback(OnWhistError cb) { on_whist_error = cb; }
+
 static int vi_api_create_window() {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // Use serial window IDs, so that each window gets a unique ID
@@ -315,6 +318,7 @@ static const VirtualInterface vi = {
         {
             .send = vi_api_send_event,
             .set_get_modifier_key_state = vi_api_set_get_modifier_key_state,
+            .set_on_whist_error_callback = vi_api_set_on_whist_error_callback,
         },
     .file =
         {

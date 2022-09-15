@@ -270,6 +270,7 @@ void send_message_dimensions(WhistFrontend *frontend) {
     if (wcmsg.dimensions.width > MAX_SCREEN_WIDTH || wcmsg.dimensions.height > MAX_SCREEN_HEIGHT) {
         LOG_WARNING("Note: Required to clamp MESSAGE_DIMENSIONS %dx%d", wcmsg.dimensions.width,
                     wcmsg.dimensions.height);
+        whist_frontend_send_error_notification(frontend, WHIST_DIMENSION_ERROR);
     }
     if (wcmsg.dimensions.width > MAX_SCREEN_WIDTH) {
         // Clamp width

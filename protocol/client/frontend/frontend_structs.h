@@ -5,6 +5,11 @@
 
 typedef struct WhistFrontend WhistFrontend;
 
+typedef enum WhistError {
+    WHIST_DISCONNECT_ERROR,
+    WHIST_DIMENSION_ERROR,
+} WhistError;
+
 typedef enum FrontendEventType {
     FRONTEND_EVENT_UNHANDLED = 0,
     /**

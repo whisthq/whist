@@ -214,6 +214,11 @@ void whist_frontend_display_notification(WhistFrontend* frontend, const WhistNot
     frontend->call->display_notification(frontend, notif);
 }
 
+void whist_frontend_send_error_notification(WhistFrontend* frontend, WhistError error) {
+    FRONTEND_ENTRY();
+    frontend->call->send_error_notification(frontend, error);
+}
+
 void whist_frontend_declare_user_activity(WhistFrontend* frontend) {
     FRONTEND_ENTRY();
     frontend->call->declare_user_activity(frontend);

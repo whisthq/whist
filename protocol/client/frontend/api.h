@@ -45,6 +45,7 @@
     GENERATOR(void, set_titlebar_color, WhistFrontend* frontend, int id,                           \
               const WhistRGBColor* color)                                                          \
     GENERATOR(void, display_notification, WhistFrontend* frontend, const WhistNotification* notif) \
+    GENERATOR(void, send_error_notification, WhistFrontend* frontend, WhistError error)            \
     GENERATOR(void, declare_user_activity, WhistFrontend* frontend)
 
 #endif  // WHIST_CLIENT_FRONTEND_API_H
