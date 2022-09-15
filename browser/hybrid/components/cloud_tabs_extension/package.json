@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "private": true,
   "devDependencies": {
-    "@types/chrome": "^0.0.130",
+    "@types/chrome": "^0.0.196",
     "@types/simple-peer": "^9.6.1",
     "@types/fuzzy-search": "^2.1.2",
     "@types/json-stringify-safe": "^5.0.0",
