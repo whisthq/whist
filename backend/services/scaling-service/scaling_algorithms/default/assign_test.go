@@ -29,22 +29,21 @@ func TestMandelboxAssign(t *testing.T) {
 
 	var tests = []struct {
 		name             string
-		env              metadata.AppEnvironment
 		capacity         int64
 		regions          []string
 		clientSHA, want  string
 		shouldBeAssigned bool
 	}{
-		{"happy path", metadata.EnvDev, instanceCapacity["g4dn.2xlarge"], defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true},             // Happy path, sufficient capacity and matching commit hash
-		{"commit hash mismatch", metadata.EnvDev, instanceCapacity["g4dn.2xlarge"], defaultRegions, "outdated-sha", COMMIT_HASH_MISMATCH, false}, // Commit mismatch, sufficient capacity but different commit hashes
-		{"no capacity", metadata.EnvDev, 0, defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, NO_INSTANCE_AVAILABLE, false},                       // No capacity, but matching commit hash
-		{"some unavailable regions", metadata.EnvDev, instanceCapacity["g4dn.2xlarge"], []string{
+		{"happy path", instanceCapacity["g4dn.2xlarge"], defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true},             // Happy path, sufficient capacity and matching commit hash
+		{"commit hash mismatch", instanceCapacity["g4dn.2xlarge"], defaultRegions, "outdated-sha", COMMIT_HASH_MISMATCH, false}, // Commit mismatch, sufficient capacity but different commit hashes
+		{"no capacity", 0, defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, NO_INSTANCE_AVAILABLE, false},                       // No capacity, but matching commit hash
+		{"some unavailable regions", instanceCapacity["g4dn.2xlarge"], []string{
 			"unavailable-region-1",
 			"us-west-1",
 			"unavailable-region-2",
 			"us-east-1",
 		}, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true}, // Some unavailable regions
-		{"only unavailable regions", metadata.EnvDev, instanceCapacity["g4dn.2xlarge"], []string{
+		{"only unavailable regions", instanceCapacity["g4dn.2xlarge"], []string{
 			"unavailable-region-1",
 			"unavailable-region-2",
 			"unavailable-region-3",
@@ -55,7 +54,6 @@ func TestMandelboxAssign(t *testing.T) {
 	for _, env := range envs {
 		for _, tt := range tests {
 			t.Run(tt.name+"_"+string(env), func(t *testing.T) {
-
 				// Override environment so we can test commit hashes on the request
 				metadata.GetAppEnvironment = func() metadata.AppEnvironment {
 					return env

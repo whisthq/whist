@@ -105,36 +105,6 @@ func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]
 	return capacityMap
 }
 
-// GetEnabledRegions returns a list of regions where the backend resources required
-// to run Whist exist, according to the current environment.
-func GetEnabledRegions() []string {
-	var enabledRegions []string
-	switch metadata.GetAppEnvironmentLowercase() {
-	case string(metadata.EnvDev):
-		enabledRegions = []string{
-			"us-east-1",
-			"us-west-1",
-		}
-	case string(metadata.EnvStaging):
-		enabledRegions = []string{
-			"us-east-1",
-		}
-	case string(metadata.EnvProd):
-		enabledRegions = []string{
-			"us-east-1",
-			"us-west-1",
-			"ca-central-1",
-			"ap-south-1",
-		}
-	default:
-		enabledRegions = []string{
-			"us-east-1",
-		}
-	}
-
-	return enabledRegions
-}
-
 // getFrontendVersion returns the current version of the frontend, which is initially
 // populated from the config database. This value is used by the scaling algorithm to
 // determine if the incoming requests come from an outdated frontend, and is part of
