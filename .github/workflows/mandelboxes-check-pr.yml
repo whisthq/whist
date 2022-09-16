@@ -137,6 +137,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Install requirements
+        working-directory: mandelboxes
+        run: pip install -r scripts/requirements.txt
+
       # Build all Docker images, as if we were in production
       - name: Build Mandelboxes
         working-directory: mandelboxes
