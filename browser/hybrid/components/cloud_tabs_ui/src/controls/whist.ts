@@ -164,5 +164,4 @@ export {
   // initializeWhistThawHandler,
   initializeWhistFreezeAllHandler,
   initializeWhistSpotlightHandler,
-  initializeRequestMandelbox
 }
