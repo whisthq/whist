@@ -1,7 +1,8 @@
-import { fromEventPattern } from "rxjs"
-import { filter, map, share } from "rxjs/operators"
+import { fromEventPattern, from } from "rxjs"
+import { filter, map, share, switchMap } from "rxjs/operators"
+import { getTab } from "@app/worker/utils/tabs"
 
-const webuiNavigate = fromEventPattern(
+const webUINavigate = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
@@ -12,7 +13,7 @@ const webuiNavigate = fromEventPattern(
   share()
 )
 
-const webuiOpenSupport = fromEventPattern(
+const webUIOpenSupport = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
@@ -22,7 +23,7 @@ const webuiOpenSupport = fromEventPattern(
   share()
 )
 
-const webuiRefresh = fromEventPattern(
+const webUIRefresh = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
@@ -33,7 +34,7 @@ const webuiRefresh = fromEventPattern(
   share()
 )
 
-const webuiMandelboxNeeded = fromEventPattern(
+const webUIMandelboxNeeded = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
@@ -53,22 +54,22 @@ const welcomePageOpened = fromEventPattern(
   share()
 )
 
-const webuiDragEntered = fromEventPattern(
+const webUIMouseEntered = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
 ).pipe(
   map((message: string) => JSON.parse(message)),
-  filter((message: any) => message.type === "DRAG_ENTERED"),
-  map((message: any) => message.value),
+  filter((message: any) => message.type === "MOUSE_ENTERED"),
+  switchMap((message: any) => from(getTab(message.value.id))),
   share()
 )
 
 export {
-  webuiNavigate,
-  webuiOpenSupport,
-  webuiRefresh,
-  webuiMandelboxNeeded,
+  webUINavigate,
+  webUIOpenSupport,
+  webUIRefresh,
+  webUIMandelboxNeeded,
   welcomePageOpened,
-  webuiDragEntered
+  webUIMouseEntered
 }

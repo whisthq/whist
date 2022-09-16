@@ -3,7 +3,7 @@ import { withLatestFrom } from "rxjs/operators"
 import find from "lodash.find"
 
 import { authSuccess } from "@app/worker/events/auth"
-import { webuiOpenSupport } from "@app/worker/events/webui"
+import { webUIOpenSupport } from "@app/worker/events/webui"
 import {
   tabActivated,
   tabRemoved,
@@ -162,7 +162,7 @@ cloudTabCreated.subscribe((tabs: chrome.tabs.Tab[]) => {
     void chrome.tabs.create({ url: tab.url, active: tab.active })
 })
 
-webuiOpenSupport.subscribe(createOrFocusHelpPopup)
+webUIOpenSupport.subscribe(createOrFocusHelpPopup)
 
 helpScreenOpened.pipe(withLatestFrom(authSuccess)).subscribe(([_, auth]) => {
   void chrome.runtime.sendMessage({

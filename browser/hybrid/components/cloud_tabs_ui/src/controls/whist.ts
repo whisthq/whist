@@ -43,30 +43,65 @@ const initializeRequestMandelbox = () => {
   }, 100)
 }
 
-const initializeWhistFreezeHandler = () => {
-  const whistTag: any = document.querySelector("whist")
+// const initializeWhistFreezeHandler = () => {
+//   const whistTag: any = document.querySelector("whist")
 
-  ;(chrome as any).whist.onMessage.addListener((message: string) => {
-    const parsed = JSON.parse(message)
+//   ;(chrome as any).whist.onMessage.addListener((message: string) => {
+//     const parsed = JSON.parse(message)
 
-    if (
-      parsed.type === "FREEZE_TAB" && 
-      parsed.value.exclude_id !== getTabId()
-    ) {
-      whistTag.freeze()
-    }
-  })
+//     if (
+//       parsed.type === "FREEZE_TAB" && 
+//       parsed.value.exclude_id !== getTabId()
+//     ) {
+//       console.log("freeze ", getTabId())
+//       whistTag.freeze()
+//     }
+//   })
 
-  // Freeze all other cloud tabs when another cloud tab has been activated
-  chrome.tabs.onActivated.addListener((activeInfo: { tabId: number }) => {
-    if (activeInfo.tabId !== sessionStorage.getNumber("tabId")) {
-      console.log("free ", activeInfo.tabId)
-      whistTag.freeze()
-    }
-  })
-}
+//   // // Freeze all other cloud tabs when another cloud tab has been activated
+//   // chrome.tabs.onActivated.addListener((activeInfo: { tabId: number }) => {
+//   //   if (activeInfo.tabId !== sessionStorage.getNumber("tabId")) {
+//   //     console.log("free ", activeInfo.tabId)
+//   //     whistTag.freeze()
+//   //   }
+//   // })
+// }
 
-const initializeWhistThawHandler = () => {
+// const initializeWhistThawHandler = () => {
+//   const whistTag: any = document.querySelector("whist")
+
+//   ;(chrome as any).whist.onMessage.addListener((message: string) => {
+//     const parsed = JSON.parse(message)
+
+//     if (
+//       (parsed.type === "ACTIVATE_TAB" || parsed.type === "UPDATE_TAB") &&
+//       parsed.value.id === getTabId()
+//     ) {
+//       if (whistParameters !== null && !whistTag.isWhistConnected()) {
+//         whistTag.focus()
+//         whistTag.whistConnect(whistParameters)
+//       }
+
+//       ;(chrome as any).whist.broadcastWhistMessage(
+//         JSON.stringify({
+//           type: "FREEZE_TAB",
+//           value: {
+//             exclude_id: sessionStorage.getNumber("tabId"),
+//           },
+//         })
+//       )
+
+//       // We delay by 100ms because this is the amount of time we expect the protocol to lag behind
+//       // the socket.io message, since the protocol has extra video encode/decode latency.
+//       // Lower values were tested and they led to flashes of other tabs being seen.
+//       setTimeout(() => {
+//         whistTag.thaw()
+//       }, 100)
+//     }
+//   })
+// }
+
+const initializeWhistSpotlightHandler = () => {
   const whistTag: any = document.querySelector("whist")
 
   ;(chrome as any).whist.onMessage.addListener((message: string) => {
@@ -76,26 +111,16 @@ const initializeWhistThawHandler = () => {
       (parsed.type === "ACTIVATE_TAB" || parsed.type === "UPDATE_TAB") &&
       parsed.value.id === getTabId()
     ) {
-      whistTag.focus()
       if (whistParameters !== null && !whistTag.isWhistConnected()) {
-        // whistTag.focus()
+        whistTag.focus()
         whistTag.whistConnect(whistParameters)
       }
-
-      ;(chrome as any).whist.broadcastWhistMessage(
-        JSON.stringify({
-          type: "FREEZE_TAB",
-          value: {
-            exclude_id: sessionStorage.getNumber("tabId"),
-          },
-        })
-      )
 
       // We delay by 100ms because this is the amount of time we expect the protocol to lag behind
       // the socket.io message, since the protocol has extra video encode/decode latency.
       // Lower values were tested and they led to flashes of other tabs being seen.
       setTimeout(() => {
-        whistTag.thaw()
+        whistTag.takeSpotlight(spotlightId)
       }, 100)
     }
   })
@@ -103,7 +128,9 @@ const initializeWhistThawHandler = () => {
 
 export {
   initializeWhistTagHandler,
-  initializeWhistFreezeHandler,
-  initializeWhistThawHandler,
   initializeRequestMandelbox,
+  // initializeWhistFreezeHandler,
+  // initializeWhistThawHandler,
+  initializeWhistSpotlightHandler,
+  initializeRequestMandelbox
 }

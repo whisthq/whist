@@ -6,7 +6,7 @@ import {
   mandelboxNeeded,
   mandelboxSuccess,
 } from "@app/worker/events/mandelbox"
-import { webuiMandelboxNeeded } from "@app/worker/events/webui"
+import { webUIMandelboxNeeded } from "@app/worker/events/webui"
 import { hostSuccess, hostError } from "@app/worker/events/host"
 import { socket, socketReconnectFailed } from "@app/worker/events/socketio"
 
@@ -47,7 +47,7 @@ hostSuccess
     whistState.mandelboxInfo = { ...mandelbox, ...host }
   })
 
-webuiMandelboxNeeded.subscribe(() => {
+webUIMandelboxNeeded.subscribe(() => {
   if (whistState.mandelboxState !== MandelboxState.MANDELBOX_WAITING) {
     whistState.mandelboxState = MandelboxState.MANDELBOX_NONEXISTENT
   }
@@ -59,7 +59,7 @@ merge(mandelboxError, hostError, socketReconnectFailed).subscribe(() => {
   whistState.mandelboxInfo = undefined
 })
 
-merge(webuiMandelboxNeeded, socketReconnectFailed).subscribe(() => {
+merge(webUIMandelboxNeeded, socketReconnectFailed).subscribe(() => {
   whistState.activeCloudTabs = []
   whistState.waitingCloudTabs = []
 

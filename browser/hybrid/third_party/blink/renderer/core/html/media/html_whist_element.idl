@@ -30,9 +30,11 @@
     HTMLConstructor,
     ActiveScriptWrappable
 ] interface HTMLWhistElement : HTMLVideoElement {
-    [ImplementedAs=whistPause] void freeze();
+    //[ImplementedAs=whistPause] void freeze();
     // TODO: Should this be a promise instead?
-    [ImplementedAs=whistPlay] void thaw();
+    //[ImplementedAs=whistPlay] void thaw();
+    long freezeAll();
+    void requestSpotlight(int spotlight_id);
     [ImplementedAs=whistConnect] void whistConnect(DOMString whist_parameters);
     [ImplementedAs=isWhistConnected] boolean isWhistConnected();
 };

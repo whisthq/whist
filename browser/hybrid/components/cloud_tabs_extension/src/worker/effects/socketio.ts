@@ -17,9 +17,9 @@ import {
   tabZoomed,
 } from "@app/worker/events/tabs"
 import { 
-  webuiNavigate, 
-  webuiRefresh,
-  webuiDragEntered
+  webUINavigate, 
+  webUIRefresh, 
+  webUIMouseEntered,
 } from "@app/worker/events/webui"
 import {
   getActiveTab,
@@ -68,7 +68,7 @@ merge(
   })
 
 // If a tab is activated, active it on the server
-merge(tabActivated, tabFocused)
+merge(tabActivated, tabFocused, webUIMouseEntered)
   .pipe(withLatestFrom(serverCookiesSynced, socket))
   .subscribe(([tab, _synced, socket]: [chrome.tabs.Tab, any, Socket]) => {
     if (isCloudTab(tab)) {
@@ -108,24 +108,17 @@ tabZoomed
     socket.emit("zoom-tab", zoomChangeInfo)
   })
 
-webuiNavigate
+webUINavigate
   .pipe(withLatestFrom(socket))
   .subscribe(async ([message, socket]: [any, Socket]) => {
     const tab = await getTab(message.id)
     socket.emit("activate-tab", { ...tab, url: message.url }, true)
   })
 
-webuiRefresh
+webUIRefresh
   .pipe(withLatestFrom(socket))
   .subscribe(([message, socket]: [any, Socket]) => {
     socket.emit("refresh-tab", message)
-  })
-
-webuiDragEntered
-  .pipe(withLatestFrom(socketConnected))
-  .subscribe(async ([message, socket]: [any, Socket]) => {
-    const tab = await getTab(message.id)
-    socket.emit("activate-tab", { ...tab, url: message.url }, true)
   })
 
 socketDisconnected.subscribe((socket: Socket) => {
