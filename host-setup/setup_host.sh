@@ -453,7 +453,7 @@ common_steps_post () {
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but it looks like getopt
 # chokes without them.
-TEMP=$(getopt -o hldgp --long help,usage,localdevelopment,deployment,gpu,provider: -n 'setup_host.sh' -- "$@")
+TEMP=$(getopt -o hldnp --long help,usage,localdevelopment,deployment,nogpu,provider: -n 'setup_host.sh' -- "$@")
 eval set -- "$TEMP"
 
 LOCAL_DEVELOPMENT=
@@ -466,7 +466,7 @@ while true; do
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
     -p | --provider ) CLOUD_PROVIDER=$2; shift 2 ;;
-    -ng | --nogpu ) GPU=false; shift ;;
+    -n | --nogpu ) GPU=false; shift ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac

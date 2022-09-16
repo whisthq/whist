@@ -210,7 +210,7 @@ build {
   }
 
   provisioner "shell" {
-    inline       = ["cd /home/ubuntu/host-setup", "./setup_host.sh --deployment  ${var.git_branch} ${var.mandelbox_logz_shipping_token}", "cd ..", "rm -rf host-setup"]
+    inline       = ["cd /home/ubuntu/host-setup", "./setup_host.sh --deployment ${var.git_branch} ${var.mandelbox_logz_shipping_token}", "cd ..", "rm -rf host-setup"]
     pause_before = "10s"
   }
 

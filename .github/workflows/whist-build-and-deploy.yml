@@ -36,15 +36,6 @@ on:
         # Avoid accidental mistakes by doing dry run deployments by
         # default
         default: true
-      gpu:
-        description: |
-          A boolean indicating whether or not to build and deploy the
-          GPU version of the Whist backend (mandelboxes and hosts). The
-          default is true, and each deploy can only support building either
-          the GPU or non-GPU backend at this time.
-        type: boolean
-        required: false
-        default: true
 
 # This guarantees that if you push many commits to the same PR, only the latest
 # commit will get run (others get cancelled)
