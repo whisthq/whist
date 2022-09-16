@@ -14,6 +14,8 @@ import (
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
+var defaultRegions []string = []string{"us-east-1", "us-west-1"}
+
 // TestMandelboxAssign test the happy path of assigning a mandelbox to a user.
 func TestMandelboxAssign(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
@@ -21,22 +23,72 @@ func TestMandelboxAssign(t *testing.T) {
 
 	var tests = []struct {
 		name             string
+		env              metadata.AppEnvironment
 		capacity         int64
+		regions          []string
 		clientSHA, want  string
 		shouldBeAssigned bool
 	}{
-		{"happy path", instanceCapacity["g4dn.2xlarge"], CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true},               // Happy path, sufficient capacity and matching commit hash
-		{"commit hash mismatch", instanceCapacity["g4dn.2xlarge"], "outdated-sha", "COMMIT_HASH_MISMATCH", false}, // Commit mismatch, sufficient capacity but different commit hashes
-		{"no capacity", 0, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "NO_INSTANCE_AVAILABLE", false},                       // No capacity, but matching commit hash
-	}
+		{"happy path dev", metadata.EnvDev, instanceCapacity["g4dn.2xlarge"], defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true},               // Happy path, sufficient capacity and matching commit hash
+		{"commit hash mismatch dev", metadata.EnvDev, instanceCapacity["g4dn.2xlarge"], defaultRegions, "outdated-sha", "COMMIT_HASH_MISMATCH", false}, // Commit mismatch, sufficient capacity but different commit hashes
+		{"no capacity dev", metadata.EnvDev, 0, defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "NO_INSTANCE_AVAILABLE", false},                       // No capacity, but matching commit hash
+		{"some unavailable regions dev", metadata.EnvDev, instanceCapacity["g4dn.2xlarge"], []string{
+			"ap-southeast-1",
+			"ap-northeast-1",
+			"ap-south-1",
+			"us-west-1",
+			"us-east-1",
+		}, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true}, // Some unavailable regions
+		{"only unavailable regions dev", metadata.EnvDev, instanceCapacity["g4dn.2xlarge"], []string{
+			"ap-southeast-1",
+			"ap-northeast-1",
+			"ap-south-1",
+			"eu-north-1",
+		}, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true}, // Only unavailable regions
 
-	// Override environment so we can test commit hashes on the request
-	metadata.GetAppEnvironment = func() metadata.AppEnvironment {
-		return metadata.EnvDev
+		{"happy path staging", metadata.EnvStaging, instanceCapacity["g4dn.2xlarge"], defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true},               // Happy path, sufficient capacity and matching commit hash
+		{"commit hash mismatch staging", metadata.EnvStaging, instanceCapacity["g4dn.2xlarge"], defaultRegions, "outdated-sha", "COMMIT_HASH_MISMATCH", false}, // Commit mismatch, sufficient capacity but different commit hashes
+		{"no capacity staging", metadata.EnvStaging, 0, defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "NO_INSTANCE_AVAILABLE", false},                       // No capacity, but matching commit hash
+		{"some unavailable regions staging", metadata.EnvStaging, instanceCapacity["g4dn.2xlarge"], []string{
+			"ap-southeast-1",
+			"ap-northeast-1",
+			"ap-south-1",
+			"us-west-1",
+			"us-east-1",
+		}, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true}, // Some unavailable regions
+		{"only unavailable regions staging", metadata.EnvStaging, instanceCapacity["g4dn.2xlarge"], []string{
+			"ap-southeast-1",
+			"ap-northeast-1",
+			"ap-south-1",
+			"eu-north-1",
+		}, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true}, // Only unavailable regions
+
+		{"happy path prod", metadata.EnvProd, instanceCapacity["g4dn.2xlarge"], defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true},               // Happy path, sufficient capacity and matching commit hash
+		{"commit hash mismatch prod", metadata.EnvProd, instanceCapacity["g4dn.2xlarge"], defaultRegions, "outdated-sha", "COMMIT_HASH_MISMATCH", false}, // Commit mismatch, sufficient capacity but different commit hashes
+		{"no capacity prod", metadata.EnvProd, 0, defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "NO_INSTANCE_AVAILABLE", false},                       // No capacity, but matching commit hash
+		{"some unavailable regions prod", metadata.EnvProd, instanceCapacity["g4dn.2xlarge"], []string{
+			"ap-southeast-1",
+			"ap-northeast-1",
+			"ap-south-1",
+			"us-west-1",
+			"us-east-1",
+		}, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true}, // Some unavailable regions
+		{"only unavailable regions prod", metadata.EnvProd, instanceCapacity["g4dn.2xlarge"], []string{
+			"ap-southeast-1",
+			"ap-northeast-1",
+			"ap-south-1",
+			"eu-north-1",
+		}, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true}, // Only unavailable regions
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			// Override environment so we can test commit hashes on the request
+			metadata.GetAppEnvironment = func() metadata.AppEnvironment {
+				return tt.env
+			}
+
 			// Populate test instances that will be used when
 			// mocking database functions.
 			testInstances = []subscriptions.Instance{
@@ -58,6 +110,17 @@ func TestMandelboxAssign(t *testing.T) {
 					Status:            "ACTIVE",
 					Type:              "g4dn.2xlarge",
 					Region:            "us-west-1",
+					IPAddress:         "1.1.1.1/24",
+					ClientSHA:         "test-sha",
+					RemainingCapacity: int64(tt.capacity),
+				},
+				{
+					ID:                "test-assign-instance-3",
+					Provider:          "AWS",
+					ImageID:           "test-image-id",
+					Status:            "ACTIVE",
+					Type:              "g4dn.2xlarge",
+					Region:            "ap-south-1",
 					IPAddress:         "1.1.1.1/24",
 					ClientSHA:         "test-sha",
 					RemainingCapacity: int64(tt.capacity),
@@ -89,7 +152,7 @@ func TestMandelboxAssign(t *testing.T) {
 			}
 
 			testAssignRequest := &httputils.MandelboxAssignRequest{
-				Regions:    []string{"us-east-1", "us-west-1"},
+				Regions:    tt.regions,
 				CommitHash: tt.clientSHA,
 				UserEmail:  "user@whist.com",
 				Version:    "2.13.2",

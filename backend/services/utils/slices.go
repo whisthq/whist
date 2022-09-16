@@ -46,17 +46,16 @@ func StringSliceContains(slice []string, val string) bool {
 // PrintSlice is a helper function to print a slice as a string of comma separated values.
 // The string is truncated to the first n elements in the slice, to improve readability.
 func PrintSlice[T constraints.Ordered](slice []T, n int) string {
-	// Default to 3 elements
-	if n <= 0 {
-		n = 3
+	if len(slice) < n {
+		n = len(slice)
 	}
 
 	var message string
 	for i, v := range slice[:n] {
-		if i+1 == len(slice) {
+		if i+1 == n {
 			message += Sprintf("%v", v)
 		} else {
-			message += Sprintf("%v ", v)
+			message += Sprintf("%v, ", v)
 		}
 	}
 	return message
