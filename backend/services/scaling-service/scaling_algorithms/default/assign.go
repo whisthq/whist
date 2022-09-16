@@ -140,7 +140,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		}
 
 		if len(instanceResult) == 0 {
-			logger.Warningw(utils.Sprintf("Failed to find an instance in %s for commit hash %s. Trying on next region.", region, mandelboxRequest.CommitHash), contextFields)
+			logger.Warningw(utils.Sprintf("Failed to find any instances with capacity in %s. Trying on next region.", region), contextFields)
 			continue
 		}
 
@@ -156,7 +156,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 				instanceFound = true
 				break
 			}
-			logger.Warningw(utils.Sprintf("Found an instance in %s but it has a different commit hash %s. Trying on next region.", region, mandelboxRequest.CommitHash), contextFields)
+			logger.Warningw(utils.Sprintf("Found an instance in %s but it has a different commit hash %s. Trying on next region.", region, assignedInstance.ClientSHA), contextFields)
 		}
 
 		// Break of outer loop if instance was found. If no instance with
@@ -164,10 +164,11 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		if instanceFound {
 			break
 		}
+		logger.Infow(utils.Sprintf("No instances found in %s with commit hash %s", region, mandelboxRequest.CommitHash), contextFields)
 	}
 
 	// No instances with capacity were found
-	if !instanceFound {
+	if assignedInstance == (subscriptions.Instance{}) {
 		serviceUnavailable = false
 		err := utils.MakeError("did not find an instance with capacity for user %s and commit hash %s", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{

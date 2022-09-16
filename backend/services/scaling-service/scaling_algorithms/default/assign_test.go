@@ -99,6 +99,13 @@ func TestMandelboxAssign(t *testing.T) {
 			wg := &sync.WaitGroup{}
 			errorChan := make(chan error, 1)
 
+			frontendVersion = &subscriptions.FrontendVersion{
+				ID:    1,
+				Major: 3,
+				Minor: 0,
+				Micro: 0,
+			}
+
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -121,19 +128,22 @@ func TestMandelboxAssign(t *testing.T) {
 			// Print the errors from the assign action to verify the
 			// behavior is the expected one.
 			err := <-errorChan
-			t.Logf("Error while testing mandelbox assign. Err: %v", err)
+			t.Log(err)
+			if err != nil && tt.shouldBeAssigned {
+				t.Errorf("error while testing mandelbox assign: %s", err)
+			}
 
 			if assignResult.Error != tt.want {
-				t.Errorf("Expected mandelbox assign request Error field to be %v, got %v", tt.want, assignResult.Error)
+				t.Errorf("expected mandelbox assign request Error field to be %v, got %v", tt.want, assignResult.Error)
 			}
 
 			id, err := uuid.Parse(assignResult.MandelboxID.String())
 			if err != nil {
-				t.Errorf("Got an invalid Mandelbox ID from the assign request %v. Err: %v", id, err)
+				t.Errorf("got an invalid Mandelbox ID from the assign request %s: %s", id, err)
 			}
 
 			if tt.shouldBeAssigned && assignResult.IP != "1.1.1.1" {
-				t.Errorf("None of the test instances were assigned correctly.")
+				t.Errorf("none of the test instances were assigned correctly.")
 			}
 		})
 	}
