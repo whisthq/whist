@@ -2558,7 +2558,7 @@ TEST_F(ProtocolTest, TCPSocketPairTest) {
         },
         "tcp_server_thread", &server);
     EXPECT_TRUE(
-        create_tcp_socket_context(&client, "0.0.0.0", BASE_TCP_PORT, 1, 1000, false, aes_key));
+        create_tcp_socket_context(&client, "127.0.0.1", BASE_TCP_PORT, 1, 1000, false, aes_key));
     int server_ret;
     whist_wait_thread(server_thread, &server_ret);
     EXPECT_EQ(server_ret, 1);
