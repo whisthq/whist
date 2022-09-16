@@ -172,11 +172,6 @@ static void vi_api_free_frame_ref(void* frame_ref) {
     av_frame_free(&frame);
 }
 
-// static void vi_api_set_video_playing(int window_id, bool playing) {
-//     std::lock_guard<std::mutex> guard(whist_window_mutex);
-//     whist_windows[window_id].playing = playing;
-// }
-
 static unsigned int vi_api_freeze_all_windows() {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     spotlight_expected_id++;

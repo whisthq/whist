@@ -12,6 +12,7 @@ import {
   initializeWhistTagHandler,
   // initializeWhistFreezeHandler,
   // initializeWhistThawHandler,
+  initializeWhistFreezeAllHandler,
   initializeWhistSpotlightHandler,
   initializeRequestMandelbox
 } from "./controls/whist"
@@ -42,6 +43,7 @@ window.onload = () => {
   initializeWhistTagHandler()
   // initializeWhistFreezeHandler()
   // initializeWhistThawHandler()
+  initializeWhistFreezeAllHandler()
   initializeWhistSpotlightHandler()
   initializeRequestMandelbox()
 }

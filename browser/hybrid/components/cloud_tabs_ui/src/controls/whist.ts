@@ -101,6 +101,33 @@ const initializeRequestMandelbox = () => {
 //   })
 // }
 
+const initializeWhistFreezeAllHandler = () => {
+  const whistTag: any = document.querySelector("whist")
+
+  ;(chrome as any).whist.onMessage.addListener((message: string) => {
+    const parsed = JSON.parse(message)
+
+    if (parsed.type = "CHANGE_FOCUSED_TAB" && parsed.value.id === getTabId()) {
+      if (whistParameters !== null && !whistTag.isWhistConnected()) {
+        whistTag.focus()
+        whistTag.whistConnect(whistParameters)
+      }
+
+      var spotlightId = whistTag.freezeAll()
+
+      ;(chrome as any).whist.broadcastWhistMessage(
+        JSON.stringify({
+          type: "WEB_UIS_FROZEN",
+          value: {
+            new_active_tab_id: getTabId(),
+            spotlight_id: spotlightId
+          },
+        })
+      )
+    }
+  })
+}
+
 const initializeWhistSpotlightHandler = () => {
   const whistTag: any = document.querySelector("whist")
 
@@ -116,12 +143,16 @@ const initializeWhistSpotlightHandler = () => {
         whistTag.whistConnect(whistParameters)
       }
 
-      // We delay by 100ms because this is the amount of time we expect the protocol to lag behind
-      // the socket.io message, since the protocol has extra video encode/decode latency.
-      // Lower values were tested and they led to flashes of other tabs being seen.
-      setTimeout(() => {
-        whistTag.takeSpotlight(spotlightId)
-      }, 100)
+      var spotlightId = parsed.value.spotlightId;
+
+      if (spotlightId != undefined) {
+        // We delay by 100ms because this is the amount of time we expect the protocol to lag behind
+        // the socket.io message, since the protocol has extra video encode/decode latency.
+        // Lower values were tested and they led to flashes of other tabs being seen.
+        setTimeout(() => {
+          whistTag.requestSpotlight(spotlightId)
+        }, 100)
+      }
     }
   })
 }
@@ -131,6 +162,7 @@ export {
   initializeRequestMandelbox,
   // initializeWhistFreezeHandler,
   // initializeWhistThawHandler,
+  initializeWhistFreezeAllHandler,
   initializeWhistSpotlightHandler,
   initializeRequestMandelbox
 }

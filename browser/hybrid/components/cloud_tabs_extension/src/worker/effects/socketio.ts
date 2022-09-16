@@ -17,9 +17,9 @@ import {
   tabZoomed,
 } from "@app/worker/events/tabs"
 import { 
-  webUINavigate, 
-  webUIRefresh, 
-  webUIMouseEntered,
+  webUiNavigate, 
+  webUiRefresh, 
+  webUiMouseEntered,
 } from "@app/worker/events/webui"
 import {
   getActiveTab,
@@ -67,14 +67,34 @@ merge(
     }
   })
 
-// If a tab is activated, active it on the server
-merge(tabActivated, tabFocused, webUIMouseEntered)
+// // If a tab is activated, active it on the server
+// merge(tabActivated, tabFocused, webUiMouseEntered)
+//   .pipe(withLatestFrom(serverCookiesSynced, socket))
+//   .subscribe(([tab, _synced, socket]: [chrome.tabs.Tab, any, Socket]) => {
+//     if (isCloudTab(tab)) {
+//       // Freeze all tabs, send activate-tab, timeout thaw on tab-activated
+//       // Freeze needs to happen synchronously
+//       // socket.emit("activate-tab", tab, false)
+//       ;(chrome as any).whist.broadcastWhistMessage(
+//         JSON.stringify({
+//           type: "CHANGE_FOCUSED_TAB",
+//           value: {
+//             id: tab.id,
+//           },
+//         })
+//       )
+//     }
+//   })
+
+// Web UIs get frozen in response to tabs switching, so activate the new active tab on the server
+webUisFrozen
   .pipe(withLatestFrom(serverCookiesSynced, socket))
-  .subscribe(([tab, _synced, socket]: [chrome.tabs.Tab, any, Socket]) => {
-    if (isCloudTab(tab)) {
-      socket.emit("activate-tab", tab, false)
+  .subscribe(([newActiveTab, spotlightId]: [chrome.tabs.Tab, number]) => {
+    const tab = find(whistState.activeCloudTabs, (t) => t.id === newActiveTabId)
+    if (tab !== undefined) {
+      socket.emit("activate-tab", tab, false, spotlightId)
     }
-  })
+  }
 
 // If a tab is removed, remove it on the server
 tabRemoved
@@ -108,14 +128,14 @@ tabZoomed
     socket.emit("zoom-tab", zoomChangeInfo)
   })
 
-webUINavigate
+webUiNavigate
   .pipe(withLatestFrom(socket))
   .subscribe(async ([message, socket]: [any, Socket]) => {
     const tab = await getTab(message.id)
     socket.emit("activate-tab", { ...tab, url: message.url }, true)
   })
 
-webUIRefresh
+webUiRefresh
   .pipe(withLatestFrom(socket))
   .subscribe(([message, socket]: [any, Socket]) => {
     socket.emit("refresh-tab", message)

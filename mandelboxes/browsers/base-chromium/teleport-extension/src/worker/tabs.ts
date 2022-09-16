@@ -28,7 +28,7 @@ const initSocketioConnection = () => {
 const initActivateTabListener = (socket: Socket) => {
   socket.on(
     "activate-tab",
-    async ([tabToActivate, reload]: [chrome.tabs.Tab, boolean]) => {
+    async ([tabToActivate, reload, spotlightId]: [chrome.tabs.Tab, boolean, number]) => {
       const openTabs = await getOpenTabs()
       const foundTab = find(openTabs, (t) => t.clientTabId === tabToActivate.id)
 
@@ -39,7 +39,7 @@ const initActivateTabListener = (socket: Socket) => {
         })?.then((_tab) => {
           if (tabToActivate.id !== undefined) {
             if (tabToActivate.active) {
-              socket.emit("tab-activated", tabToActivate.id)
+              socket.emit("tab-activated", tabToActivate.id, spotlightId)
             }
 
             chrome.storage.local.set({
@@ -51,7 +51,7 @@ const initActivateTabListener = (socket: Socket) => {
         updateTab(foundTab.tab.id, {
           active: tabToActivate.active,
         }).then(() => {
-          socket.emit("tab-activated", tabToActivate.id)
+          socket.emit("tab-activated", tabToActivate.id, spotlightId)
         })
       } else {
         const tab = await getTab(foundTab.tab.id)
@@ -63,7 +63,7 @@ const initActivateTabListener = (socket: Socket) => {
             url: urlToActivate,
           }),
         }).then(() => {
-          socket.emit("tab-activated", tabToActivate.id)
+          socket.emit("tab-activated", tabToActivate.id, spotlightId)
         })
       }
     }

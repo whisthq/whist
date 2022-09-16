@@ -398,17 +398,6 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
   }
 }
 
-// void HTMLWhistElement::whistPause() {
-//   WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_playing, whist_window_id_, false);
-// }
-
-// void HTMLWhistElement::whistPlay() {
-//   // We must re-send the latest resize message here, because if the video was
-//   // resize during the pause, we will play a stretched video.
-//   ProcessCachedResize();
-//   WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_playing, whist_window_id_, true);
-// }
-
 int HTMLWhistElement::freezeAll() {
   return WHIST_VIRTUAL_INTERFACE_CALL(video.freeze_all_windows);
 }

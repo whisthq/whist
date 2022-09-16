@@ -3,7 +3,7 @@ import { withLatestFrom } from "rxjs/operators"
 import find from "lodash.find"
 
 import { authSuccess } from "@app/worker/events/auth"
-import { webUIOpenSupport } from "@app/worker/events/webui"
+import { webUiOpenSupport } from "@app/worker/events/webui"
 import {
   tabActivated,
   tabRemoved,
@@ -73,6 +73,23 @@ merge(tabActivated, tabUpdated, tabFocused)
     )
 
     if (!isCloudTab(tab)) unmarkActiveCloudTab(tab)
+  })
+
+merge(tabActivated, tabUpdated, webUiMouseEntered.subscribe(
+  .subscribe((tab: chrome.tabs.Tab) => {
+    if (isCloudTab(tab)) {
+      // Freeze all tabs, send activate-tab, timeout thaw on tab-activated
+      // Freeze needs to happen synchronously
+      // socket.emit("activate-tab", tab, false)
+      ;(chrome as any).whist.broadcastWhistMessage(
+        JSON.stringify({
+          type: "CHANGE_FOCUSED_TAB",
+          value: {
+            id: tab.id,
+          },
+        })
+      )
+    }
   })
 
 // If a tab is removed, remove it from the cloud tab queue
@@ -162,7 +179,7 @@ cloudTabCreated.subscribe((tabs: chrome.tabs.Tab[]) => {
     void chrome.tabs.create({ url: tab.url, active: tab.active })
 })
 
-webUIOpenSupport.subscribe(createOrFocusHelpPopup)
+webUiOpenSupport.subscribe(createOrFocusHelpPopup)
 
 helpScreenOpened.pipe(withLatestFrom(authSuccess)).subscribe(([_, auth]) => {
   void chrome.runtime.sendMessage({
@@ -171,12 +188,13 @@ helpScreenOpened.pipe(withLatestFrom(authSuccess)).subscribe(([_, auth]) => {
   })
 })
 
-cloudTabActivated.subscribe(([tabId]: [number]) => {
+cloudTabActivated.subscribe(([tabId, spotlightId]: [number, number]) => {
   ;(chrome as any).whist.broadcastWhistMessage(
     JSON.stringify({
       type: "ACTIVATE_TAB",
       value: {
         id: tabId,
+        spotlightId: spotlightId
       },
     })
   )
