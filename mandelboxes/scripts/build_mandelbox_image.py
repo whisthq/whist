@@ -37,9 +37,9 @@ parser.add_argument(
     required=True,
 )
 parser.add_argument(
-    "--gpu",
+    "--nogpu",
     action="store_true",
-    help="This flag will build a mandelbox with GPU support",
+    help="This flag will build a mandelbox for a non-GPU setup",
 )
 parser.add_argument(
     "--beta",
@@ -54,7 +54,7 @@ args = parser.parse_args()
 # Input Variables
 show_output = not args.quiet
 beta = args.beta
-gpu = args.gpu
+nogpu = args.nogpu
 # Remove trailing slashes
 image_paths = [path.strip("/") for path in args.image_paths]
 build_all = args.all
@@ -144,12 +144,12 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
         command.append("--build-arg")
         command.append(f"InstallBeta={beta}")
 
-    if gpu:
-        command.append("--build-arg")
-        command.append("DisplayDriver=nvidia")
-    else:
+    if nogpu:
         command.append("--build-arg")
         command.append("DisplayDriver=dummy")
+    else:
+        command.append("--build-arg")
+        command.append("DisplayDriver=nvidia")
 
     status = 0
 

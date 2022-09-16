@@ -33,7 +33,7 @@ mandelboxes.
 To set up the host for local development, pass in the --localdevelopment flag.
 To set it up for deployments, pass in the --deployment flag, followed by the
 arguments described in the comment for \`deployment_setup_steps\`.
-To set up the host for GPU usage, add the --gpu flag to any existing
+To set up the host for non-GPU usage, add the --nogpu flag to any existing
 arguments.
 EOF
   # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
@@ -459,14 +459,14 @@ eval set -- "$TEMP"
 LOCAL_DEVELOPMENT=
 DEPLOYMENT=
 CLOUD_PROVIDER="AWS"
-GPU=
+GPU=true
 while true; do
   case "$1" in
     -h | --help | --usage) usage ;;
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
     -p | --provider ) CLOUD_PROVIDER=$2; shift 2 ;;
-    -g | --gpu ) GPU=true; shift ;;
+    -ng | --nogpu ) GPU=false; shift ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
