@@ -38,6 +38,7 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -86,6 +87,11 @@ func main() {
 		logger.Errorf("failed to start config GraphQL client: %s", err)
 	}
 
+	if err := config.Initialize(globalCtx, configGraphqlClient); err != nil {
+		logger.Errorf("Failed to retrieve configuration values: %s", err)
+		return
+	}
+
 	// Start database subscriptions
 	subscriptionEvents = make(chan subscriptions.SubscriptionEvent, 100)
 	subscriptionClient = &subscriptions.SubscriptionClient{}
@@ -111,7 +117,7 @@ func main() {
 	algorithmByRegionMap := &sync.Map{}
 
 	// Load default scaling algorithm for all enabled regions.
-	for _, region := range algos.GetEnabledRegions() {
+	for _, region := range config.GetEnabledRegions() {
 		name := utils.Sprintf("default-sa-%s", region)
 		algorithmByRegionMap.Store(name, &algos.DefaultScalingAlgorithm{
 			Region: region,
@@ -374,7 +380,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 
 		case scheduledEvent := <-scheduledEvents:
 			// Start scaling algorithm based on region
-			for _, region := range algos.GetEnabledRegions() {
+			for _, region := range config.GetEnabledRegions() {
 				scheduledEvent.Region = region
 				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
 				switch algorithm := algorithm.(type) {

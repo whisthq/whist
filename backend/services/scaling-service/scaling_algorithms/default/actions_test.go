@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
@@ -232,6 +233,8 @@ func setup() {
 	desiredFreeMandelboxesPerRegion = map[string]int{
 		"test-region": 2,
 	}
+
+	config.Initialize(context.TODO(), testGraphQLClient)
 }
 
 func TestMain(m *testing.M) {

@@ -28,6 +28,7 @@ import (
 	"sync"
 
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
 	aws "github.com/whisthq/whist/backend/services/scaling-service/hosts/aws"
@@ -172,7 +173,7 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 
 	// Look for each region's entry in the config database values
 	// to populate the `desiredFreeMandelboxesPerRegion` map.
-	for _, region := range GetEnabledRegions() {
+	for _, region := range config.GetEnabledRegions() {
 		// Parse the region string to the format used by
 		// the config database so we can get the value.
 		key := strings.ReplaceAll(region, "-", "_")

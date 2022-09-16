@@ -8,6 +8,7 @@ import (
 	hashicorp "github.com/hashicorp/go-version"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/types"
@@ -73,7 +74,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// Populate availableRegions
 	for _, requestedRegion := range requestedRegions {
 		var regionFound bool
-		for _, enabledRegion := range GetEnabledRegions() {
+		for _, enabledRegion := range config.GetEnabledRegions() {
 			if enabledRegion == requestedRegion {
 				availableRegions = append(availableRegions, requestedRegion)
 				regionFound = true
