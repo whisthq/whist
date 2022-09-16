@@ -36,8 +36,6 @@ extern "C" {
 #include "whist/debug/plotter.h"
 }
 
-#include "whist/network/congestion_control/congestion_controller.h"
-
 // Updater variables
 extern "C" {
 extern SocketContext packet_udp_context;
@@ -67,8 +65,6 @@ Public Function Implementations
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 static int multithreaded_sync_udp_packets(void* opaque) {
-
-    example_call();
     /*
         Send, receive, and process UDP packets - dimension messages, audio/video packets.
     */

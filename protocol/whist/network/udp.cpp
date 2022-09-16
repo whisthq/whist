@@ -26,6 +26,8 @@ extern "C" {
 #include <whist/fec/fec_controller.h>
 }
 
+#include <whist/network/congestion_control/cc_interface.h>
+
 #if !OS_IS(OS_WIN32)
 #include <fcntl.h>
 #endif
@@ -224,6 +226,7 @@ typedef struct {
     void* nack_queue;
 
     void* fec_controller;
+    void* congestion_controller;
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -1130,6 +1133,7 @@ bool create_udp_socket_context(SocketContext* network_context, const char* desti
         ret = create_udp_client_context(context, destination, port, connection_timeout_ms);
         if (ret == 0) {
             context->fec_controller = create_fec_controller(get_timestamp_sec());
+            context->congestion_controller = create_congestion_controller();
         }
     }
 

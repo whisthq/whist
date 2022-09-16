@@ -28,6 +28,6 @@ set(COMMON_FILES
 add_executable(a.out main.cpp ${COMMON_FILES})
 
 add_library(whistCC STATIC
-        congestion_controller.cpp
+        cc_impl.cpp
         ${COMMON_FILES}
         )
