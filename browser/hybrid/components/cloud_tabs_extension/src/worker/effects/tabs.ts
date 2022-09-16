@@ -3,7 +3,7 @@ import { withLatestFrom } from "rxjs/operators"
 import find from "lodash.find"
 
 import { authSuccess } from "@app/worker/events/auth"
-import { webUiOpenSupport } from "@app/worker/events/webui"
+import { webUiOpenSupport, webUiMouseEntered } from "@app/worker/events/webui"
 import {
   tabActivated,
   tabRemoved,
@@ -75,7 +75,7 @@ merge(tabActivated, tabUpdated, tabFocused)
     if (!isCloudTab(tab)) unmarkActiveCloudTab(tab)
   })
 
-merge(tabActivated, tabUpdated, webUiMouseEntered.subscribe(
+merge(tabActivated, tabUpdated, webUiMouseEntered)
   .subscribe((tab: chrome.tabs.Tab) => {
     if (isCloudTab(tab)) {
       // Freeze all tabs, send activate-tab, timeout thaw on tab-activated

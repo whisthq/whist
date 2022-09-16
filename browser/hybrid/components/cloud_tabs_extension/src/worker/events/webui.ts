@@ -75,7 +75,7 @@ const webUisFrozen = fromEventPattern(
   switchMap((message: any) => [
     from(getTab(message.value.new_active_tab_id)),
     message.value.spotlight_id
-  ],
+  ]),
   share()
 )
 
@@ -85,5 +85,6 @@ export {
   webUiRefresh,
   webUiMandelboxNeeded,
   welcomePageOpened,
-  webUiMouseEntered
+  webUiMouseEntered,
+  webUisFrozen,
 }

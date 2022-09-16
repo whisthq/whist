@@ -19,7 +19,7 @@ import {
 import { 
   webUiNavigate, 
   webUiRefresh, 
-  webUiMouseEntered,
+  webUisFrozen,
 } from "@app/worker/events/webui"
 import {
   getActiveTab,
@@ -89,12 +89,11 @@ merge(
 // Web UIs get frozen in response to tabs switching, so activate the new active tab on the server
 webUisFrozen
   .pipe(withLatestFrom(serverCookiesSynced, socket))
-  .subscribe(([newActiveTab, spotlightId]: [chrome.tabs.Tab, number]) => {
-    const tab = find(whistState.activeCloudTabs, (t) => t.id === newActiveTabId)
-    if (tab !== undefined) {
-      socket.emit("activate-tab", tab, false, spotlightId)
+  .subscribe(([newActiveTab, spotlightId, socket]: [chrome.tabs.Tab, number, Socket]) => {
+    if (isCloudTab(newActiveTab)) {
+      socket.emit("activate-tab", newActiveTab, false, spotlightId)
     }
-  }
+  })
 
 // If a tab is removed, remove it on the server
 tabRemoved
