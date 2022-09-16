@@ -178,11 +178,6 @@ func cleanupTestDirs() error {
 }
 
 func TestPrintSlice(t *testing.T) {
-	type customType struct {
-		A string
-		B int
-	}
-
 	var tests = []struct {
 		name     string
 		slice    interface{}
