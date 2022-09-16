@@ -181,10 +181,10 @@ static unsigned int vi_api_freeze_all_windows() {
     return spotlight_expected_id;
 }
 
-static void vi_api_set_video_spotlight(int spotlight_window_id, int spotlight_id) {
+static void vi_api_set_video_spotlight(int window_id, unsigned int spotlight_id) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
-    if (spotlight_event_id != spotlight_expected_id) return;
-    whist_windows[spotlight_window_id].playing = true;
+    if (spotlight_id != spotlight_expected_id) return;
+    whist_windows[window_id].playing = true;
 }
 
 void virtual_interface_send_frame(AVFrame* frame) {

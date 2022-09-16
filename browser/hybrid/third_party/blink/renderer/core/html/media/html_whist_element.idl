@@ -31,7 +31,7 @@
     ActiveScriptWrappable
 ] interface HTMLWhistElement : HTMLVideoElement {
     long freezeAll();
-    void requestSpotlight(int spotlight_id);
+    void requestSpotlight(long spotlight_id);
     [ImplementedAs=whistConnect] void whistConnect(DOMString whist_parameters);
     [ImplementedAs=isWhistConnected] boolean isWhistConnected();
 };
