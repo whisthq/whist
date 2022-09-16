@@ -26,7 +26,7 @@ webRequest.subscribe((response: any) => {
 
     if (!isCloudUrl && host !== currentHost) {
       unmarkActiveCloudTab(tab)
-      updateTabUrl(tab.id, `cloud:${response.url as string}`)
+      void updateTabUrl(tab.id, `cloud:${response.url as string}`)
     }
   })
 })

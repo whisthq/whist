@@ -10,7 +10,7 @@ const sendMessageToBackground = (
   if (callback !== undefined) {
     chrome.runtime.sendMessage(popupMessage, callback)
   } else {
-    chrome.runtime.sendMessage(popupMessage)
+    void chrome.runtime.sendMessage(popupMessage)
   }
 }
 

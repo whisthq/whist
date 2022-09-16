@@ -9,35 +9,50 @@ import { whistState } from "@app/worker/utils/state"
 import { PopupMessage, PopupMessageType } from "@app/@types/messaging"
 import { AuthInfo } from "@app/@types/payload"
 import { Storage } from "@app/constants/storage"
+import { welcomePageOpened } from "../events/webui"
 
 void initConfigTokenHandler()
 
 // Tell the browser that auth succeeded and redirect to chrome://welcome
-authSuccess.subscribe((auth: AuthInfo) => {
+authSuccess.subscribe(async (auth: AuthInfo) => {
   whistState.isLoggedIn = true
-  ;(chrome as any).whist.setWhistIsLoggedIn(true, async () => {
-    if (auth.isFirstAuth) {
-      const { id } = await getActiveTab()
-      updateTabUrl(id ?? -1, "chrome://welcome")
-    }
 
-    chrome.runtime.sendMessage(<PopupMessage>{
-      type: PopupMessageType.SEND_POPUP_DATA,
+  if (auth.isFirstAuth) {
+    const { id } = await getActiveTab()
+    void updateTabUrl(id ?? -1, "chrome://welcome")
+  }
+
+  void chrome.runtime.sendMessage(<PopupMessage>{
+    type: PopupMessageType.SEND_POPUP_DATA,
+    value: {
+      isLoggedIn: true,
+    },
+  })
+
+  void setStorage(Storage.AUTH_INFO, auth)
+  ;(chrome as any).whist.broadcastWhistMessage(
+    JSON.stringify({
+      type: "IS_LOGGED_IN",
       value: {
-        isLoggedIn: true,
+        loggedIn: true,
       },
     })
-
-    void setStorage(Storage.AUTH_INFO, auth)
-    whistState.isLoggedIn = true
-  })
+  )
 })
 
 // Tell the browser that auth failed
 authFailure.subscribe(async () => {
   whistState.isLoggedIn = false
-  ;(chrome as any).whist.setWhistIsLoggedIn(false)
-  chrome.runtime.sendMessage(<PopupMessage>{
+  ;(chrome as any).whist.broadcastWhistMessage(
+    JSON.stringify({
+      type: "IS_LOGGED_IN",
+      value: {
+        loggedIn: false,
+      },
+    })
+  )
+
+  void chrome.runtime.sendMessage(<PopupMessage>{
     type: PopupMessageType.SEND_POPUP_DATA,
     value: {
       isLoggedIn: false,
@@ -50,5 +65,17 @@ authFailure.pipe(take(1)).subscribe(async () => {
   const authInfo = await getStorage<AuthInfo>(Storage.AUTH_INFO)
 
   if (authInfo?.accessToken === undefined)
-    updateTabUrl(id ?? -1, "chrome://welcome")
+    void updateTabUrl(id ?? -1, "chrome://welcome")
+})
+
+welcomePageOpened.subscribe(() => {
+  console.log("welcome page opened", whistState.isLoggedIn)
+  ;(chrome as any).whist.broadcastWhistMessage(
+    JSON.stringify({
+      type: "IS_LOGGED_IN",
+      value: {
+        loggedIn: whistState.isLoggedIn,
+      },
+    })
+  )
 })

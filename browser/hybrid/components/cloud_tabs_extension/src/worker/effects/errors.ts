@@ -15,9 +15,9 @@ import { CloudTabError } from "@app/constants/errors"
 
 const showPopup = (type: CloudTabError) => {
   whistState.waitingCloudTabs.forEach((tab) => {
-    updateTabUrl(tab.id, stripCloudUrl(tab.url ?? ""), () => {
+    void updateTabUrl(tab.id, stripCloudUrl(tab.url ?? ""), () => {
       setTimeout(() => {
-        chrome.tabs.sendMessage(tab.id ?? 0, { type })
+        void chrome.tabs.sendMessage(tab.id ?? 0, { type })
       }, 1000)
     })
   })

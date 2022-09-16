@@ -57,5 +57,5 @@ serverCookieAdded.subscribe(([cookie]: [chrome.cookies.Cookie]) => {
   } as chrome.cookies.SetDetails
 
   whistState.alreadyAddedCookies.push(cookie)
-  chrome.cookies.set(details)
+  void chrome.cookies.set(details)
 })

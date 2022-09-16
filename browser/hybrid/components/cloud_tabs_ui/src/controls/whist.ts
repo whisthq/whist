@@ -32,10 +32,10 @@ const initializeRequestMandelbox = () => {
       )
     }
 
-    if(!whistTag.isWhistConnected()) {
-      state.wasConnected = false 
+    if (!whistTag.isWhistConnected()) {
+      state.wasConnected = false
     }
-    
+
     if (whistTag.isWhistConnected()) {
       state.wasConnected = true
       mandelboxRequested = false
@@ -46,26 +46,26 @@ const initializeRequestMandelbox = () => {
 const initializeWhistFreezeHandler = () => {
   const whistTag: any = document.querySelector("whist")
 
-  chrome.windows.onFocusChanged.addListener((windowId: number) => {
-    if (windowId < 0 || windowId !== sessionStorage.getNumber("windowId")) {
-      whistTag.freeze()
-    } else {
-      chrome.tabs.query(
-        {
-          active: true,
-          windowId,
-        },
-        (tabs) => {
-          const tabId = tabs[0]?.id
-          if (tabId !== sessionStorage.getNumber("tabId")) whistTag.freeze()
-        }
-      )
-    }
-  })
+  ;(chrome as any).whist.onMessage.addListener((message: string) => {
+    const parsed = JSON.parse(message)
 
-  chrome.tabs.onActivated.addListener((activeInfo: { tabId: number }) => {
-    if (activeInfo.tabId !== sessionStorage.getNumber("tabId"))
+    if (parsed.type === "WINDOW_FOCUSED") {
+      if (
+        parsed.value.windowId < 0 ||
+        parsed.value.windowId !== sessionStorage.getNumber("windowId")
+      ) {
+        whistTag.freeze()
+      } else if (parsed.value.tabId !== sessionStorage.getNumber("tabId")) {
+        whistTag.freeze()
+      }
+    }
+
+    if (
+      parsed.type === "TAB_ACTIVATED" &&
+      parsed.value.id !== sessionStorage.getNumber("tabId")
+    ) {
       whistTag.freeze()
+    }
   })
 }
 
@@ -97,5 +97,5 @@ export {
   initializeWhistTagHandler,
   initializeWhistFreezeHandler,
   initializeWhistThawHandler,
-  initializeRequestMandelbox
+  initializeRequestMandelbox,
 }

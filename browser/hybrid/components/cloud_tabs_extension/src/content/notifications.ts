@@ -46,13 +46,13 @@ const initNotificationListener = () => {
 
     if (message.type === CloudTabError.AUTH_ERROR) {
       notification.addEventListener("click", () => {
-        chrome.runtime.sendMessage({ type: "SHOW_LOGIN_PAGE" })
+        void chrome.runtime.sendMessage({ type: "SHOW_LOGIN_PAGE" })
       })
     }
 
     if (message.type === CloudTabError.UPDATE_NEEDED) {
       notification.addEventListener("click", () => {
-        chrome.runtime.sendMessage({ type: "SHOW_UPDATE_PAGE" })
+        void chrome.runtime.sendMessage({ type: "SHOW_UPDATE_PAGE" })
       })
     }
 

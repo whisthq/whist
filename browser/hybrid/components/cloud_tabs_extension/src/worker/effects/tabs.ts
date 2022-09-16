@@ -42,7 +42,8 @@ authSuccess.subscribe(() => {
 
     if (!sameWindow) {
       cloudTabs.forEach((tab) => {
-        if (tab.url !== undefined) updateTabUrl(tab.id, stripCloudUrl(tab.url))
+        if (tab.url !== undefined)
+          void updateTabUrl(tab.id, stripCloudUrl(tab.url))
       })
     } else {
       cloudTabs.forEach((tab) => {
@@ -91,6 +92,17 @@ tabUpdated.subscribe((tab: chrome.tabs.Tab) => {
   }
 })
 
+tabActivated.subscribe((tab: chrome.tabs.Tab) => {
+  ;(chrome as any).whist.broadcastWhistMessage(
+    JSON.stringify({
+      type: "TAB_ACTIVATED",
+      value: {
+        id: tab.id,
+      },
+    })
+  )
+})
+
 cloudTabUpdated.subscribe(
   async ([tabId, _historyLength, tab]: [number, number, chrome.tabs.Tab]) => {
     if (tabId === undefined || cannotStreamError(tab) !== undefined) return
@@ -132,7 +144,7 @@ cloudTabUpdated.subscribe(
 cloudTabUpdated.subscribe(
   ([tabId, _historyLength, tab]: [number, number, chrome.tabs.Tab]) => {
     if (tab.url !== undefined && cannotStreamError(tab) !== undefined) {
-      updateTabUrl(tabId, stripCloudUrl(tab.url))
+      void updateTabUrl(tabId, stripCloudUrl(tab.url))
     }
   }
 )
@@ -141,11 +153,11 @@ cloudTabCreated.subscribe((tabs: chrome.tabs.Tab[]) => {
   const tab = tabs[0]
 
   if (tab.url !== undefined)
-    chrome.tabs.create({ url: tab.url, active: tab.active })
+    void chrome.tabs.create({ url: tab.url, active: tab.active })
 })
 
 webuiOpenSupport.subscribe(() => {
-  chrome.tabs.create({ url: chrome.runtime.getURL("intercom.html") })
+  void chrome.tabs.create({ url: chrome.runtime.getURL("intercom.html") })
 })
 
 cloudTabActivated.subscribe(([tabId]: [number]) => {

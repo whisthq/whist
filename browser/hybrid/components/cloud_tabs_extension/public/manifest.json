@@ -34,10 +34,7 @@
     "webRequestBlocking",
     "webNavigation",
     "runtime",
-    "*://*/*",
-    "*://fractal-dev.us.auth0.com/*",
-    "*://fractal-staging.us.auth0.com/*",
-    "*://auth.whist.com/*"
+    "*://*/*"
   ],
   "host_permissions": ["*://*/*"],
   "icons": {
