@@ -9,7 +9,11 @@ import {
 } from "rxjs/operators"
 
 import { getStorage } from "@app/worker/utils/storage"
-import { hostSpinUp, hostSpinUpSuccess } from "@app/worker/utils/host"
+import {
+  hostSpinUp,
+  hostSpinUpSuccess,
+  HostSpinUpResponse,
+} from "@app/worker/utils/host"
 import {
   timeZone,
   darkMode,
@@ -20,9 +24,8 @@ import {
 } from "@app/worker/utils/jsonTransport"
 import { mandelboxSuccess } from "@app/worker/events/mandelbox"
 
-import { MandelboxInfo } from "@app/@types/payload"
+import { AuthInfo, ConfigTokenInfo, MandelboxInfo } from "@app/@types/payload"
 import { Storage } from "@app/constants/storage"
-import { AsyncReturnType } from "@app/@types/api"
 import { generateRandomConfigToken } from "@app/@core-ts/auth"
 
 const jsonTransport = async () => {
@@ -51,14 +54,15 @@ const hostInfo = mandelboxSuccess.pipe(
   switchMap((mandelbox: MandelboxInfo) =>
     from(
       Promise.all([
-        getStorage(Storage.AUTH_INFO),
-        getStorage(Storage.CONFIG_TOKEN_INFO),
-        new Promise((resolve) => resolve(mandelbox)),
+        getStorage<AuthInfo>(Storage.AUTH_INFO),
+        getStorage<ConfigTokenInfo>(Storage.CONFIG_TOKEN_INFO),
+        // TODO: This is silly and probably not needed.
+        new Promise<MandelboxInfo>((resolve) => resolve(mandelbox)),
         jsonTransport(),
       ])
     )
   ),
-  switchMap(([auth, _configTokenInfo, mandelbox, jsonData]) =>
+  switchMap(([auth, _, mandelbox, jsonData]) =>
     from(
       hostSpinUp({
         ip: mandelbox.mandelboxIP ?? "",
@@ -76,17 +80,15 @@ const hostInfo = mandelboxSuccess.pipe(
       })
     ).pipe(
       timeout(10000), // If nothing is emitted for 10s, we assume a timeout so that an error can be shown
-      catchError(() => of({}))
+      catchError(() => of({} as HostSpinUpResponse))
     )
   ),
   share()
 )
 
 const hostSuccess = hostInfo.pipe(
-  filter((response: AsyncReturnType<typeof hostSpinUp>) =>
-    hostSpinUpSuccess(response)
-  ),
-  map((response: AsyncReturnType<typeof hostSpinUp>) => ({
+  filter((response: HostSpinUpResponse) => hostSpinUpSuccess(response)),
+  map((response: HostSpinUpResponse) => ({
     mandelboxSecret: response.json?.result?.aes_key,
     mandelboxPorts: {
       port_32261: response.json?.result?.port_32261,
@@ -99,10 +101,7 @@ const hostSuccess = hostInfo.pipe(
 )
 
 const hostError = hostInfo.pipe(
-  filter(
-    (response: AsyncReturnType<typeof hostSpinUp>) =>
-      !hostSpinUpSuccess(response)
-  ),
+  filter((response: HostSpinUpResponse) => !hostSpinUpSuccess(response)),
   share()
 )
 

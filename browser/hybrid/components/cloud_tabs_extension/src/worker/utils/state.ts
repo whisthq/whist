@@ -5,34 +5,45 @@ import { MandelboxState } from "@app/constants/storage"
 import onChange from "on-change"
 import { MandelboxInfo, HostInfo } from "@app/@types/payload"
 
-const _stateDidChange = new ReplaySubject()
-
-const _whistState = {
-  isLoggedIn: false,
-  waitingCloudTabs: [] as chrome.tabs.Tab[],
-  activeCloudTabs: [] as chrome.tabs.Tab[],
-  mandelboxState: MandelboxState.MANDELBOX_NONEXISTENT as MandelboxState,
-  mandelboxInfo: undefined as (HostInfo & MandelboxInfo) | undefined,
-  alreadyAddedCookies: [] as chrome.cookies.Cookie[],
+interface WhistState {
+  isLoggedIn: boolean
+  waitingCloudTabs: chrome.tabs.Tab[]
+  activeCloudTabs: chrome.tabs.Tab[]
+  mandelboxState: MandelboxState
+  mandelboxInfo: (HostInfo & MandelboxInfo) | undefined
+  alreadyAddedCookies: chrome.cookies.Cookie[]
 }
+
+interface WhistStateChange {
+  path: string
+  value: WhistState
+  previousValue: WhistState
+  applyData: {
+    name: string
+    args: any[]
+  }
+}
+
+const _whistState: WhistState = {
+  isLoggedIn: false,
+  waitingCloudTabs: [],
+  activeCloudTabs: [],
+  mandelboxState: MandelboxState.MANDELBOX_NONEXISTENT,
+  mandelboxInfo: undefined,
+  alreadyAddedCookies: [],
+}
+
+const _stateDidChange = new ReplaySubject<WhistStateChange>()
 
 const whistState = onChange(
   _whistState,
-  (
-    path: string,
-    value: any,
-    previousValue: any,
-    applyData: {
-      name: string
-      args: any[]
-    }
-  ) => {
+  (path, value, previousValue, applyData) => {
     _stateDidChange.next({
       path,
       value,
       previousValue,
       applyData,
-    })
+    } as WhistStateChange)
   }
 )
 

@@ -68,4 +68,4 @@ const hostSpinUpSuccess = (res: HostSpinUpResponse) => {
   )
 }
 
-export { hostSpinUp, hostSpinUpSuccess }
+export { hostSpinUp, hostSpinUpSuccess, HostSpinUpResponse }

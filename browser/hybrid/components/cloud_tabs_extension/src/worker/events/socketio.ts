@@ -14,6 +14,7 @@ import { mandelboxSuccess } from "@app/worker/events/mandelbox"
 import { hostSuccess } from "@app/worker/events/host"
 import { io, Socket } from "socket.io-client"
 import { MandelboxInfo, HostInfo } from "@app/@types/payload"
+import { JQueryStyleEventEmitter } from "rxjs/internal/observable/fromEvent"
 
 const socket = zip(mandelboxSuccess, hostSuccess).pipe(
   map(([mandelbox, host]: [MandelboxInfo, HostInfo]) =>
@@ -44,7 +45,10 @@ const socketDisconnected = socket.pipe(
 
 const socketReconnectFailed = merge(socket, socketConnected).pipe(
   switchMap((s: Socket) =>
-    fromEvent(s.io, "reconnect_error").pipe(take(15), count())
+    fromEvent(
+      s.io as JQueryStyleEventEmitter<any, Error>,
+      "reconnect_error"
+    ).pipe(take(15), count())
   )
 )
 

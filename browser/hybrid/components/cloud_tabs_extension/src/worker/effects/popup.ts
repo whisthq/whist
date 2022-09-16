@@ -37,63 +37,59 @@ import { inviteCode } from "@app/constants/app"
 import { AWSRegion, regions } from "@app/constants/location"
 
 // If the popup is opened, send the necessary display information
-popupOpened
-  .pipe(withLatestFrom(authSuccess))
-  .subscribe(async ([event]: [any]) => {
-    void Promise.all([
-      getNumberOfCloudTabs(),
-      getActiveTab(),
-      getStorage<boolean | undefined>(Storage.WAITLISTED),
-      getStorage<string[]>(Storage.SAVED_CLOUD_URLS),
-      getStorage<Array<{ region: AWSRegion; pingTime: number }>>(
-        Storage.CLOSEST_AWS_REGIONS
-      ),
-    ]).then(
-      ([
-        numberCloudTabs,
-        activeTab,
-        waitlisted,
-        savedCloudUrls,
-        sortedRegions,
-      ]) => {
-        const url = new URL(stripCloudUrl(activeTab.url ?? ""))
-        const host =
-          url?.protocol === "http:" || url?.protocol === "https:"
-            ? url?.hostname
-            : undefined
+popupOpened.pipe(withLatestFrom(authSuccess)).subscribe(async ([event]) => {
+  void Promise.all([
+    getNumberOfCloudTabs(),
+    getActiveTab(),
+    getStorage<boolean | undefined>(Storage.WAITLISTED),
+    getStorage<string[]>(Storage.SAVED_CLOUD_URLS),
+    getStorage<Array<{ region: AWSRegion; pingTime: number }>>(
+      Storage.CLOSEST_AWS_REGIONS
+    ),
+  ]).then(
+    ([
+      numberCloudTabs,
+      activeTab,
+      waitlisted,
+      savedCloudUrls,
+      sortedRegions,
+    ]) => {
+      const url = new URL(stripCloudUrl(activeTab.url ?? ""))
+      const host =
+        url?.protocol === "http:" || url?.protocol === "https:"
+          ? url?.hostname
+          : undefined
 
-        event.sendResponse({
-          isCloudTab: isCloudTab(activeTab),
-          isWaiting: whistState.waitingCloudTabs.some(
-            (tab: chrome.tabs.Tab) => activeTab.id === tab.id
-          ),
-          isSaved: (savedCloudUrls ?? []).some(
-            (_host: string) => _host === host
-          ),
-          error: cannotStreamError(activeTab),
-          numberCloudTabs,
-          host,
-          isLoggedIn: true,
-          waitlisted: waitlisted ?? true,
-          networkInfo: {
-            ...sortedRegions[0],
-            region: regions.find((r) => r.name === sortedRegions[0]?.region)
-              ?.location,
-          },
-        })
-      }
-    )
-  })
+      event.sendResponse({
+        isCloudTab: isCloudTab(activeTab),
+        isWaiting: whistState.waitingCloudTabs.some(
+          (tab: chrome.tabs.Tab) => activeTab.id === tab.id
+        ),
+        isSaved: (savedCloudUrls ?? []).some((_host: string) => _host === host),
+        error: cannotStreamError(activeTab),
+        numberCloudTabs,
+        host,
+        isLoggedIn: true,
+        waitlisted: waitlisted ?? true,
+        networkInfo: {
+          ...sortedRegions[0],
+          region: regions.find((r) => r.name === sortedRegions[0]?.region)
+            ?.location,
+        },
+      })
+    }
+  )
+})
 
 popupOpened
   .pipe(withLatestFrom(authFailure), takeUntil(authSuccess))
-  .subscribe(([event]: [any]) => {
+  .subscribe(([event]) => {
     event.sendResponse({ isLoggedIn: false })
   })
 
 popupOpened
   .pipe(withLatestFrom(authNetworkError), takeUntil(authSuccess))
-  .subscribe(([event]: [any]) => {
+  .subscribe(([event]) => {
     event.sendResponse({ networkError: true })
   })
 
