@@ -88,8 +88,9 @@ merge(
 
 // Web UIs get frozen in response to tabs switching, so activate the new active tab on the server
 webUisFrozen
-  .pipe(withLatestFrom(serverCookiesSynced, socket))
-  .subscribe(([newActiveTab, spotlightId, socket]: [chrome.tabs.Tab, number, Socket]) => {
+  .pipe(withLatestFrom(socket))
+  .subscribe(([[newActiveTab, spotlightId], socket]: [[chrome.tabs.Tab, number], Socket]) => {
+    console.log("webUisFrozen event")
     if (isCloudTab(newActiveTab)) {
       socket.emit("activate-tab", newActiveTab, false, spotlightId)
     }

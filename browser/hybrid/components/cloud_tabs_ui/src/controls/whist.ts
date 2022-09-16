@@ -113,7 +113,10 @@ const initializeWhistFreezeAllHandler = () => {
         whistTag.whistConnect(whistParameters)
       }
 
+      // TODO: check to make sure that we are not already focused before
+      // freezing, etc.
       var spotlightId = whistTag.freezeAll()
+      console.log("freeze all id: ", spotlightId)
 
       ;(chrome as any).whist.broadcastWhistMessage(
         JSON.stringify({
@@ -142,6 +145,8 @@ const initializeWhistSpotlightHandler = () => {
         whistTag.focus()
         whistTag.whistConnect(whistParameters)
       }
+
+      console.log("message for spotlighting: ", parsed)
 
       var spotlightId = parsed.value.spotlightId;
 

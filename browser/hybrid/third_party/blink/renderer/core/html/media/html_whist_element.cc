@@ -399,10 +399,12 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
 }
 
 int HTMLWhistElement::freezeAll() {
+  LOG(ERROR) << "freezeAll";
   return WHIST_VIRTUAL_INTERFACE_CALL(video.freeze_all_windows);
 }
 
 void HTMLWhistElement::requestSpotlight(int spotlight_id) {
+  LOG(ERROR) << "requestSpotlight " << spotlight_id;
   ProcessCachedResize();
   WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_spotlight, whist_window_id_, spotlight_id);
 }
