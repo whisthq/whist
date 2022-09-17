@@ -1,7 +1,7 @@
 import fetch from "node-fetch"
 import { DeployEnvironment, HasuraAdminSecret } from "./config"
 
-export interface SessionsData {
+interface SessionData {
   app: string
   instance: {
     client_sha: string
@@ -22,7 +22,7 @@ export interface SessionsData {
 
 type JSONResponse = {
   data?: {
-    whist_mandelboxes: [Omit<SessionsData, "fetchedAt">]
+    whist_mandelboxes: [Omit<SessionData, "fetchedAt">]
   }
   errors?: Array<{ message: string }>
 }
