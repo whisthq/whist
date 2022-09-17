@@ -136,8 +136,7 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
 
   # Allow inbound traffic on port 443 so the instance
   # can use SSM
-  dynamic "ingress" {
-    for_each = var.env != "prod" ? [1] : []
+  ingress {
     content {
       description = "whist-tcp-rule"
       protocol    = "tcp"
@@ -147,9 +146,8 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
     }
   }
 
-  # Allow incoming SSH traffic on dev and staging
-  dynamic "ingress" {
-    for_each = var.env != "prod" ? [1] : []
+  # Allow incoming SSH traffic
+  ingress {
     content {
       description = "whist-ssh-rule"
       protocol    = "tcp"
