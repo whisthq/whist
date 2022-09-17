@@ -12,11 +12,14 @@ import {
   initializeWhistTagHandler,
   initializeWhistFreezeHandler,
   initializeWhistThawHandler,
-  initializeRequestMandelbox
+  initializeRequestMandelbox,
 } from "./controls/whist"
 import { initializePageRefreshHandler } from "./controls/refresh"
 
-import { createStartNotification, createDisconnectNotification } from "./ui/notifications"
+import {
+  createStartNotification,
+  createDisconnectNotification,
+} from "./ui/notifications"
 import { initializeLoadingScreen } from "./ui/loading"
 
 window.onload = () => {

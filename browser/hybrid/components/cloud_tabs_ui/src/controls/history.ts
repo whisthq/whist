@@ -41,9 +41,9 @@ const initializeURLUpdater = () => {
         "",
         parsed.value.url
       )
-    // History replaceStates can only happen if we're at the end of history. So we check to see if we're the end of 
-    // server history; if we are and the URL is changing but the server-side history length is the same, 
-    // then the server must be doing a replaceState. We store the new replaced URL in window.history.state.
+      // History replaceStates can only happen if we're at the end of history. So we check to see if we're the end of
+      // server history; if we are and the URL is changing but the server-side history length is the same,
+      // then the server must be doing a replaceState. We store the new replaced URL in window.history.state.
     } else if (
       parsed.value.historyLength === serverHistoryLength &&
       maxHistoryIndex === currentHistoryIndex &&
@@ -57,7 +57,7 @@ const initializeURLUpdater = () => {
         "",
         document.URL
       )
-    // If the new URL is not in our list of previous URLs at this history index, then the server must be doing a pushState
+      // If the new URL is not in our list of previous URLs at this history index, then the server must be doing a pushState
     } else if (
       document.URL !== parsed.value.url &&
       !window.history.state.urls.includes(parsed.value.url)

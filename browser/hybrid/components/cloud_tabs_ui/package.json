@@ -1,5 +1,26 @@
 {
+  "name": "cloud_tabs_ui",
+  "version": "1.0.0",
+  "description": "The Chromium WebUI for cloud tabs.",
+  "scripts": {
+    "build": "echo 'Nothing to do.'",
+    "format:check": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "lint:check": "echo 'Nothing to do.'",
+    "lint:fix": "echo 'Nothing to do.'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/whisthq/whist.git"
+  },
+  "author": "Whist Technologies, Inc.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/whisthq/whist/issues"
+  },
+  "homepage": "https://github.com/whisthq/whist#readme",
   "devDependencies": {
-    "@types/chrome": "^0.0.197"
+    "@types/chrome": "^0.0.197",
+    "prettier": "^2.7.1"
   }
 }

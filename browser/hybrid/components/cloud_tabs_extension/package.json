@@ -44,8 +44,8 @@
   },
   "scripts": {
     "build": "node ./scripts/build.js",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ,",
+    "format:fix": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint:check": "node ./scripts/lint.js --fix",
     "lint:fix": "node ./scripts/lint.js --fix"
   },

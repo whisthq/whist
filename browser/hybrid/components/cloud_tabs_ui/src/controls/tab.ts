@@ -4,7 +4,8 @@ const initializeGetTabId = () => {
   const promise = new Promise<void>((resolve) => {
     chrome.tabs.getCurrent((tab) => {
       if (tab?.id !== undefined) sessionStorage.setNumber("tabId", tab.id)
-      if (tab?.windowId !== undefined) sessionStorage.setNumber("windowId", tab.windowId)
+      if (tab?.windowId !== undefined)
+        sessionStorage.setNumber("windowId", tab.windowId)
       resolve()
     })
   })
