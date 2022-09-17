@@ -16,13 +16,13 @@ For example, a workflow for the `backend/services` projects which checks the PR 
 
 ### Headers
 
-We used to have a convention regarding duplicating information and writing descriptions about workflows in comments atop the YAML files. This information is often not useful and just leads to cruft, so it is no longer required unless something particularly confusing needs to be documented.
+We used to have a convention which involved duplicating information and writing descriptions about workflows in comments atop the YAML files. This information is often not useful and just leads to cruft, so it is no longer required unless something particularly confusing needs to be documented.
 
 ### Jobs
 
 Many of our workflows have a single job, whereas some of our more complex workflows (for example, `whist-publish-build.yml`) will contain multiple jobs triggered by the same event.
 
-We used to have a convention that jobs need to be named uniquely across workflows. This was extra caution on Roshan's part since we were not yet sure how GitHub would build out and stabilize the Actions API. While you may choose to use this convention, feel free to opt for consision and clarity and avoid extra-long job names for the sake of uniqueness.
+We used to have a convention that jobs needed to be named uniquely across workflows. This was extra caution on Roshan's part since we were not yet sure how GitHub would build out and stabilize the Actions API. While you may choose to use this convention, feel free to opt for concision and clarity and to avoid extra-long job names.
 
 In many cases, `jobname` can simply be `main` -- for example, here is the start of the job description in `protocol-linting.yml`:
 
