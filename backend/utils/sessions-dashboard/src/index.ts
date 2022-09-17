@@ -26,7 +26,8 @@ const cleanTable = (input: any) => {
   console.log(result)
 }
 
-retrieveSessions().then(async (sessions) => {
+const tick = async () => {
+  const sessions = await retrieveSessions()
   if (!sessions) return
 
   const data = await Promise.all(
@@ -38,7 +39,6 @@ retrieveSessions().then(async (sessions) => {
     })
   )
 
-  console.log(`Active sessions for environment "${DeployEnvironment}":`)
   const table = data.map((s) => {
     return {
       name: s.user.name,
@@ -50,5 +50,12 @@ retrieveSessions().then(async (sessions) => {
       region: s.instance.region,
     }
   })
+  console.clear()
+  console.log(
+    `Active sessions for environment "${DeployEnvironment}": (updates every 60 seconds, Ctrl+C to exit)`
+  )
   cleanTable(table)
-})
+}
+
+tick()
+const interval = setInterval(tick, 60000)
