@@ -17,7 +17,6 @@ const { execute } = require("../node_modules/eslint/lib/cli")
 
 const lint = (_env, ...args) => {
   execute([
-    "yarn",
     "eslint",
     ...args,
     "--max-warnings=0",
