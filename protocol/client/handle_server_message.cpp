@@ -49,8 +49,6 @@ Private Functions
 
 static int handle_quit_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
-static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
-static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size,
                                         WhistFrontend *frontend);
@@ -86,10 +84,6 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size, WhistFro
             return handle_quit_message(wsmsg, wsmsg_size);
         case SMESSAGE_CLIPBOARD:
             return handle_clipboard_message(wsmsg, wsmsg_size);
-        case SMESSAGE_WINDOW_TITLE:
-            return handle_window_title_message(wsmsg, wsmsg_size);
-        case SMESSAGE_OPEN_URI:
-            return handle_open_uri_message(wsmsg, wsmsg_size);
         case SMESSAGE_FULLSCREEN:
             return handle_fullscreen_message(wsmsg, wsmsg_size);
         case SMESSAGE_FILE_DATA:
@@ -154,62 +148,6 @@ static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size
     LOG_INFO("Received %zu byte clipboard message from server!", wsmsg_size);
     // Known to run in less than ~100 assembly instructions
     push_clipboard_chunk(&wsmsg->clipboard);
-    return 0;
-}
-
-static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
-    /*
-        Handle server window title message
-        Since only the main thread is allowed to perform UI functionality on MacOS, instead of
-        setting the title directly, this function updates a global variable window_title.
-        The main thread periodically polls this variable to determine if it needs to update the
-        window title.
-
-        Arguments:
-            wsmsg (WhistServerMessage*): server window title message
-            wsmsg_size (size_t): size of the packet message contents
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    LOG_INFO("Received window title message from server!");
-
-    sdl_set_window_title(0, (char *)wsmsg->window_title);
-
-    return 0;
-}
-
-static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
-    /*
-        Handle server open URI message by launching the relevant URI locally
-
-        Arguments:
-            wsmsg (WhistServerMessage*): server open uri message
-            wsmsg_size (size_t): size of the packet message contents
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-    LOG_INFO("Received Open URI message from the server!");
-
-#if OS_IS(OS_WIN32)
-#define OPEN_URI_CMD "cmd /c start \"\""
-#elif OS_IS(OS_MACOS)
-#define OPEN_URI_CMD "open"
-#else
-#define OPEN_URI_CMD "xdg-open"
-#endif  // Windows
-// just to be safe from off-by-1 errors
-#define OPEN_URI_CMD_MAXLEN 30
-
-    const char *uri = (const char *)&wsmsg->requested_uri;
-    const int cmd_len = (int)strlen(uri) + OPEN_URI_CMD_MAXLEN + 1;
-    char *cmd = (char *)safe_malloc(cmd_len);
-    memset(cmd, 0, cmd_len);
-    snprintf(cmd, cmd_len, OPEN_URI_CMD " \"%s\"", uri);
-    runcmd(cmd, NULL);
-    free(cmd);
     return 0;
 }
 

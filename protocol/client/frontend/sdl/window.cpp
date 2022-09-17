@@ -130,27 +130,6 @@ bool sdl_is_any_window_visible(WhistFrontend* frontend) {
     return false;
 }
 
-WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
-    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-#if !USING_MULTIWINDOW
-    SDL_Event event = {
-        .user =
-            {
-                .type = context->internal_event_id,
-                .timestamp = 0,
-                .code = SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
-                .data1 = (void*)title,
-                // Cast the data directly into the 8bytes of void*,
-                // So data2 holds the id directly, rather than a pointer to it
-                .data2 = (void*)(intptr_t)id,
-            },
-    };
-    // NOTE: "title" will be freed when the event is consumed
-    SDL_PushEvent(&event);
-#endif
-    return WHIST_SUCCESS;
-}
-
 void sdl_restore_window(WhistFrontend* frontend, int id) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {

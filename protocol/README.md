@@ -113,7 +113,6 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   │   ├── png.c <- Functions to encode/decode bitmap's as png's
 │   │   ├── rwlock.c <- Implementation of a lock with one writer and many readers
 │   │   ├── sysinfo.c <- Print RAM/OS/Memory/HDD etc for logging purposes
-│   │   ├── window_name.c <- Linux Getter for the window name of the application
 │   │   └── windows_utils.c <- Log-in past windows start screen
 │   └── video
 │       ├── capture

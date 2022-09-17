@@ -195,10 +195,6 @@ int virtual_get_window_dpi(WhistFrontend* frontend) {
 
 bool virtual_is_any_window_visible(WhistFrontend* frontend) { return true; }
 
-WhistStatus virtual_set_title(WhistFrontend* frontend, int id, const char* title) {
-    return WHIST_SUCCESS;
-}
-
 void virtual_restore_window(WhistFrontend* frontend, int id) {}
 
 void virtual_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen) {}

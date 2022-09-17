@@ -131,17 +131,6 @@ void sdl_present_pending_cursor(WhistFrontend* frontend);
 void sdl_render_window_titlebar_color(int id, WhistRGBColor color);
 
 /**
- * @brief                          Update the title of the window
- *
- * @param id                       The window ID to set change the title of
- *
- * @param window_title             The string to set the window's title to
- *
- * @note                           This function is virtually instantaneous
- */
-void sdl_set_window_title(int id, const char* window_title);
-
-/**
  * @brief                          Update the window's fullscreen state
  *
  * @param id                       The window ID to change fullscreen status of

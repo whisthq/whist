@@ -163,8 +163,6 @@ bool connect_client(void *state_raw) {
 
     LOG_INFO("Client successfully connected.");
 
-    state->client_joined_after_window_name_broadcast = true;
-
     // We reset the input tracker when a new client connects
     reset_input(state->client_os);
 

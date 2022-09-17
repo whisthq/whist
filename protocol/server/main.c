@@ -361,7 +361,6 @@ static void whist_server_state_init(WhistServerState* state, whist_server_config
     state->config = config;
     state->client_os = WHIST_UNKNOWN_OS;
     state->input_device = NULL;
-    state->client_joined_after_window_name_broadcast = false;
 
     // Set width and height to -1. Video thread will start once correct dimensions are received from
     // client
@@ -467,9 +466,6 @@ int main(int argc, char* argv[]) {
 
     init_window_info_getter();
 
-    WhistTimer window_name_timer;
-    start_timer(&window_name_timer);
-
     WhistTimer window_fullscreen_timer;
     start_timer(&window_fullscreen_timer);
 
@@ -477,9 +473,6 @@ int main(int argc, char* argv[]) {
     start_timer(&cpu_usage_statistics_timer);
 
 #if !OS_IS(OS_WIN32)
-    WhistTimer uri_handler_timer;
-    start_timer(&uri_handler_timer);
-
     WhistTimer downloaded_file_timer;
     start_timer(&downloaded_file_timer);
 
@@ -581,61 +574,6 @@ int main(int argc, char* argv[]) {
                 }
             }
             start_timer(&window_fullscreen_timer);
-        }
-
-        if (get_timer(&window_name_timer) > 50.0 / MS_IN_SECOND) {
-            char* name = NULL;
-            bool new_window_name = get_focused_window_name(&name);
-            if (name != NULL &&
-                (server_state.client_joined_after_window_name_broadcast || new_window_name)) {
-                LOG_INFO("%sBroadcasting window title message.",
-                         new_window_name ? "Window title changed. " : "");
-                static char wsmsg_buf[sizeof(WhistServerMessage) + WINDOW_NAME_MAXLEN + 1];
-                WhistServerMessage* wsmsg = (void*)wsmsg_buf;
-                wsmsg->type = SMESSAGE_WINDOW_TITLE;
-                strncpy(wsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
-                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
-                                         (int)(sizeof(WhistServerMessage) + strlen(name) + 1)) ==
-                    0) {
-                    LOG_INFO("Sent window title message!");
-                    server_state.client_joined_after_window_name_broadcast = false;
-                } else {
-                    LOG_WARNING("Failed to broadcast window title message.");
-                }
-            }
-            start_timer(&window_name_timer);
-        }
-
-#if !OS_IS(OS_WIN32)
-#define URI_HANDLER_FILE "/home/whist/.teleport/handled-uri"
-#define HANDLED_URI_MAXLEN 4096
-        if (get_timer(&uri_handler_timer) > 50.0 / MS_IN_SECOND) {
-            if (!access(URI_HANDLER_FILE, R_OK)) {
-                // If the handler file exists, read it and delete the file
-                int fd = open(URI_HANDLER_FILE, O_RDONLY);
-                char handled_uri[HANDLED_URI_MAXLEN + 1] = {0};
-                ssize_t bytes = read(fd, &handled_uri, HANDLED_URI_MAXLEN);
-                if (bytes > 0) {
-                    size_t wsmsg_size = sizeof(WhistServerMessage) + bytes + 1;
-                    WhistServerMessage* wsmsg = safe_malloc(wsmsg_size);
-                    memset(wsmsg, 0, sizeof(*wsmsg));
-                    wsmsg->type = SMESSAGE_OPEN_URI;
-                    memcpy(&wsmsg->requested_uri, handled_uri, bytes + 1);
-                    if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
-                                             (int)wsmsg_size) < 0) {
-                        LOG_WARNING("Failed to broadcast open URI message.");
-                    } else {
-                        LOG_INFO("Sent open URI message!");
-                    }
-                    free(wsmsg);
-                } else {
-                    LOG_WARNING("Unable to read URI handler file: %d", errno);
-                }
-                close(fd);
-                remove(URI_HANDLER_FILE);
-            }
-
-            start_timer(&uri_handler_timer);
         }
 
 #define FILE_UPLOAD_TRIGGER_FILE "/home/whist/.teleport/uploaded-file"
