@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /var/lib/apt/lists/*
 
 # Download Whist Chromium installer
-COPY s3/chromium-browser-stable_106.0.5228.0-1_amd64_v6-fa09b9eafae80b4238c76e13bdb541f9.deb /whistium.deb
+COPY s3/whistium-ade0f5dccc53599fcd802ca5cd44eced.deb /whistium.deb
 
 # Install Whist Chromium
 RUN apt-get update && apt-get install --no-install-recommends -y \
