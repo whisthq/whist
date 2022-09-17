@@ -104,7 +104,7 @@ bool InitializeWhistClient() {
 
   if (get_virtual_interface_ptr == NULL) {
     LOG(ERROR) << "Got value of NULL, or could not find, symbol get_virtual_interface";
-    return;
+    return true;
   } else {
     whist_virtual_interface = get_virtual_interface_ptr();
   }
