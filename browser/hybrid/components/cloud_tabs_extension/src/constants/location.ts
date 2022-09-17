@@ -23,6 +23,11 @@ enum AWSRegion {
   SA_EAST_1 = "sa-east-1",
 }
 
+export type AWSRegionOrdering = Array<{
+  region: AWSRegion
+  pingTime: number | undefined
+}>
+
 const regions = [
   {
     name: AWSRegion.US_EAST_1,

@@ -10,7 +10,7 @@ const execCommand = require("./execCommand").execCommand
 module.exports = {
   // Creates the Tailwind CSS file
   buildTailwind: () => {
-    process.stdout.write("\nBuilding CSS with Tailwind...");
+    process.stdout.write("\nBuilding CSS with Tailwind...")
     execCommand("tailwindcss build -o public/css/tailwind.css", ".")
     process.stdout.write("\n")
   },

@@ -21,7 +21,7 @@ const getStorage = async <T>(key: string) => {
   return await promise
 }
 
-const storageSubject = new ReplaySubject()
+const storageSubject = new ReplaySubject<Record<string, any>>()
 
 const storageChanged = fromEventPattern(
   (handler: any) => chrome.storage.onChanged.addListener(handler),

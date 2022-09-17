@@ -36,7 +36,7 @@ const initGoogleAuthHandler = async () => {
     Description:
       Opens the Google auth window when requested by the user
   */
-  const authPromise = new Promise((resolve) => {
+  const authPromise = new Promise<AuthInfo>((resolve) => {
     chrome.webRequest.onBeforeRequest.addListener(
       (details: { url: string }) => {
         const callbackUrl = details.url

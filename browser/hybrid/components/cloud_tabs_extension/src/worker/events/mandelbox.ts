@@ -11,7 +11,8 @@ import { stateDidChange, whistState } from "@app/worker/utils/state"
 import { MandelboxState, Storage } from "@app/constants/storage"
 import { config } from "@app/constants/app"
 import { AsyncReturnType } from "@app/@types/api"
-import { AWSRegion } from "@app/constants/location"
+import { AWSRegion, AWSRegionOrdering } from "@app/constants/location"
+import { AuthInfo } from "@app/@types/payload"
 
 const mandelboxNeeded = stateDidChange("waitingCloudTabs")
   .pipe(filter((change: any) => change?.applyData?.name === "push"))
@@ -26,8 +27,8 @@ const mandelboxInfo = mandelboxNeeded.pipe(
   switchMap(() =>
     from(
       Promise.all([
-        getStorage(Storage.AUTH_INFO),
-        getStorage(Storage.CLOSEST_AWS_REGIONS),
+        getStorage<AuthInfo>(Storage.AUTH_INFO),
+        getStorage<AWSRegionOrdering>(Storage.CLOSEST_AWS_REGIONS),
       ])
     )
   ),

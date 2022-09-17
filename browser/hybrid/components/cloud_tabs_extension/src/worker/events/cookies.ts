@@ -6,16 +6,15 @@ import isEqual from "lodash.isequal"
 
 import { socketConnected } from "@app/worker/events/socketio"
 import { whistState } from "@app/worker/utils/state"
+import { NodeEventHandler } from "rxjs/internal/observable/fromEvent"
 
-const clientCookieAdded = fromEventPattern(
-  (handler: any) => chrome.cookies.onChanged.addListener(handler),
-  (handler: any) => chrome.cookies.onChanged.removeListener(handler),
+const clientCookieAdded = fromEventPattern<chrome.cookies.CookieChangeInfo>(
+  (handler: NodeEventHandler) => chrome.cookies.onChanged.addListener(handler),
+  (handler: NodeEventHandler) =>
+    chrome.cookies.onChanged.removeListener(handler),
   (details: any) => details
 ).pipe(
-  filter(
-    ({ cause, removed }: { cause: string; removed: boolean }) =>
-      !removed && cause === "explicit"
-  ),
+  filter(({ cause, removed }) => !removed && cause === "explicit"),
   filter(
     ({ cookie }) =>
       find(whistState.alreadyAddedCookies, (c) => isEqual(c, cookie)) ===
@@ -26,13 +25,14 @@ const clientCookieAdded = fromEventPattern(
 
 // We want to ignore cookies that were removed by explicit calls to chrome.cookies.remove
 // and removed because they were overwritten by a new cookie
-const clientCookieRemoved = fromEventPattern(
-  (handler: any) => chrome.cookies.onChanged.addListener(handler),
-  (handler: any) => chrome.cookies.onChanged.removeListener(handler),
+const clientCookieRemoved = fromEventPattern<chrome.cookies.CookieChangeInfo>(
+  (handler: NodeEventHandler) => chrome.cookies.onChanged.addListener(handler),
+  (handler: NodeEventHandler) =>
+    chrome.cookies.onChanged.removeListener(handler),
   (details: any) => details
 ).pipe(
   filter(
-    ({ cause, removed }: { cause: string; removed: boolean }) =>
+    ({ cause, removed }) =>
       removed && ["expired", "expired_overwrite", "evicted"].includes(cause)
   ),
   map(({ cookie }) => cookie)

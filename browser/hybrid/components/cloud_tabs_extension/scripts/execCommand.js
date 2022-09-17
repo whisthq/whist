@@ -1,4 +1,3 @@
-
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file execCommand.js
