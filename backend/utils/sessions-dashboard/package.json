@@ -1,0 +1,22 @@
+{
+  "name": "sessions-dashboard",
+  "version": "1.0.0",
+  "description": "A tool to keep track of all active user sessions in Whist.",
+  "repository": "https://github.com/whisthq/whist",
+  "type": "commonjs",
+  "main": "./build/index.js",
+  "scripts": {
+    "start": "tsc && node ."
+  },
+  "author": "Whist Technologies, Inc.",
+  "license": "ISC",
+  "dependencies": {
+    "auth0": "^2.42.0",
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "@types/auth0": "^2.35.3",
+    "@types/node-fetch": "^2.6.2",
+    "typescript": "^4.8.3"
+  }
+}
