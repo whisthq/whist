@@ -137,24 +137,20 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
   # Allow inbound traffic on port 443 so the instance
   # can use SSM
   ingress {
-    content {
-      description = "whist-tcp-rule"
-      protocol    = "tcp"
-      from_port   = 443
-      to_port     = 443
-      cidr_blocks = ["0.0.0.0/0"]
-    }
+    description = "whist-tcp-rule"
+    protocol    = "tcp"
+    from_port   = 443
+    to_port     = 443
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Allow incoming SSH traffic
   ingress {
-    content {
-      description = "whist-ssh-rule"
-      protocol    = "tcp"
-      from_port   = 22
-      to_port     = 22
-      cidr_blocks = ["0.0.0.0/0"]
-    }
+    description = "whist-ssh-rule"
+    protocol    = "tcp"
+    from_port   = 22
+    to_port     = 22
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Allow all outgoing IPv4 traffic
