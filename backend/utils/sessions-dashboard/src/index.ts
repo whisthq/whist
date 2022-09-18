@@ -1,61 +1,61 @@
 import { DeployEnvironment } from "./config"
-import { retrieveSessions } from "./retrieve"
-import { getUser } from "./users"
-import { Console } from "node:console"
-import { Transform } from "node:stream"
+import { printOutput } from "./output"
+import { generateData } from "./generate"
+import * as yargs from "yargs"
 
-const cleanTable = (input: any) => {
-  // @see https://stackoverflow.com/a/67859384
-  const ts = new Transform({
-    transform(chunk, _, cb) {
-      cb(null, chunk)
+const title = (extraInfo = "") =>
+  `Active sessions for environment "${DeployEnvironment}":${
+    extraInfo ? ` (${extraInfo})` : ""
+  }`
+
+// (updates every 60 seconds, Ctrl+C to exit)
+yargs
+  .scriptName("sessions-dashboard")
+  .usage("$0 <cmd> [args]")
+  .command("show", "Show all active sessions", async (_args) => {
+    printOutput(await generateData(), title())
+  })
+  .command(
+    "watch",
+    "Watch active sessions",
+    {
+      interval: {
+        alias: "n",
+        type: "number",
+        description: "Set how often to update the dashboard",
+        default: 60,
+        required: true,
+      },
     },
-  })
-  const logger = new Console({ stdout: ts })
-  logger.table(input)
-  const table = (ts.read() || "").toString()
-  let result = ""
-  for (let row of table.split(/[\r\n]+/)) {
-    let r = row.replace(/[^┬]*┬/, "┌")
-    r = r.replace(/^├─*┼/, "├")
-    r = r.replace(/│[^│]*/, "")
-    r = r.replace(/^└─*┴/, "└")
-    r = r.replace(/'/g, " ")
-    result += `${r}\n`
-  }
-  console.log(result)
-}
-
-const tick = async () => {
-  const sessions = await retrieveSessions()
-  if (!sessions) return
-
-  const data = await Promise.all(
-    sessions.map(async (s) => {
-      return {
-        ...s,
-        user: await getUser(s.user_id),
+    async (args) => {
+      const minimumInterval = 5
+      if (args.interval < minimumInterval) {
+        console.log(
+          `Interval too low: the minimum interval is ${minimumInterval} seconds`
+        )
+        process.exit(1)
       }
-    })
-  )
 
-  const table = data.map((s) => {
-    return {
-      name: s.user.name,
-      email: s.user.email,
-      commit: s.instance.client_sha.substring(0, 8),
-      mandelbox: s.id,
-      instance: s.instance.id,
-      ip: s.instance.ip_addr.split("/")[0],
-      region: s.instance.region,
+      // Gracefully handle Ctrl+C
+      process.on("SIGINT", () => {
+        console.log() // prevent an ugly white square in some terminals
+        process.exit(0)
+      })
+
+      const tick = async () => {
+        printOutput(
+          await generateData(),
+          title(`updates every ${args.interval} seconds, Ctrl+C to exit`),
+          true
+        )
+      }
+
+      await tick()
+      setInterval(tick, args.interval * 1000)
     }
-  })
-  console.clear()
-  console.log(
-    `Active sessions for environment "${DeployEnvironment}": (updates every 60 seconds, Ctrl+C to exit)`
   )
-  cleanTable(table)
-}
-
-tick()
-const interval = setInterval(tick, 60000)
+  .demandCommand()
+  .strict()
+  .wrap((yargs.terminalWidth() * 2) / 3)
+  .help("h")
+  .help("help").argv
