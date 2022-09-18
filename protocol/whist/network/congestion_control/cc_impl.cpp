@@ -81,13 +81,13 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       CCOutput output;
       RTC_CHECK(input.packets.size()==1);
 
-      output.target_bitrate=20*1000*1000;
+      output.target_bitrate=40*1000*1000;
       return output;
   }
   virtual CCOutput process_interval(CCInput input) override
   {
     CCOutput output;
-    output.target_bitrate=20*1000*1000;
+    output.target_bitrate=40*1000*1000;
     return output;
   }
   /*

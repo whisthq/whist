@@ -24,6 +24,8 @@ extern "C" {
 #include <whist/core/features.h>
 #include <whist/debug/debug_console.h>
 #include <whist/fec/fec_controller.h>
+#include <whist/network/congestion_control/cc_interface.h>
+#include <whist/logging/logging.h>
 }
 
 #include <whist/network/congestion_control/cc_interface.h>
@@ -557,7 +559,14 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             }
             if(USING_WCC_V2)
             {
-
+                if (send_network_settings || get_timer(&context->last_network_settings_send_time) > 0.05) 
+                {
+                    auto cc_controler= (CongestionCongrollerInterface* ) context->congestion_controller;
+                    CCInput input;
+                    CCOutput output= cc_controler->process_interval(input);
+                    FATAL_ASSERT(output.target_bitrate.has_value());
+                    context->network_settings.video_bitrate = output.target_bitrate.value();
+                }
             }
             else {
                 send_network_settings = whist_congestion_controller(
