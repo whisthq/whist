@@ -576,6 +576,7 @@ int main(int argc, char* argv[]) {
             start_timer(&window_fullscreen_timer);
         }
 
+#if !OS_IS(OS_WIN32)
 #define FILE_UPLOAD_TRIGGER_FILE "/home/whist/.teleport/uploaded-file"
         if (get_timer(&uploaded_file_timer) > 50.0 / MS_IN_SECOND) {
             if (!access(FILE_UPLOAD_TRIGGER_FILE, R_OK)) {
@@ -592,7 +593,6 @@ int main(int argc, char* argv[]) {
             }
             start_timer(&uploaded_file_timer);
         }
-
 #endif  // Not Windows
     }
 

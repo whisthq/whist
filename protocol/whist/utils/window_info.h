@@ -31,8 +31,6 @@ Includes
 #include <whist/core/whist.h>
 #include <whist/video/capture/capture.h>
 
-
-
 /*
 ============================
 Public Functions
