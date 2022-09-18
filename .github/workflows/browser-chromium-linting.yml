@@ -1,0 +1,148 @@
+# workflows/browser-chromium-linting.yml
+#
+# Browser - Chromium: Linting
+# Lint C and C++ Chromium/Brave files created/modified by Whist using Clang.
+
+name: "Browser - Chromium: Linting"
+
+on:
+  pull_request:
+    paths:
+      - "browser/**/**.c"
+      - "browser/**/**.cc"
+      - "browser/**/**.cpp"
+      - "browser/**/**.m"
+      - "browser/**/**.mm"
+      - "browser/**/**.h"
+      - "browser/**/**.hpp"
+      - ".github/workflows/browser-chromium-linting.yml"
+  workflow_dispatch:
+
+# This guarantees that if you push many commits to the same PR, only the latest
+# commit will get run (others get cancelled)
+concurrency:
+  group: browser-chromium-linting-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  browser-chromium-linting-check-pr-linting:
+    name: Chromium Linting - ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - name: Windows
+            os: windows-2019
+          - name: Linux Ubuntu
+            os: ubuntu-20.04
+          - name: macOS (x64)
+            os: macos-11.0
+            arch: x86_64
+          - name: macOS (arm64)
+            os: macos-11.0
+            arch: arm64
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Register OS Compiler Matchers
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: |
+          # OS-independent matchers
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/cppcheck_matcher.json"
+          # OS-specific matchers
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/gcc_matcher.json"
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/msvc_matcher.json"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
+          fi
+
+      ###################################################################################
+      ################################ WINDOWS STEPS START ##############################
+
+      # We hardcode cppcheck version to 2.7, since version 2.8 is broken on Chocolatey starting May 24, 2022
+      - name: Install Chocolatey dependencies on Windows GHA Machine
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: (choco install cppcheck --version 2.7) -and (choco install ninja)
+
+      - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Verify builds with clang-tidy on Windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        working-directory: browser
+        run: |
+          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
+          
+          # Print clang-tidy version for local comparison
+          clang-tidy --version
+
+          # Run clang-tidy
+          clang-tidy **/**.c **/**.cc **/**.cpp **/**.h **/**.hpp
+
+      ###################################################################################
+      ################################# MACOS STEPS START ###############################
+
+      - name: Install Clang Dependencies on macOS GHA Machines
+        if: runner.os == 'macOS'
+        run: |
+          # llvm for clang-tidy, coreutils for realpath
+          brew install llvm coreutils perl
+          ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
+          ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+
+      - name: Verify Builds with clang-tidy on macOS
+        if: runner.os == 'macOS'
+        working-directory: browser
+        run: |
+          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
+
+          # Print clang-tidy version for local comparison
+          clang-tidy --version
+
+          # Run clang-tidy
+          clang-tidy **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
+
+      ###################################################################################
+      ################################# LINUX STEPS START ###############################
+
+      # Verify clang-format on Linux
+      - name: Verify Builds with clang-format
+        if: runner.os == 'Linux'
+        working-directory: browser
+        run: |
+          # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
+
+          # Print clang-format version for local comparison
+          clang-format --version
+
+          # Run clang-format
+          clang-format **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
+
+          # Show diff in GitHub Actions logs
+          git diff HEAD .
+
+          # This will return an error if there is a non-empty diff
+          git diff-index --quiet HEAD .
+
+      - name: Verify Builds with clang-tidy on Ubuntu Linux
+        if: runner.os == 'Linux'
+        working-directory: browser
+        run: |
+          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
+
+          # Print clang-tidy version for local comparison
+          clang-tidy --version
+
+          # Run clang-tidy
+          clang-tidy **/**.c **/**.cc **/**.cpp **/**.h **/**.hpp
