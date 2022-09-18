@@ -1970,7 +1970,7 @@ TEST_F(ProtocolTest, VirtualEventTest) {
                                               // match when we poll it.
     vi->events.send(&sent_event);
     WhistFrontend frontend;
-    virtual_init(&frontend, 0, 0, NULL, NULL);
+    virtual_init(&frontend, NULL);
     WhistFrontendEvent received_event;
     EXPECT_EQ(virtual_poll_event(&frontend, &received_event), true);
     EXPECT_EQ(received_event.type, FRONTEND_EVENT_RESIZE);
