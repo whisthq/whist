@@ -555,10 +555,16 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                     }
                 }
             }
-            send_network_settings = whist_congestion_controller(
+            if(USING_WCC_V2)
+            {
+
+            }
+            else {
+                send_network_settings = whist_congestion_controller(
                 curr_group_stats, prev_group_stats, incoming_bitrate, packet_loss_ratio,
                 context->short_term_latency, context->long_term_latency, &context->network_settings,
                 context->fec_controller);
+            }
         }
         context->prev_group_id = context->curr_group_id;
         context->curr_group_id = group_id;
@@ -682,7 +688,7 @@ static bool udp_update(void* raw_context) {
 
     if (context->ring_buffers[PACKET_VIDEO] != NULL) {
         // If no pong is received for UDP_PONG_CONGESTION_SEC, then we signal severe congestion.
-        if (diff_timer(&context->last_pong_timer, &current_time) > UDP_PONG_CONGESTION_SEC &&
+        if (!USING_WCC_V2 && diff_timer(&context->last_pong_timer, &current_time) > UDP_PONG_CONGESTION_SEC &&
             whist_congestion_controller_handle_severe_congestion(&context->network_settings)) {
             send_desired_network_settings(context);
         }

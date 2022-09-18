@@ -413,6 +413,22 @@ void SendSideBandwidthEstimation::UpdatePacketsLost(int64_t packets_lost,
   UpdateUmaStatsPacketsLost(at_time, packets_lost);
 }
 
+void SendSideBandwidthEstimation::UpdatePacketsLostDirect( double packet_loss,
+                                                    Timestamp at_time) {
+  last_loss_feedback_ = at_time;
+  if (first_report_time_.IsInfinite())
+    first_report_time_ = at_time;
+
+  last_fraction_loss_ = std::min<int>(packet_loss*256, 255);
+  has_decreased_since_last_fraction_loss_ = false;
+  // Reset accumulators.
+  lost_packets_since_last_loss_update_ = 0;
+  expected_packets_since_last_loss_update_ = 0;
+  last_loss_packet_report_ = at_time;
+  UpdateEstimate(at_time);
+
+}
+
 void SendSideBandwidthEstimation::UpdateUmaStatsPacketsLost(Timestamp at_time,
                                                             int packets_lost) {
   DataRate bitrate_kbps =

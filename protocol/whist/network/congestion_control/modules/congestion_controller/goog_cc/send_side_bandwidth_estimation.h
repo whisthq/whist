@@ -105,6 +105,8 @@ class SendSideBandwidthEstimation {
                          int64_t number_of_packets,
                          Timestamp at_time);
 
+  void UpdatePacketsLostDirect(double packets_lost, Timestamp at_time);
+
   // Call when we receive a RTCP message with a ReceiveBlock.
   void UpdateRtt(TimeDelta rtt, Timestamp at_time);
 

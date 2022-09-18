@@ -1,8 +1,8 @@
+#include "whist/logging/logging.h"
 extern "C"
 {
 #include "cc_interface.h"
 }
-
 #include "api/units/time_delta.h"
 #include "api/units/timestamp.h"
 #include "common_fixes.h"
@@ -35,6 +35,8 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
     CongestionCongrollerImpl()
     {
         webrtc::field_trial::InitFieldTrialsFromString("");
+        webrtc::FieldTrials ft("");
+        /*
         webrtc::FieldTrials ft("WebRTC-Bwe-EstimateBoundedIncrease/"
         "ratio:0.85,ignore_acked:true,immediate_incr:false/"
         "WebRTC-DontIncreaseDelayBasedBweInAlr/Enabled/"
@@ -42,11 +44,11 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         "WebRTC-Bwe-TrendlineEstimatorSettings/sort:false/"
         "WebRTC-BweAimdRateControlConfig/initial_backoff_interval:200/"
         "WebRTC-Bwe-MaxRttLimit/limit:2s,floor:100bps/"
-        );
+        );*/
         delay_based_bwe= std::make_unique<webrtc::DelayBasedBwe> (&ft,nullptr,nullptr);
         send_side_bwd= std::make_unique<webrtc::SendSideBandwidthEstimation> (&ft,nullptr);
 
-
+        /*
         int a;
 
         //RTC_DCHECK(1>2)<<"!!!!!";
@@ -67,21 +69,32 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         webrtc::AimdRateControl arc(&ft);
 
         printf("zong!!\n");
-
+        */
     }
 
    ~CongestionCongrollerImpl() override
    {
    }
 
-   void feed_packet(double send_time_ms, double arrival_time_ms, double current_incoming_bitrate) override{
+  virtual CCOutput feed_info(CCInput input) override
+  {
+      CCOutput output;
+      RTC_CHECK(input.packets.size()==1);
 
-   }
-
-   double get_target_bitrate() override{
+      output.target_bitrate=20*1000*1000;
+      return output;
+  }
+  virtual CCOutput process_interval(CCInput input) override
+  {
+    CCOutput output;
+    output.target_bitrate=20*1000*1000;
+    return output;
+  }
+  /*
+  double get_target_bitrate() override{
     fprintf(stderr,"it works!!!\n");
     return 0;
-   }
+   }*/
 };
 
 

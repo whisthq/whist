@@ -25,7 +25,7 @@ set(COMMON_FILES
         rtc_base/checks.cc
         )
 
-add_executable(a.out main.cpp ${COMMON_FILES})
+#add_executable(a.out main.cpp ${COMMON_FILES})
 
 add_library(whistCC STATIC
         cc_impl.cpp
