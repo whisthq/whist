@@ -1,4 +1,5 @@
 #include <whist/core/platform.h>
+
 #if OS_IS(OS_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
@@ -26,6 +27,8 @@ extern "C" {
 #include <whist/fec/fec_controller.h>
 #include <whist/network/congestion_control/cc_interface.h>
 #include <whist/logging/logging.h>
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 }
 
 #include <whist/network/congestion_control/cc_interface.h>
@@ -537,8 +540,15 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                 &context->group_stats[context->prev_group_id % MAX_GROUP_STATS];
 
             int incoming_bitrate = get_incoming_bitrate(context);
+
             double packet_loss_ratio = get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
                                                              context->short_term_latency);
+
+            whist_plotter_insert_sample("packet_loss_ratio", get_timestamp_sec(), packet_loss_ratio*100);
+            whist_plotter_insert_sample("incoming_bitrate", get_timestamp_sec(), incoming_bitrate<0?-1: incoming_bitrate/1000.0/100.0);
+            whist_plotter_insert_sample("short_term_latency", get_timestamp_sec(), context->short_term_latency*1000);
+            whist_plotter_insert_sample("long_term_latency", get_timestamp_sec(), context->long_term_latency*1000);
+
             if (ENABLE_FEC) {
                 // feed current time and latency info into fec controller
                 double current_time = get_timestamp_sec();
@@ -574,6 +584,9 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                 context->short_term_latency, context->long_term_latency, &context->network_settings,
                 context->fec_controller);
             }
+            whist_plotter_insert_sample("target_bitrate", get_timestamp_sec(), context->network_settings.video_bitrate/1000.0/100.0);
+            whist_plotter_insert_sample("burst_bitrate", get_timestamp_sec(), context->network_settings.burst_bitrate/1000.0/100.0);
+            whist_plotter_insert_sample("saturate", get_timestamp_sec(), context->network_settings.saturate_bandwidth *100);
         }
         context->prev_group_id = context->curr_group_id;
         context->curr_group_id = group_id;
