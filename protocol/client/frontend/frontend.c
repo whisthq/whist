@@ -43,10 +43,9 @@ unsigned int whist_frontend_get_id(WhistFrontend* frontend) { return frontend->i
 // TODO: Can we use api.h to do this cleanly? The issue is that it's hard to separate out types from
 // parameter names.
 
-WhistStatus whist_frontend_init(WhistFrontend* frontend, int width, int height, const char* title,
-                                const WhistRGBColor* color) {
+WhistStatus whist_frontend_init(WhistFrontend* frontend, const WhistRGBColor* color) {
     FRONTEND_ENTRY();
-    return frontend->call->init(frontend, width, height, title, color);
+    return frontend->call->init(frontend, color);
 }
 
 void whist_frontend_destroy(WhistFrontend* frontend) {

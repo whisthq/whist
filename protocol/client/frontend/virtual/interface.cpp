@@ -8,6 +8,7 @@ extern "C" {
 #include "interface.h"
 #include <whist/utils/queue.h>
 #include <whist/network/network_algorithm.h>
+#include "../frontend.h"
 }
 
 // Just chosen a very large number for events queue size. If required we can optimize/reduce it.
@@ -15,8 +16,7 @@ extern "C" {
 
 static AVFrame* pending = NULL;
 static std::atomic<bool> protocol_alive = false;
-static int requested_width;
-static int requested_height;
+static std::atomic<FrontendResizeEvent> latest_resize;
 
 // Whist window management
 struct WhistWindowInformation {
@@ -100,6 +100,8 @@ static bool vi_api_connect() {
         WhistFrontendEvent event;
         while (fifo_queue_dequeue_item(events_queue, &event) == 0)
             ;
+        // Remember to reset pertinent global state.
+        latest_resize = FrontendResizeEvent();
         // Hit the semaphore to start the protocol again
         whist_post_semaphore(connection_semaphore);
         return true;
@@ -149,14 +151,15 @@ static void vi_api_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data, int*
     *width = frame->width;
     *height = frame->height;
     // If video width is rounded to the nearest even number, then crop the last pixel
-    if (frame->width - requested_width == 1) {
-        *visible_width = requested_width;
+    FrontendResizeEvent cached = latest_resize.load();
+    if (frame->width - cached.height == 1) {
+        *visible_width = cached.height;
     } else {
         *visible_width = frame->width;
     }
     // If video height is rounded to the nearest even number, then crop the last pixel
-    if (frame->height - requested_height == 1) {
-        *visible_height = requested_height;
+    if (frame->height - cached.height == 1) {
+        *visible_height = cached.height;
     } else {
         *visible_height = frame->height;
     }
@@ -206,8 +209,18 @@ static void vi_api_set_video_frame_callback(int window_id, VideoFrameCallback ca
 
 static void vi_api_send_event(const WhistFrontendEvent* frontend_event) {
     if (frontend_event->type == FRONTEND_EVENT_RESIZE) {
-        requested_width = frontend_event->resize.width;
-        requested_height = frontend_event->resize.height;
+        // Don't emit duplicate resize events
+        // Note: We should refactor to remove duplication between here and
+        // impl.c. Currently, there is a synchronization issue if send_event
+        // is called from multiple threads -- there's no guarantee that the
+        // order of te caches will match the order of the enqueues!
+        FrontendResizeEvent cached = latest_resize.load();
+        if (cached.width == frontend_event->resize.width &&
+            cached.height == frontend_event->resize.height &&
+            cached.dpi == frontend_event->resize.dpi) {
+            return;
+        }
+        latest_resize = frontend_event->resize;
     }
     if (fifo_queue_enqueue_item(events_queue, frontend_event) != 0) {
         LOG_ERROR("Virtual event queuing failed");

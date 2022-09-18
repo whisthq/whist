@@ -71,8 +71,7 @@ void sdl_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
 static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 
 // TODO: We could factor this out to initialize by component -- e.g. audio, window, renderer, etc.
-WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char* title,
-                     const WhistRGBColor* color) {
+WhistStatus sdl_init(WhistFrontend* frontend, const WhistRGBColor* color) {
     // Ensure that SDL doesn't override our signal handlers
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     /*
@@ -156,9 +155,9 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     window_context->window_id = 0;
     window_context->x = SDL_WINDOWPOS_CENTERED;
     window_context->y = SDL_WINDOWPOS_CENTERED;
-    window_context->width = width;
-    window_context->height = height;
-    window_context->title = std::string(title == NULL ? "Whist" : title);
+    window_context->width = 0;
+    window_context->height = 0;
+    window_context->title = "Whist";
     window_context->color = {17, 24, 39};
     window_context->is_fullscreen = false;
     window_context->has_titlebar = false;
@@ -273,8 +272,9 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
         window_flags |= SDL_WINDOW_SKIP_TASKBAR;
     }
 
-    // If width or height is 0, update width/height to use the entire display,
-    // And set the MAXIMIZED window flag
+    // If width or height is 0 (which is currently always the case except for
+    // potentially in unit tests), update width/height to use the entire display,
+    // And set the MAXIMIZED window flag.
     if (window_context->width == 0 || window_context->height == 0) {
         SDL_DisplayMode display_info;
         if (SDL_GetDesktopDisplayMode(0, &display_info) != 0) {

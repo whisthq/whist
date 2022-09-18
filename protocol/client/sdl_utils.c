@@ -91,8 +91,7 @@ WhistFrontend* create_frontend(void) {
         return NULL;
     }
 
-    // TODO: Stop passing width/height/title here.
-    if (whist_frontend_init(frontend, 0, 0, "Whist", &background_color) != WHIST_SUCCESS) {
+    if (whist_frontend_init(frontend, &background_color) != WHIST_SUCCESS) {
         whist_frontend_destroy(frontend);
         LOG_ERROR("Failed to initialize frontend");
         return NULL;
