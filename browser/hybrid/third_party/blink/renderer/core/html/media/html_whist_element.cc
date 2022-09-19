@@ -399,12 +399,12 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
 }
 
 unsigned int HTMLWhistElement::freezeAll() {
-  LOG(ERROR) << "freezeAll";
   return WHIST_VIRTUAL_INTERFACE_CALL(video.freeze_all_windows);
 }
 
 void HTMLWhistElement::requestSpotlight(int spotlight_id) {
-  LOG(ERROR) << "requestSpotlight " << spotlight_id;
+  // We must re-send the latest resize message here, because if the video was
+  // resized during the pause, we will play a stretched video.
   ProcessCachedResize();
   WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_spotlight, whist_window_id_, spotlight_id);
 }

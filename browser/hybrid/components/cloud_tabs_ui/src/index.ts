@@ -10,8 +10,6 @@ import {
 } from "./controls/history"
 import {
   initializeWhistTagHandler,
-  // initializeWhistFreezeHandler,
-  // initializeWhistThawHandler,
   initializeWhistFreezeAllHandler,
   initializeWhistSpotlightHandler,
   initializeRequestMandelbox
@@ -41,8 +39,6 @@ window.onload = () => {
 
   initializeLoadingScreen()
   initializeWhistTagHandler()
-  // initializeWhistFreezeHandler()
-  // initializeWhistThawHandler()
   initializeWhistFreezeAllHandler()
   initializeWhistSpotlightHandler()
   initializeRequestMandelbox()

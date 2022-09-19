@@ -323,7 +323,6 @@ static const VirtualInterface vi = {
             .free_frame_ref = vi_api_free_frame_ref,
             .set_on_cursor_change_callback = vi_api_set_on_cursor_change_callback,
             .set_video_frame_callback = vi_api_set_video_frame_callback,
-            // .set_video_playing = vi_api_set_video_playing,
             .freeze_all_windows = vi_api_freeze_all_windows,
             .set_video_spotlight = vi_api_set_video_spotlight,
         },

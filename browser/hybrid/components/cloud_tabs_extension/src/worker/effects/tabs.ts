@@ -78,8 +78,6 @@ merge(tabActivated, tabUpdated, tabFocused)
 merge(tabActivated, tabUpdated, webUiMouseEntered)
   .subscribe((tab: chrome.tabs.Tab) => {
     if (isCloudTab(tab)) {
-      // Freeze all tabs, send activate-tab, timeout thaw on tab-activated
-      // Freeze needs to happen synchronously
       ;(chrome as any).whist.broadcastWhistMessage(
         JSON.stringify({
           type: "CHANGE_FOCUSED_TAB",
