@@ -123,6 +123,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${X11_Xfixes_LIB}
             ${ALSA_LIBRARIES}
             crypto
+            atomic
             m)
 endif()
 

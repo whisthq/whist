@@ -2,8 +2,7 @@
 #define WHIST_CLIENT_FRONTEND_API_H
 
 #define FRONTEND_API(GENERATOR)                                                                    \
-    GENERATOR(WhistStatus, init, WhistFrontend* frontend, int width, int height,                   \
-              const char* title, const WhistRGBColor* color)                                       \
+    GENERATOR(WhistStatus, init, WhistFrontend* frontend, const WhistRGBColor* color)              \
     GENERATOR(void, destroy, WhistFrontend* frontend)                                              \
     GENERATOR(void, open_audio, WhistFrontend* frontend, unsigned int frequency,                   \
               unsigned int channels)                                                               \

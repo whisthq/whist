@@ -202,6 +202,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         asound
         m
         OpenSSL::Crypto
+        atomic
     )
 endif()
 

@@ -419,6 +419,11 @@ void HTMLWhistElement::whistConnect(const String& whist_parameters) {
 
   // Send parameters for this new whist connection
   if (new_connection) {
+    // IMPORTANT: Calling lifecycle.connect() flushes the event queue, so we must re-submit
+    // the resize event from element startup. This is to ensure that the protocol has the
+    // correct dimensions and DPI at startup.
+    ProcessCachedResize();
+
     WhistClient::WhistFrontendEvent event = {};
     event.type = WhistClient::FRONTEND_EVENT_STARTUP_PARAMETER;
     event.startup_parameter.error = false;

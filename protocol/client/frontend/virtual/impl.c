@@ -61,13 +61,16 @@ static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* e
     }
 }
 
-WhistStatus virtual_init(WhistFrontend* frontend, int width, int height, const char* title,
-                         const WhistRGBColor* color) {
+WhistStatus virtual_init(WhistFrontend* frontend, const WhistRGBColor* color) {
     frontend->context = safe_zalloc(sizeof(VirtualFrontendContext));
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
-    context->width = width ? width : 1920;
-    context->height = height ? height : 1080;
+    // Note: These defaults are only to prevent FATAL_ERRORs in the case that the main executable
+    //       does not submit a resize event before finishing startup of the virtual interface. In
+    //       such a case, an extra resize event is sent to the server, harming UX.
+    context->width = 1920;
+    context->height = 1080;
     context->dpi = 96;
+    context->dimensions_set = false;
     context->sdl_audio_device = 0;
 
     // Ensure that SDL doesn't override our signal handlers
