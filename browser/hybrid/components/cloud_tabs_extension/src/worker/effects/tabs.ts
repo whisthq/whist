@@ -157,7 +157,15 @@ cloudTabCreated.subscribe((tabs: chrome.tabs.Tab[]) => {
 })
 
 webuiOpenSupport.subscribe(() => {
-  void chrome.tabs.create({ url: chrome.runtime.getURL("intercom.html") })
+  void chrome.windows.create({ 
+    focused: true,
+    url: chrome.runtime.getURL("intercom.html"),
+    type: "popup",
+    width: Math.min(425, screen.width),
+    height: Math.min(625, screen.height),
+    left: Math.max(screen.width / 2 - 210, 10),
+    top: Math.max(screen.height / 2 - 310, 10),
+  })
 })
 
 cloudTabActivated.subscribe(([tabId]: [number]) => {

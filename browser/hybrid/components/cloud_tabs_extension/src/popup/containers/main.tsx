@@ -4,7 +4,6 @@ import Host from "../components/host"
 import Toggle from "../components/toggle"
 import Checkbox from "../components/checkbox"
 import Metrics from "../components/metrics"
-import Help from "../components/help"
 import Network from "../components/network"
 
 const Main = (props: {
@@ -17,7 +16,6 @@ const Main = (props: {
   isCloudTab?: boolean
   onToggled: (toggled: boolean) => void
   onSaved: (saved: boolean) => void
-  onHelp: () => void
 }) => {
   const {
     host,
@@ -27,14 +25,13 @@ const Main = (props: {
     isSaved,
     onToggled,
     onSaved,
-    onHelp,
     numberCloudTabs,
     networkInfo,
   } = props
 
   return (
     <div className="w-screen bg-gray-100 dark:bg-gray-800">
-      <div className="rounded-3xl rounded-t-none bg-white dark:bg-gray-900 px-6">
+      <div className="bg-white dark:bg-gray-900 px-6">
         {host !== undefined && (
           <>
             <Host host={host} />
@@ -71,7 +68,6 @@ const Main = (props: {
           <Network networkInfo={networkInfo} />
         </div>
       </div>
-      <Help onClick={onHelp} />
     </div>
   )
 }

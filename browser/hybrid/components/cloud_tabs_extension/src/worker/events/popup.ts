@@ -60,10 +60,6 @@ const popupOpenLogin = popupMessage.pipe(
   )
 )
 
-const popupOpenIntercom = popupMessage.pipe(
-  filter((event: any) => event.request.type === PopupMessageType.OPEN_INTERCOM)
-)
-
 const popupInviteCode = popupMessage.pipe(
   filter((event: any) => event.request.type === PopupMessageType.INVITE_CODE)
 )
@@ -76,6 +72,5 @@ export {
   popupUrlSaved,
   popupUrlUnsaved,
   popupOpenLogin,
-  popupOpenIntercom,
   popupInviteCode,
 }
