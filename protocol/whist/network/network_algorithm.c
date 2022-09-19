@@ -28,6 +28,7 @@ Includes
 #include "network_algorithm.h"
 #include "whist/debug/debug_console.h"
 #include "whist/core/features.h"
+#include "whist/debug/plotter.h"
 #include <whist/fec/fec_controller.h>
 #include <whist/fec/fec.h>
 #include <whist/debug/protocol_analyzer.h>
@@ -287,12 +288,30 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         max(latency_threshold_decrease_state, MIN_LATENCY_THRESHOLD_SEC);
     latency_threshold_hold_state = max(latency_threshold_hold_state, MIN_LATENCY_THRESHOLD_SEC);
 
+    int force_d=0;
+    int force_h=0;
     if (short_term_latency > latency_threshold_decrease_state) {
         delay_controller_state = DELAY_CONTROLLER_DECREASE;
+        force_d=1;
     } else if (short_term_latency > latency_threshold_hold_state &&
                delay_controller_state == DELAY_CONTROLLER_INCREASE) {
         delay_controller_state = DELAY_CONTROLLER_HOLD;
+        force_h=1;
     }
+    whist_plotter_insert_sample("force_decrease_by_latency", get_timestamp_sec(), force_d*120);
+    whist_plotter_insert_sample("force_hold_by_latency", get_timestamp_sec(), force_h*130);
+
+    int signal=0;
+    if (overuse_detector_signal == NORMAL_SIGNAL) signal= 90;
+    if (overuse_detector_signal == OVERUSE_SIGNAL) signal= 140;
+    if (overuse_detector_signal == UNDERUSE_SIGNAL) signal= 40;
+    whist_plotter_insert_sample("current_signal", get_timestamp_sec(), signal);
+
+    int state=0;
+    if(delay_controller_state ==DELAY_CONTROLLER_HOLD ) state=100;
+    if(delay_controller_state == DELAY_CONTROLLER_INCREASE) state=150;
+    if(delay_controller_state == DELAY_CONTROLLER_DECREASE) state= 50;
+    whist_plotter_insert_sample("current_state", get_timestamp_sec(), state);
 
     WccOp op = WCC_NO_OP;
     int old_bitrate = network_settings->video_bitrate;

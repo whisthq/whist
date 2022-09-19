@@ -513,6 +513,21 @@ static void send_desired_network_settings(UDPContext* context) {
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
                                    timestamp_us arrival_time, int group_id) {
     whist_lock_mutex(context->congestion_control_mutex);
+
+    static timestamp_us d_first=0;
+    static timestamp_us a_first=0;
+
+    if(!d_first) d_first= departure_time;
+    if(!a_first) a_first= arrival_time;
+
+    timestamp_us d_relative= departure_time - d_first;
+    timestamp_us a_relative= arrival_time - a_first;
+
+    //whist_plotter_insert_sample("departure_time", get_timestamp_sec(), d_relative/1000.0);
+    //whist_plotter_insert_sample("arrival_time", get_timestamp_sec(), a_relative/1000.0);
+
+    whist_plotter_insert_sample("relative one-way delay", get_timestamp_sec(), a_relative/1000.0 - d_relative/1000.0);
+
     // Initialize desired_network_settings if it is not done yet. Also send that starting bitrate
     // setting to server.
     if (context->network_settings.video_bitrate == 0) {
@@ -1713,7 +1728,6 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
         if (arrival_time) {
             *arrival_time = current_time_us();
         }
-
         // Verify the reported packet length
         // This is before the `decrypt_packet` call, so the packet might be malicious
         // ~ We check recv_len against UDPNETWORKPACKET_HEADER_SIZE first, to ensure that
