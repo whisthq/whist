@@ -11,12 +11,12 @@ extern "C++" {
 
 struct PacketInfo
 {
-    double send_time;
-    double recv_time;
+    double depature_time_ms;
+    double arrival_time_ms;
 };
 struct CCInput
 {
-   double current_timestamp_ms;
+   double current_time_ms;
    std::vector<PacketInfo> packets;
 
    std::optional<double> start_bitrate;
@@ -42,7 +42,7 @@ class CongestionCongrollerInterface
     CongestionCongrollerInterface(){};
     virtual ~CongestionCongrollerInterface() {};
     virtual CCOutput feed_info(CCInput input)=0;
-    virtual CCOutput process_interval(CCInput input)=0;
+    virtual CCOutput process_interval(double current_time_ms)=0;
     //virtual double get_target_bitrate() =0;
 };
 }

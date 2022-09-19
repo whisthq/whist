@@ -562,7 +562,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         if(true)
         {
             CCInput input;
-            input.current_timestamp_ms = get_timestamp_sec()*MS_IN_SECOND;
+            input.current_time_ms = get_timestamp_sec()*MS_IN_SECOND;
 
             double start_rate,min_rate,max_rate;
             get_bitrates(&start_rate, &min_rate, &max_rate);
@@ -573,6 +573,10 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             }
             input.max_bitrate=max_rate;
             input.min_bitrate=min_rate;
+
+            input.packets.emplace_back();
+            input.packets[0].arrival_time_ms= a_relative/1000.0;
+            input.packets[0].depature_time_ms= d_relative/1000.0; 
 
             whist_plotter_insert_sample("min_rate", get_timestamp_sec(), min_rate/1000.0/100.0);
             whist_plotter_insert_sample("max_rate", get_timestamp_sec(), max_rate/1000.0/100.0);
@@ -602,9 +606,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         double current_time = get_timestamp_sec();
         if( (current_time - last_process_time)*MS_IN_SECOND > 25)
         {
-            CCInput input;
-            input.current_timestamp_ms= get_timestamp_sec()*MS_IN_SECOND;
-            CCOutput output= cc_controler->process_interval(input);
+            double current_time_ms= get_timestamp_sec()*MS_IN_SECOND;
+            CCOutput output= cc_controler->process_interval(current_time_ms);
             context->network_settings.video_bitrate = output.target_bitrate.value();
             context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
             send_network_settings=true;

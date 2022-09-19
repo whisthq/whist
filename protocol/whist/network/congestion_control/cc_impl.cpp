@@ -80,7 +80,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
 
   virtual CCOutput feed_info(CCInput input) override
   {
-      webrtc::Timestamp current_time= webrtc::Timestamp::Seconds( input.current_timestamp_ms);
+      webrtc::Timestamp current_time= webrtc::Timestamp::Seconds( input.current_time_ms);
       
       //RTC_CHECK(input.packets.size()==1);
 
@@ -114,10 +114,10 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       output.target_bitrate=loss_based_target_rate.bps();
       return output;
   }
-  virtual CCOutput process_interval(CCInput input) override
+  virtual CCOutput process_interval(double current_time_ms) override
   {
    // CCOutput output;
-    webrtc::Timestamp current_time= webrtc::Timestamp::Seconds( input.current_timestamp_ms);
+    webrtc::Timestamp current_time= webrtc::Timestamp::Seconds(current_time_ms);
 
     send_side_bwd->UpdateEstimate(current_time);
     
