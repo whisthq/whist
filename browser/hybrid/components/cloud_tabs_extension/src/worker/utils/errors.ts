@@ -17,6 +17,8 @@ const isUnsupportedUrl = (url: URL) =>
   unsupportedUrls.some((el) => url.hostname.includes(el))
 const isWhistUrl = (url: URL) =>
   whistUrls.some((el) => url.hostname.includes(el))
+const isLocalhost = (url: URL) =>
+  url.hostname === "localhost" || url.hostname === "127.0.0.1"
 
 const cannotStreamError = (tab: chrome.tabs.Tab | undefined) => {
   if (tab === undefined || tab.id === undefined || tab.url === undefined)
@@ -35,6 +37,7 @@ const cannotStreamError = (tab: chrome.tabs.Tab | undefined) => {
   if (isVideoUrl(url)) return PopupError.IS_VIDEO
   if (isUnsupportedUrl(url)) return PopupError.IS_UNSUPPORTED_URL
   if (isWhistUrl(url)) return PopupError.IS_WHIST_URL
+  if (isLocalhost(url)) return PopupError.IS_LOCALHOST
 
   return undefined
 }
