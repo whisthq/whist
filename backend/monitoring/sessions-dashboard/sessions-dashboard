@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [[ ! -d build ]]; then
+  echo 'Error: Project has not been built.' >&2
+  echo '       Please run `npm run build` before proceeding.' >&2
+fi
+
+exec npm run start --silent -- $@
+
