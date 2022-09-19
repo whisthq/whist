@@ -43,6 +43,9 @@ for arg in "$@"; do
     --gcloud|-gc)
       provider="GCP"
       ;;
+    --quiet|-q)
+      quiet="--quiet"
+      ;;
     *)
       python_args+=("$arg")
       ;;
@@ -111,4 +114,4 @@ docker build --quiet -t whist/build-assets:protocol -f base/build-assets/Dockerf
 # and whist/build-assets:protocol when they determine that
 # they want to copy the protocol based on the mode.
 
-python3 ./scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode" --beta="$beta" --quiet
+python3 ./scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode" --beta="$beta" "$quiet"
