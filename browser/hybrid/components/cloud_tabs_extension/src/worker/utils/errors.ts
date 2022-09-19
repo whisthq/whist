@@ -7,8 +7,7 @@ import {
 } from "@app/constants/urls"
 import { isCloudTab, stripCloudUrl } from "@app/worker/utils/tabs"
 
-const isInvalidScheme = (url: URL) =>
-  url.protocol !== "http:" && url.protocol !== "https:"
+const isValidScheme = (url: URL) => ["http:", "https:"].includes(url.protocol)
 const isVideoChatUrl = (url: URL) =>
   videoChatUrls.some((el) => url.hostname.includes(el))
 const isVideoUrl = (url: URL) =>
@@ -18,7 +17,7 @@ const isUnsupportedUrl = (url: URL) =>
 const isWhistUrl = (url: URL) =>
   whistUrls.some((el) => url.hostname.includes(el))
 const isLocalhost = (url: URL) =>
-  url.hostname === "localhost" || url.hostname === "127.0.0.1"
+  ["localhost", "127.0.0.1", "0.0.0.0"].includes(url.hostname)
 
 const cannotStreamError = (tab: chrome.tabs.Tab | undefined) => {
   if (tab === undefined || tab.id === undefined || tab.url === undefined)
@@ -32,7 +31,7 @@ const cannotStreamError = (tab: chrome.tabs.Tab | undefined) => {
 
   const url = new URL(stripCloudUrl(tab.url))
 
-  if (isInvalidScheme(url)) return PopupError.IS_INVALID_SCHEME
+  if (!isValidScheme(url)) return PopupError.IS_INVALID_SCHEME
   if (isVideoChatUrl(url)) return PopupError.IS_VIDEO_CHAT
   if (isVideoUrl(url)) return PopupError.IS_VIDEO
   if (isUnsupportedUrl(url)) return PopupError.IS_UNSUPPORTED_URL
