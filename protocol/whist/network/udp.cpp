@@ -40,11 +40,20 @@ extern "C" {
 
 
 static bool always_saturate;
+static bool no_burst_mode;
+static bool wcc_v2;
+
+COMMAND_LINE_BOOL_OPTION(
+    wcc_v2, 0, "wcc_v2",
+    "use wcc_v2");
 
 COMMAND_LINE_BOOL_OPTION(
     always_saturate, 0, "always-saturate",
     "always saturate bandwith, to simlulate a perfect encoder that never undershoot");
 
+COMMAND_LINE_BOOL_OPTION(
+    no_burst_mode, 0, "no-burst-mode",
+    "disable burst-mode");
 /*
 ============================
 Defines
@@ -554,7 +563,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         group_stats->arrival_time = arrival_time;
     }
 
-    if(USING_WCC_V2)
+    if(wcc_v2)
     {
         double old_bitrate=context->network_settings.video_bitrate;
 
@@ -667,7 +676,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                     }
                 }
             }
-            if(!USING_WCC_V2) {
+            if(!wcc_v2) {
                 send_network_settings = whist_congestion_controller(
                 curr_group_stats, prev_group_stats, incoming_bitrate, packet_loss_ratio,
                 context->short_term_latency, context->long_term_latency, &context->network_settings,
@@ -686,7 +695,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         // note: the timer of last send is updated inside
 
         if(always_saturate) context->network_settings.saturate_bandwidth=1;
-
+        if(no_burst_mode) context->network_settings.burst_bitrate = context->network_settings.video_bitrate;
         send_desired_network_settings(context);
     }
     whist_unlock_mutex(context->congestion_control_mutex);
@@ -802,7 +811,7 @@ static bool udp_update(void* raw_context) {
 
     if (context->ring_buffers[PACKET_VIDEO] != NULL) {
         // If no pong is received for UDP_PONG_CONGESTION_SEC, then we signal severe congestion.
-        if (!USING_WCC_V2 && diff_timer(&context->last_pong_timer, &current_time) > UDP_PONG_CONGESTION_SEC &&
+        if (!wcc_v2 && diff_timer(&context->last_pong_timer, &current_time) > UDP_PONG_CONGESTION_SEC &&
             whist_congestion_controller_handle_severe_congestion(&context->network_settings)) {
             send_desired_network_settings(context);
         }
