@@ -1,3 +1,4 @@
+#include <SDL2/SDL_shape.h>
 #include <whist/core/whist.h>
 extern "C" {
 #include "common.h"
@@ -11,12 +12,18 @@ extern "C" {
 
 static bool skip_taskbar;
 static char* icon_png_filename;
+static char* force_resolution;
+
 COMMAND_LINE_BOOL_OPTION(
     skip_taskbar, 0, "sdl-skip-taskbar",
     "Launch the protocol without displaying an icon in the taskbar (SDL frontend only).")
 COMMAND_LINE_STRING_OPTION(
     icon_png_filename, 0, "sdl-icon", WHIST_ARGS_MAXLEN,
     "Set the protocol window icon from a 64x64 pixel png file (SDL frontend only).")
+
+COMMAND_LINE_STRING_OPTION(
+    force_resolution, 0, "force-resolution", WHIST_ARGS_MAXLEN,
+    "force resolution, ie: 1920x1080");
 
 static const char* sdl_render_driver;
 COMMAND_LINE_STRING_OPTION(sdl_render_driver, 0, "sdl-render-driver", 16,
@@ -282,9 +289,20 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
             return WHIST_ERROR_UNKNOWN;
         }
 
-        window_context->width = display_info.w;
-        window_context->height = display_info.h;
-        window_flags |= SDL_WINDOW_MAXIMIZED;
+        if(force_resolution){
+            int w=-1,h=-1;
+            sscanf(force_resolution,"%dx%d",&w,&h);
+            FATAL_ASSERT(w!=-1&&h!=-1);
+            window_context->width=w;
+            window_context->height=h;
+        }
+        else {
+            window_context->width = display_info.w;
+            window_context->height = display_info.h;
+            window_flags |= SDL_WINDOW_MAXIMIZED;
+        }
+
+
     }
 
     // Renderer flags
