@@ -602,15 +602,15 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
         }
 
-        static double last_process_time=0;
-        double current_time = get_timestamp_sec();
-        if( (current_time - last_process_time)*MS_IN_SECOND > 25)
+        static double last_process_time_ms=0;
+        double current_time_ms = get_timestamp_sec()*MS_IN_SECOND;
+        if( (current_time_ms - last_process_time_ms)> 25)
         {
-            double current_time_ms= get_timestamp_sec()*MS_IN_SECOND;
             CCOutput output= cc_controler->process_interval(current_time_ms);
             context->network_settings.video_bitrate = output.target_bitrate.value();
             context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
             send_network_settings=true;
+            last_process_time_ms =current_time_ms;
         }
 
         if(context->network_settings.video_bitrate != old_bitrate)

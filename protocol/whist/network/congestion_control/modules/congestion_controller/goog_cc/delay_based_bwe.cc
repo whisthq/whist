@@ -26,6 +26,7 @@
 #include "modules/remote_bitrate_estimator/include/bwe_defines.h"
 //#include "modules/remote_bitrate_estimator/test/bwe_test_logging.h"
 #include "rtc_base/checks.h"
+
 //#include "rtc_base/logging.h"
 //#include "system_wrappers/include/metrics.h"
 
@@ -129,6 +130,8 @@ DelayBasedBwe::Result DelayBasedBwe::IncomingPacketFeedbackVector(
     prev_detector_state = active_delay_detector_->State();
   }
 
+  whist_plotter_insert_sample("signal", get_timestamp_sec(), int(active_delay_detector_->State())*50+50);
+
   if (delayed_feedback) {
     // TODO(bugs.webrtc.org/10125): Design a better mechanism to safe-guard
     // against building very large network queues.
@@ -192,6 +195,9 @@ void DelayBasedBwe::IncomingPacketFeedback(const PacketResult& packet_feedback,
   bool calculated_deltas = inter_arrival_for_packet->ComputeDeltas(
       packet_feedback.sent_packet.send_time, packet_feedback.receive_time,
       at_time, packet_size.bytes(), &send_delta, &recv_delta, &size_delta);
+
+  /*if(calculated_deltas)
+  printf("<%f %f>\n", recv_delta.ms<double>(), send_delta.ms<double>());*/
 
   delay_detector_for_packet->Update(recv_delta.ms<double>(),
                                     send_delta.ms<double>(),

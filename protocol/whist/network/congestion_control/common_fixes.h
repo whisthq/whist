@@ -7,6 +7,13 @@
 #include <vector>
 #include <map>
 
+extern "C"
+{
+#include "whist/debug/plotter.h"
+#include "whist/core/platform.h"
+#include "whist/utils/clock.h"
+}
+
 namespace webrtc
 {
     /*struct FieldTrialsView{

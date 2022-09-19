@@ -2,7 +2,10 @@
 #include "api/transport/network_types.h"
 #include "api/units/data_rate.h"
 #include "api/units/data_size.h"
+#include "whist/debug/plotter.h"
 #include "whist/logging/logging.h"
+#include "whist/utils/clock.h"
+
 extern "C"
 {
 #include "cc_interface.h"
@@ -93,14 +96,17 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         delay_based_bwe->OnRttUpdate(webrtc::TimeDelta::Millis(input.rtt_ms.value()));
       }
 
+
+      RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value());
+
       std::optional<webrtc::DataRate> start_rate;
       if(input.start_bitrate.has_value())
       {
          start_rate=webrtc::DataRate::BitsPerSec(input.start_bitrate.value());
-         delay_based_bwe->SetMinBitrate(start_rate.value());
-      }
+         delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
+         delay_based_bwe->SetStartBitrate(start_rate.value());
 
-      RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value());
+      }
 
       send_side_bwd->SetBitrates(start_rate, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
                                      webrtc::DataRate::BitsPerSec(input.max_bitrate.value()),  current_time);
@@ -130,14 +136,18 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       report.packet_feedbacks[0].sent_packet.send_time= webrtc::Timestamp::Millis(input.packets[0].depature_time_ms);
       report.packet_feedbacks[0].sent_packet.size = webrtc::DataSize::Bytes(1000);
 
-      webrtc::DelayBasedBwe::Result result; delay_based_bwe->IncomingPacketFeedbackVector(
+      webrtc::DelayBasedBwe::Result result= delay_based_bwe->IncomingPacketFeedbackVector(
       report, incoming_optional, dummy_probe, dummy_est,
       false);
 
       if (result.updated) {
             send_side_bwd->UpdateDelayBasedEstimate(report.feedback_time,
                                                             result.target_bitrate);
+            whist_plotter_insert_sample("delay_based_bwd", get_timestamp_sec(), result.target_bitrate.bps()/1000.0/100.0);
       }
+      //whist_plotter_insert_sample("fuck", get_timestamp_sec(), 100);
+
+      //whist_plotter_insert_sample("delay_last_est", get_timestamp_sec(), delay_based_bwe->last_estimate().bps()/1000.0/100.0);
 
       CCOutput output;
       webrtc::DataRate loss_based_target_rate = send_side_bwd->target_rate();
