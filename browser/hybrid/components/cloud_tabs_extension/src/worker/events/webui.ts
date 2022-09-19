@@ -1,4 +1,4 @@
-import { fromEventPattern, from, of, zip, tap } from "rxjs"
+import { fromEventPattern, from, of, zip } from "rxjs"
 import { filter, map, share, switchMap } from "rxjs/operators"
 import { getTab } from "@app/worker/utils/tabs"
 
@@ -72,7 +72,6 @@ const webUisFrozen = fromEventPattern(
 ).pipe(
   map((message: string) => JSON.parse(message)),
   filter((message: any) => message.type === "WEB_UIS_FROZEN"),
-  tap((message: any) => console.log(message.type)),
   switchMap((message: any) => zip([
     from(getTab(message.value.new_active_tab_id)),
     of(message.value.spotlight_id)

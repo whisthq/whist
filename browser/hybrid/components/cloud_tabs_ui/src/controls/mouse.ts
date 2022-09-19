@@ -11,7 +11,6 @@ const initializeMouseEnterHandler = () => {
         },
       })
     )
-    console.log("mouse entered")
   })
 }
 

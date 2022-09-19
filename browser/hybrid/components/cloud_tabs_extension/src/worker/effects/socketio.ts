@@ -67,30 +67,10 @@ merge(
     }
   })
 
-// // If a tab is activated, active it on the server
-// merge(tabActivated, tabFocused, webUiMouseEntered)
-//   .pipe(withLatestFrom(serverCookiesSynced, socket))
-//   .subscribe(([tab, _synced, socket]: [chrome.tabs.Tab, any, Socket]) => {
-//     if (isCloudTab(tab)) {
-//       // Freeze all tabs, send activate-tab, timeout thaw on tab-activated
-//       // Freeze needs to happen synchronously
-//       // socket.emit("activate-tab", tab, false)
-//       ;(chrome as any).whist.broadcastWhistMessage(
-//         JSON.stringify({
-//           type: "CHANGE_FOCUSED_TAB",
-//           value: {
-//             id: tab.id,
-//           },
-//         })
-//       )
-//     }
-//   })
-
 // Web UIs get frozen in response to tabs switching, so activate the new active tab on the server
 webUisFrozen
   .pipe(withLatestFrom(socket))
   .subscribe(([[newActiveTab, spotlightId], socket]: [[chrome.tabs.Tab, number], Socket]) => {
-    console.log("webUisFrozen event")
     if (isCloudTab(newActiveTab)) {
       socket.emit("activate-tab", newActiveTab, false, spotlightId)
     }

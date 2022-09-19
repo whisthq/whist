@@ -398,7 +398,7 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
   }
 }
 
-int HTMLWhistElement::freezeAll() {
+unsigned int HTMLWhistElement::freezeAll() {
   LOG(ERROR) << "freezeAll";
   return WHIST_VIRTUAL_INTERFACE_CALL(video.freeze_all_windows);
 }

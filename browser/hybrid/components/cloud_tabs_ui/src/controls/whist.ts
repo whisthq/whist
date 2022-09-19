@@ -43,80 +43,19 @@ const initializeRequestMandelbox = () => {
   }, 100)
 }
 
-// const initializeWhistFreezeHandler = () => {
-//   const whistTag: any = document.querySelector("whist")
-
-//   ;(chrome as any).whist.onMessage.addListener((message: string) => {
-//     const parsed = JSON.parse(message)
-
-//     if (
-//       parsed.type === "FREEZE_TAB" && 
-//       parsed.value.exclude_id !== getTabId()
-//     ) {
-//       console.log("freeze ", getTabId())
-//       whistTag.freeze()
-//     }
-//   })
-
-//   // // Freeze all other cloud tabs when another cloud tab has been activated
-//   // chrome.tabs.onActivated.addListener((activeInfo: { tabId: number }) => {
-//   //   if (activeInfo.tabId !== sessionStorage.getNumber("tabId")) {
-//   //     console.log("free ", activeInfo.tabId)
-//   //     whistTag.freeze()
-//   //   }
-//   // })
-// }
-
-// const initializeWhistThawHandler = () => {
-//   const whistTag: any = document.querySelector("whist")
-
-//   ;(chrome as any).whist.onMessage.addListener((message: string) => {
-//     const parsed = JSON.parse(message)
-
-//     if (
-//       (parsed.type === "ACTIVATE_TAB" || parsed.type === "UPDATE_TAB") &&
-//       parsed.value.id === getTabId()
-//     ) {
-//       if (whistParameters !== null && !whistTag.isWhistConnected()) {
-//         whistTag.focus()
-//         whistTag.whistConnect(whistParameters)
-//       }
-
-//       ;(chrome as any).whist.broadcastWhistMessage(
-//         JSON.stringify({
-//           type: "FREEZE_TAB",
-//           value: {
-//             exclude_id: sessionStorage.getNumber("tabId"),
-//           },
-//         })
-//       )
-
-//       // We delay by 100ms because this is the amount of time we expect the protocol to lag behind
-//       // the socket.io message, since the protocol has extra video encode/decode latency.
-//       // Lower values were tested and they led to flashes of other tabs being seen.
-//       setTimeout(() => {
-//         whistTag.thaw()
-//       }, 100)
-//     }
-//   })
-// }
-
 const initializeWhistFreezeAllHandler = () => {
   const whistTag: any = document.querySelector("whist")
 
   ;(chrome as any).whist.onMessage.addListener((message: string) => {
     const parsed = JSON.parse(message)
 
-    if (parsed.type = "CHANGE_FOCUSED_TAB" && parsed.value.id === getTabId()) {
+    if (parsed.type == "CHANGE_FOCUSED_TAB" && parsed.value.id === getTabId()) {
       if (whistParameters !== null && !whistTag.isWhistConnected()) {
         whistTag.focus()
         whistTag.whistConnect(whistParameters)
       }
 
-      // TODO: check to make sure that we are not already focused before
-      // freezing, etc.
       var spotlightId = whistTag.freezeAll()
-      console.log("freeze all id: ", spotlightId)
 
       ;(chrome as any).whist.broadcastWhistMessage(
         JSON.stringify({
@@ -145,8 +84,6 @@ const initializeWhistSpotlightHandler = () => {
         whistTag.focus()
         whistTag.whistConnect(whistParameters)
       }
-
-      console.log("message for spotlighting: ", parsed)
 
       var spotlightId = parsed.value.spotlightId;
 

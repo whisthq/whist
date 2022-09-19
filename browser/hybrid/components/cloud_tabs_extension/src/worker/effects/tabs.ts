@@ -80,7 +80,6 @@ merge(tabActivated, tabUpdated, webUiMouseEntered)
     if (isCloudTab(tab)) {
       // Freeze all tabs, send activate-tab, timeout thaw on tab-activated
       // Freeze needs to happen synchronously
-      // socket.emit("activate-tab", tab, false)
       ;(chrome as any).whist.broadcastWhistMessage(
         JSON.stringify({
           type: "CHANGE_FOCUSED_TAB",
