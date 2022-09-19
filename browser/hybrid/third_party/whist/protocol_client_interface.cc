@@ -122,4 +122,6 @@ bool InitializeWhistClient() {
   WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line) {
     whist_logs_out << line;
   });
+
+  return true
 }
