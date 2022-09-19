@@ -29,6 +29,7 @@ extern "C" {
 #include <whist/logging/logging.h>
 #include "whist/debug/plotter.h"
 #include "whist/utils/clock.h"
+#include <whist/utils/command_line.h>
 }
 
 #include <whist/network/congestion_control/cc_interface.h>
@@ -36,6 +37,13 @@ extern "C" {
 #if !OS_IS(OS_WIN32)
 #include <fcntl.h>
 #endif
+
+
+static bool always_saturate;
+
+COMMAND_LINE_BOOL_OPTION(
+    always_saturate, 0, "always-saturate",
+    "always saturate bandwith, to simlulate a perfect encoder that never undershoot");
 
 /*
 ============================
@@ -610,6 +618,9 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     // resend values periodically since UDP packet might get lost
     if (send_network_settings || get_timer(&context->last_network_settings_send_time) > 1.0) {
         // note: the timer of last send is updated inside
+
+        if(always_saturate) context->network_settings.saturate_bandwidth=1;
+
         send_desired_network_settings(context);
     }
     whist_unlock_mutex(context->congestion_control_mutex);
