@@ -1,5 +1,7 @@
 #include <optional>
+#include "api/transport/network_types.h"
 #include "api/units/data_rate.h"
+#include "api/units/data_size.h"
 #include "whist/logging/logging.h"
 extern "C"
 {
@@ -37,7 +39,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
     CongestionCongrollerImpl()
     {
         webrtc::field_trial::InitFieldTrialsFromString("");
-        webrtc::FieldTrials ft("");
+        webrtc::FieldTrials * ft= new webrtc::FieldTrials("");
         /*
         webrtc::FieldTrials ft("WebRTC-Bwe-EstimateBoundedIncrease/"
         "ratio:0.85,ignore_acked:true,immediate_incr:false/"
@@ -47,9 +49,9 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         "WebRTC-BweAimdRateControlConfig/initial_backoff_interval:200/"
         "WebRTC-Bwe-MaxRttLimit/limit:2s,floor:100bps/"
         );*/
-        delay_based_bwe= std::make_unique<webrtc::DelayBasedBwe> (&ft,nullptr,nullptr);
-        send_side_bwd= std::make_unique<webrtc::SendSideBandwidthEstimation> (&ft,nullptr);
-
+        delay_based_bwe= std::make_unique<webrtc::DelayBasedBwe> (ft,nullptr,nullptr);
+        send_side_bwd= std::make_unique<webrtc::SendSideBandwidthEstimation> (ft,nullptr);
+        delay_based_bwe->SetMinBitrate(webrtc::congestion_controller::GetMinBitrate());
         /*
         int a;
 
@@ -80,7 +82,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
 
   virtual CCOutput feed_info(CCInput input) override
   {
-      webrtc::Timestamp current_time= webrtc::Timestamp::Seconds( input.current_time_ms);
+      webrtc::Timestamp current_time= webrtc::Timestamp::Millis( input.current_time_ms);
       
       //RTC_CHECK(input.packets.size()==1);
 
@@ -88,12 +90,14 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       {
         RTC_CHECK(input.rtt_ms.has_value() && input.rtt_ms.value() >0);
         send_side_bwd->UpdateRtt(webrtc::TimeDelta::Millis(input.rtt_ms.value()), current_time);
+        delay_based_bwe->OnRttUpdate(webrtc::TimeDelta::Millis(input.rtt_ms.value()));
       }
 
       std::optional<webrtc::DataRate> start_rate;
       if(input.start_bitrate.has_value())
       {
          start_rate=webrtc::DataRate::BitsPerSec(input.start_bitrate.value());
+         delay_based_bwe->SetMinBitrate(start_rate.value());
       }
 
       RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value());
@@ -101,12 +105,38 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       send_side_bwd->SetBitrates(start_rate, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
                                      webrtc::DataRate::BitsPerSec(input.max_bitrate.value()),  current_time);
 
+      delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
+
       RTC_CHECK(input.packet_loss.has_value());
       send_side_bwd->UpdatePacketsLostDirect(input.packet_loss.value(), current_time);
+
+      optional<webrtc::DataRate> incoming_optional;
 
       if(input.incoming_bitrate.has_value())
       {
         send_side_bwd->SetAcknowledgedRate(webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value()),current_time);
+        incoming_optional = webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value());
+      }
+
+
+      webrtc::TransportPacketsFeedback report;
+      optional<webrtc::DataRate> dummy_probe;
+      optional<webrtc::NetworkStateEstimate> dummy_est;
+
+      RTC_CHECK(input.packets.size()==1);
+      report.feedback_time=current_time;
+      report.packet_feedbacks.emplace_back();
+      report.packet_feedbacks[0].receive_time= webrtc::Timestamp::Millis(input.packets[0].arrival_time_ms);
+      report.packet_feedbacks[0].sent_packet.send_time= webrtc::Timestamp::Millis(input.packets[0].depature_time_ms);
+      report.packet_feedbacks[0].sent_packet.size = webrtc::DataSize::Bytes(1000);
+
+      webrtc::DelayBasedBwe::Result result; delay_based_bwe->IncomingPacketFeedbackVector(
+      report, incoming_optional, dummy_probe, dummy_est,
+      false);
+
+      if (result.updated) {
+            send_side_bwd->UpdateDelayBasedEstimate(report.feedback_time,
+                                                            result.target_bitrate);
       }
 
       CCOutput output;
@@ -117,7 +147,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
   virtual CCOutput process_interval(double current_time_ms) override
   {
    // CCOutput output;
-    webrtc::Timestamp current_time= webrtc::Timestamp::Seconds(current_time_ms);
+    webrtc::Timestamp current_time= webrtc::Timestamp::Millis(current_time_ms);
 
     send_side_bwd->UpdateEstimate(current_time);
     
