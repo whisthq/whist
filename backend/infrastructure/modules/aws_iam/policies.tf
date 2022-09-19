@@ -93,44 +93,39 @@ data "aws_iam_policy_document" "WhistEC2DeploymentRolePolicy" {
     ]
   }
 
-  # This statement will only evaluate if the environment is not `prod`.
-  # It enables SSM to access instances (for debugging), but does not allow
-  # it in `prod` (for user privacy/security).
-  dynamic "statement" {
-    for_each = var.env != "prod" ? [1] : []
-    content {
-      actions = [
-        "ssm:DescribeAssociation",
-        "ssm:GetDeployablePatchSnapshotForInstance",
-        "ssm:GetDocument",
-        "ssm:DescribeDocument",
-        "ssm:GetManifest",
-        "ssm:GetParameter",
-        "ssm:GetParameters",
-        "ssm:ListAssociations",
-        "ssm:ListInstanceAssociations",
-        "ssm:PutInventory",
-        "ssm:PutComplianceItems",
-        "ssm:PutConfigurePackageResult",
-        "ssm:UpdateAssociationStatus",
-        "ssm:UpdateInstanceAssociationStatus",
-        "ssm:UpdateInstanceInformation",
-        "ssmmessages:CreateControlChannel",
-        "ssmmessages:CreateDataChannel",
-        "ssmmessages:OpenControlChannel",
-        "ssmmessages:OpenDataChannel",
-        "ec2messages:AcknowledgeMessage",
-        "ec2messages:DeleteMessage",
-        "ec2messages:FailMessage",
-        "ec2messages:GetEndpoint",
-        "ec2messages:GetMessages",
-        "ec2messages:SendReply"
-      ]
-      effect = "Allow"
-      resources = [
-        "*",
-      ]
-    }
+  // Enable SSM access to EC2 instances
+  statement {
+    actions = [
+      "ssm:DescribeAssociation",
+      "ssm:GetDeployablePatchSnapshotForInstance",
+      "ssm:GetDocument",
+      "ssm:DescribeDocument",
+      "ssm:GetManifest",
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:ListAssociations",
+      "ssm:ListInstanceAssociations",
+      "ssm:PutInventory",
+      "ssm:PutComplianceItems",
+      "ssm:PutConfigurePackageResult",
+      "ssm:UpdateAssociationStatus",
+      "ssm:UpdateInstanceAssociationStatus",
+      "ssm:UpdateInstanceInformation",
+      "ssmmessages:CreateControlChannel",
+      "ssmmessages:CreateDataChannel",
+      "ssmmessages:OpenControlChannel",
+      "ssmmessages:OpenDataChannel",
+      "ec2messages:AcknowledgeMessage",
+      "ec2messages:DeleteMessage",
+      "ec2messages:FailMessage",
+      "ec2messages:GetEndpoint",
+      "ec2messages:GetMessages",
+      "ec2messages:SendReply"
+    ]
+    effect = "Allow"
+    resources = [
+      "*",
+    ]
   }
 }
 
