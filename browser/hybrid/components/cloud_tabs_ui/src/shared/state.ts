@@ -1,5 +1,5 @@
 let state = {
-    wasConnected: false
+  wasConnected: false,
 }
 
 export { state }

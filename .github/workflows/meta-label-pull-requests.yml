@@ -22,11 +22,11 @@ jobs:
       PR_LABEL_PREFIX: "📁 Repo: "
 
     steps:
-      - name: Label Pull Request (.github & backend subprojects)
+      - name: Label Pull Request (.github, backend, and browser subprojects)
         uses: adamzolyak/monorepo-pr-labeler-action@4.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_DIRS: ".github|backend"
+          BASE_DIRS: ".github|backend|browser"
         with:
           prefix: ${{ env.PR_LABEL_PREFIX }}
 
@@ -35,6 +35,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Match how we've been labeling our PRs before the action 3.0.0 changed
-          # its default behavior to remove the prefix.
           prefix: ${{ env.PR_LABEL_PREFIX }}

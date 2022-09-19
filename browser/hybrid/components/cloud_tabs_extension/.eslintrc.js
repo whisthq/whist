@@ -29,4 +29,15 @@ module.exports = {
       version: "detect",
     },
   },
+  overrides: [
+    // This override hides incorrect usage of async/await in rxjs subscriptions. Instead of
+    // doing that, we should be doing anything asynchronous in the observable pipe chain.
+    // TODO: Fix this after Suriya's major rewrite for spotlighting tabs.
+    {
+      files: ["*.ts"],
+      rules: {
+        "@typescript-eslint/no-misused-promises": "off",
+      },
+    },
+  ],
 }

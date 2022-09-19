@@ -1,0 +1,53 @@
+name: "Hybrid Browser: Check Typescript"
+
+on:
+  pull_request:
+    paths:
+      - "browsers/hybrid/components/cloud_tabs_extension/**"
+      - "browsers/hybrid/components/cloud_tabs_ui/**"
+      - ".github/workflows/browser-hybrid-check-typescript.yml"
+  workflow_dispatch:
+
+# This guarantees that if you push many commits to the same PR, only the latest
+# commit will get run (others get cancelled)
+concurrency:
+  group: browser-hybrid-check-typescript-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  check-typescript-component:
+    strategy:
+      matrix:
+        component:
+          - name: Cloud Tabs Extension
+            dir: browser/hybrid/components/cloud_tabs_extension
+          - name: Cloud Tabs UI
+            dir: browser/hybrid/components/cloud_tabs_ui
+
+    name: Lint and Format ${{ matrix.component.name }}
+    runs-on: ubuntu-20.04
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.component.dir }}
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Set up NodeJS Environment
+        uses: actions/setup-node@v3.4.1
+        with:
+          node-version: "16"
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Check Building
+        run: npm run build
+
+      - name: Check Formatting
+        run: npm run format:check
+
+      - name: Check Linting
+        run: npm run lint:check
