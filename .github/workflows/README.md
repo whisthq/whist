@@ -14,15 +14,9 @@ Since GitHub does not yet allow us to sort our workflow files into directories, 
 
 For example, a workflow for the `backend/services` projects which checks the PR and runs tests is called `backend-services-check-pr.yml`, whereas a meta workflow (one which operates on workflows and PRs themselves) which labels pull requests is named `meta-label-pull-requests.yml`. Workflows that belong to the whole repo -- for example, for pushing Sentry releases, are instead written `whist-deploy-sentry-releases.yml`.
 
-### Headers
-
-We used to have a convention which involved duplicating information and writing descriptions about workflows in comments atop the YAML files. This information is often not useful and just leads to cruft, so it is no longer required unless something particularly confusing needs to be documented.
-
 ### Jobs
 
 Many of our workflows have a single job, whereas some of our more complex workflows (for example, `whist-publish-build.yml`) will contain multiple jobs triggered by the same event.
-
-We used to have a convention that jobs needed to be named uniquely across workflows. This was extra caution on Roshan's part since we were not yet sure how GitHub would build out and stabilize the Actions API. While you may choose to use this convention, feel free to opt for concision and clarity and to avoid extra-long job names.
 
 In many cases, `jobname` can simply be `main` -- for example, here is the start of the job description in `protocol-linting.yml`:
 

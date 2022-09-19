@@ -1,7 +1,7 @@
 {
   "name": "cloud_tabs_ui",
   "version": "1.0.0",
-  "description": "The Chromium WebUI for cloud tabs.",
+  "description": "The Chromium WebUI for Cloud Tabs",
   "scripts": {
     "build": "echo 'Nothing to do.'",
     "format:check": "prettier --check .",
@@ -14,7 +14,7 @@
     "url": "git+https://github.com/whisthq/whist.git"
   },
   "author": "Whist Technologies, Inc.",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "bugs": {
     "url": "https://github.com/whisthq/whist/issues"
   },
