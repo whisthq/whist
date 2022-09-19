@@ -213,7 +213,7 @@ static void vi_api_send_event(const WhistFrontendEvent* frontend_event) {
         // Note: We should refactor to remove duplication between here and
         // impl.c. Currently, there is a synchronization issue if send_event
         // is called from multiple threads -- there's no guarantee that the
-        // order of te caches will match the order of the enqueues!
+        // order of the caches will match the order of the enqueues!
         FrontendResizeEvent cached = latest_resize.load();
         if (cached.width == frontend_event->resize.width &&
             cached.height == frontend_event->resize.height &&
