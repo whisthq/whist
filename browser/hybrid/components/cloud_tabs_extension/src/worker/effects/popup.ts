@@ -29,6 +29,7 @@ import {
   popupUrlSaved,
   popupUrlUnsaved,
   popupOpenLogin,
+  popupOpenIntercom,
   popupInviteCode,
 } from "@app/worker/events/popup"
 import { Storage } from "@app/constants/storage"
@@ -165,6 +166,11 @@ popupUrlUnsaved.subscribe((event: any) => {
 // If the user clicks the popup login button
 popupOpenLogin.subscribe(() => {
   void chrome.tabs.create({ url: "chrome://welcome" })
+})
+
+// If the user clicks the popup help button
+popupOpenIntercom.subscribe(() => {
+  void chrome.tabs.create({ url: chrome.runtime.getURL("intercom.html") })
 })
 
 popupInviteCode.subscribe((event: any) => {

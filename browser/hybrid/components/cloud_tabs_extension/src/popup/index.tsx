@@ -106,6 +106,10 @@ const App = () => {
     })
   }
 
+  const onHelp = () => {
+    sendMessageToBackground(PopupMessageType.OPEN_INTERCOM)
+  }
+
   const onInviteCode = (code: string) => {
     setInviteError(false)
     sendMessageToBackground(
@@ -163,6 +167,7 @@ const App = () => {
         error={error}
         onToggled={onToggled}
         onSaved={onSaved}
+        onHelp={onHelp}
         numberCloudTabs={numberCloudTabs}
         networkInfo={networkInfo}
       />
