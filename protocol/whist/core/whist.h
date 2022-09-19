@@ -125,7 +125,7 @@ Defines
 #define UINPUT_INPUT_DRIVER 3
 
 
-#define USING_WCC_V2 false
+#define USING_WCC_V2 true
 // Whether or not multi-window is being used
 #define USING_MULTIWINDOW false
 

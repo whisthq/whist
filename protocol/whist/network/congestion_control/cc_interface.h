@@ -19,10 +19,15 @@ struct CCInput
    double current_timestamp_ms;
    std::vector<PacketInfo> packets;
 
+   std::optional<double> start_bitrate;
    std::optional<double> min_bitrate;
    std::optional<double> max_bitrate;
    std::optional<double> packet_loss;
-   std::optional<double> ack_bitrate;
+   //std::optional<double> ack_bitrate;
+
+   std::optional<double> incoming_bitrate;
+
+   std::optional<double> rtt_ms;
 };
 
 struct CCOutput

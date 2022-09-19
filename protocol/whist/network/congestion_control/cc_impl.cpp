@@ -1,3 +1,5 @@
+#include <optional>
+#include "api/units/data_rate.h"
 #include "whist/logging/logging.h"
 extern "C"
 {
@@ -78,16 +80,51 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
 
   virtual CCOutput feed_info(CCInput input) override
   {
-      CCOutput output;
-      RTC_CHECK(input.packets.size()==1);
+      webrtc::Timestamp current_time= webrtc::Timestamp::Seconds( input.current_timestamp_ms);
+      
+      //RTC_CHECK(input.packets.size()==1);
 
-      output.target_bitrate=40*1000*1000;
+      if(input.rtt_ms.has_value())
+      {
+        RTC_CHECK(input.rtt_ms.has_value() && input.rtt_ms.value() >0);
+        send_side_bwd->UpdateRtt(webrtc::TimeDelta::Millis(input.rtt_ms.value()), current_time);
+      }
+
+      std::optional<webrtc::DataRate> start_rate;
+      if(input.start_bitrate.has_value())
+      {
+         start_rate=webrtc::DataRate::BitsPerSec(input.start_bitrate.value());
+      }
+
+      RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value());
+
+      send_side_bwd->SetBitrates(start_rate, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
+                                     webrtc::DataRate::BitsPerSec(input.max_bitrate.value()),  current_time);
+
+      RTC_CHECK(input.packet_loss.has_value());
+      send_side_bwd->UpdatePacketsLostDirect(input.packet_loss.value(), current_time);
+
+      if(input.incoming_bitrate.has_value())
+      {
+        send_side_bwd->SetAcknowledgedRate(webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value()),current_time);
+      }
+
+      CCOutput output;
+      webrtc::DataRate loss_based_target_rate = send_side_bwd->target_rate();
+      output.target_bitrate=loss_based_target_rate.bps();
       return output;
   }
   virtual CCOutput process_interval(CCInput input) override
   {
+   // CCOutput output;
+    webrtc::Timestamp current_time= webrtc::Timestamp::Seconds( input.current_timestamp_ms);
+
+    send_side_bwd->UpdateEstimate(current_time);
+    
     CCOutput output;
-    output.target_bitrate=40*1000*1000;
+    webrtc::DataRate loss_based_target_rate = send_side_bwd->target_rate();
+    output.target_bitrate=loss_based_target_rate.bps();
+
     return output;
   }
   /*

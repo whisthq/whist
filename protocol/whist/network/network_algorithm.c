@@ -101,6 +101,14 @@ static int get_video_bitrate(int width, int height, int screen_dpi, double bitra
     return (int)(width * height * bitrate_per_pixel * dpi_scaling_factor);
 }
 
+
+void get_bitrates(double *start, double *min,double *max)
+{
+    *start=STARTING_BITRATE;
+    *min=MINIMUM_BITRATE;
+    *max=MAXIMUM_BITRATE;
+}
+
 /*
 ============================
 Public Function Implementations

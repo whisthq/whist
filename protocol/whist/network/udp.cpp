@@ -554,6 +554,80 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         group_stats->arrival_time = arrival_time;
     }
 
+    if(USING_WCC_V2)
+    {
+        double old_bitrate=context->network_settings.video_bitrate;
+
+        auto cc_controler= (CongestionCongrollerInterface* ) context->congestion_controller;
+        if(true)
+        {
+            CCInput input;
+            input.current_timestamp_ms = get_timestamp_sec()*MS_IN_SECOND;
+
+            double start_rate,min_rate,max_rate;
+            get_bitrates(&start_rate, &min_rate, &max_rate);
+            static int first_time=1;
+            if(first_time){
+                input.start_bitrate=start_rate;
+                first_time=0;
+            }
+            input.max_bitrate=max_rate;
+            input.min_bitrate=min_rate;
+
+            whist_plotter_insert_sample("min_rate", get_timestamp_sec(), min_rate/1000.0/100.0);
+            whist_plotter_insert_sample("max_rate", get_timestamp_sec(), max_rate/1000.0/100.0);
+            whist_plotter_insert_sample("start_rate", get_timestamp_sec(), start_rate/1000.0/100.0);
+
+            double incoming_rate=get_incoming_bitrate(context);
+            if(incoming_rate>0){
+                input.incoming_bitrate=incoming_rate;
+            }
+
+            input.packet_loss=get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
+                                                             context->short_term_latency);
+
+            //printf("<<%f>>\n",input.packet_loss.value());
+            //input.packet_loss=0;
+
+            if(context->short_term_latency>0){
+                input.rtt_ms=context->short_term_latency;
+            }
+
+            CCOutput output=cc_controler->feed_info(input);
+            context->network_settings.video_bitrate = output.target_bitrate.value();
+            context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
+        }
+
+        static double last_process_time=0;
+        double current_time = get_timestamp_sec();
+        if( (current_time - last_process_time)*MS_IN_SECOND > 25)
+        {
+            CCInput input;
+            input.current_timestamp_ms= get_timestamp_sec()*MS_IN_SECOND;
+            CCOutput output= cc_controler->process_interval(input);
+            context->network_settings.video_bitrate = output.target_bitrate.value();
+            context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
+            send_network_settings=true;
+        }
+
+        if(context->network_settings.video_bitrate != old_bitrate)
+        {
+
+            send_network_settings=true;
+        }
+    }
+
+    /*
+    if (send_network_settings || get_timer(&context->last_network_settings_send_time) > 0.05) 
+    {
+        auto cc_controler= (CongestionCongrollerInterface* ) context->congestion_controller;
+        CCInput input;
+        CCOutput output= cc_controler->process_interval(input);
+        FATAL_ASSERT(output.target_bitrate.has_value());
+        context->network_settings.video_bitrate = output.target_bitrate.value();
+    }*/
+
+
     if (group_id > context->curr_group_id) {
         if (context->prev_group_id != 0 &&
             get_timer(&context->last_bottleneck_timer) > WCC_HOLD_TIME_AFTER_UDP_BOTTLENECK_SEC) {
@@ -590,18 +664,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                     }
                 }
             }
-            if(USING_WCC_V2)
-            {
-                if (send_network_settings || get_timer(&context->last_network_settings_send_time) > 0.05) 
-                {
-                    auto cc_controler= (CongestionCongrollerInterface* ) context->congestion_controller;
-                    CCInput input;
-                    CCOutput output= cc_controler->process_interval(input);
-                    FATAL_ASSERT(output.target_bitrate.has_value());
-                    context->network_settings.video_bitrate = output.target_bitrate.value();
-                }
-            }
-            else {
+            if(!USING_WCC_V2) {
                 send_network_settings = whist_congestion_controller(
                 curr_group_stats, prev_group_stats, incoming_bitrate, packet_loss_ratio,
                 context->short_term_latency, context->long_term_latency, &context->network_settings,
