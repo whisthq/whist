@@ -682,6 +682,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                 context->short_term_latency, context->long_term_latency, &context->network_settings,
                 context->fec_controller);
             }
+            if(no_burst_mode) context->network_settings.burst_bitrate = context->network_settings.video_bitrate;
+            
             whist_plotter_insert_sample("target_bitrate", get_timestamp_sec(), context->network_settings.video_bitrate/1000.0/100.0);
             whist_plotter_insert_sample("burst_bitrate", get_timestamp_sec(), context->network_settings.burst_bitrate/1000.0/100.0);
             whist_plotter_insert_sample("saturate", get_timestamp_sec(), context->network_settings.saturate_bandwidth *100);
@@ -695,7 +697,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         // note: the timer of last send is updated inside
 
         if(always_saturate) context->network_settings.saturate_bandwidth=1;
-        if(no_burst_mode) context->network_settings.burst_bitrate = context->network_settings.video_bitrate;
+        
         send_desired_network_settings(context);
     }
     whist_unlock_mutex(context->congestion_control_mutex);
