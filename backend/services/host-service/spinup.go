@@ -190,7 +190,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings", ":", "/whist", "resourceMappings"),
 			path.Join(utils.TempDir, mandelbox.GetID().String(), "sockets", ":", "tmp", "sockets"),
 			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), serverSessionID, ":", "var", "log", "whist"), "/run/udev/data:/run/udev/data:ro",
-			path.Join(utils.WhistDir, mandelbox.GetID().String(), "userConfigs", "unpacked_configs", ":", "/whist", "userConfigs", ":rshared"),
+			// path.Join(utils.WhistDir, mandelbox.GetID().String(), "userConfigs", "unpacked_configs", ":", "/whist", "userConfigs", ":rshared"),
 		},
 		PortBindings: natPortBindings,
 		CapDrop:      strslice.StrSlice{"ALL"},
@@ -409,11 +409,11 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		return utils.MakeError("couldn't return host port bindings")
 	}
 
-	// Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
-	sendEncryptionInfoChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs(globalCtx, globalCancel, goroutineTracker)
-	defer close(sendEncryptionInfoChan)
+	// // Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
+	// sendEncryptionInfoChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs(globalCtx, globalCancel, goroutineTracker)
+	// defer close(sendEncryptionInfoChan)
 
-	logger.FastInfo(utils.Sprintf("SpinUpMandelbox(): Waiting for config encryption token from client..."), contextFields...)
+	// logger.FastInfo(utils.Sprintf("SpinUpMandelbox(): Waiting for config encryption token from client..."), contextFields...)
 
 	if req == nil {
 		// Receive the JSON transport request from the client via the httpserver.
@@ -430,14 +430,14 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	}
 	mandelbox.SetStatus(dbdriver.MandelboxStatusConnecting)
 
-	// Report the config encryption info to the config loader after making sure
-	// it passes some basic sanity checks.
-	sendEncryptionInfoChan <- mandelboxData.ConfigEncryptionInfo{
-		Token:                          req.ConfigEncryptionToken,
-		IsNewTokenAccordingToClientApp: req.IsNewConfigToken,
-	}
-	// We don't close the channel here, since we defer the close when we first
-	// make it.
+	// // Report the config encryption info to the config loader after making sure
+	// // it passes some basic sanity checks.
+	// sendEncryptionInfoChan <- mandelboxData.ConfigEncryptionInfo{
+	// 	Token:                          req.ConfigEncryptionToken,
+	// 	IsNewTokenAccordingToClientApp: req.IsNewConfigToken,
+	// }
+	// // We don't close the channel here, since we defer the close when we first
+	// // make it.
 
 	// While we wait for config decryption, write the config.json file with the
 	// data received from JSON transport.
@@ -447,32 +447,32 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		return utils.MakeError("error writing config.json file for protocol: %s", err)
 	}
 
-	// Wait for configs to be fully decrypted before we write any user initial
-	// browser data.
-	for err := range configDownloadErrChan {
-		// We don't want these user config errors to be fatal, so we log them as
-		// errors and move on.
-		logger.Errorw(utils.Sprintf("%s", err), contextFieldSlice)
-	}
+	// // Wait for configs to be fully decrypted before we write any user initial
+	// // browser data.
+	// for err := range configDownloadErrChan {
+	// 	// We don't want these user config errors to be fatal, so we log them as
+	// 	// errors and move on.
+	// 	logger.Errorw(utils.Sprintf("%s", err), contextFieldSlice)
+	// }
 
-	// Write the user's initial browser data
-	logger.FastInfo("SpinUpMandelbox(): Beginning storing user initial browser data", contextFields...)
+	// // Write the user's initial browser data
+	// logger.FastInfo("SpinUpMandelbox(): Beginning storing user initial browser data", contextFields...)
 
-	err = mandelbox.WriteUserInitialBrowserData(req.BrowserData)
+	// err = mandelbox.WriteUserInitialBrowserData(req.BrowserData)
 
-	if err != nil {
-		logger.Errorw(utils.Sprintf("error writing initial browser data: %s", err), contextFieldSlice)
-	} else {
-		logger.FastInfo("SpinUpMandelbox(): Successfully wrote user initial browser data", contextFields...)
-	}
+	// if err != nil {
+	// 	logger.Errorw(utils.Sprintf("error writing initial browser data: %s", err), contextFieldSlice)
+	// } else {
+	// 	logger.FastInfo("SpinUpMandelbox(): Successfully wrote user initial browser data", contextFields...)
+	// }
 
-	// Unblock whist-startup.sh to start symlink loaded user configs
-	err = mandelbox.MarkConfigReady()
-	if err != nil {
-		incrementErrorRate()
-		return utils.MakeError("error marking configs as ready: %s", err)
-	}
-	logger.FastInfo("SpinUpMandelbox(): Successfully marked mandelbox as ready", contextFields...)
+	// // Unblock whist-startup.sh to start symlink loaded user configs
+	// err = mandelbox.MarkConfigReady()
+	// if err != nil {
+	// 	incrementErrorRate()
+	// 	return utils.MakeError("error marking configs as ready: %s", err)
+	// }
+	// logger.FastInfo("SpinUpMandelbox(): Successfully marked mandelbox as ready", contextFields...)
 
 	// Don't wait for whist-application to start up in local environment. We do
 	// this because in local environments, we want to provide the developer a

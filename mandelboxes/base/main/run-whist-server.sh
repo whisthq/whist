@@ -18,55 +18,55 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-### BEGIN USER CONFIG RETRIEVE ###
+# ### BEGIN USER CONFIG RETRIEVE ###
 
-# Begin wait loop to get userConfigs
-WHIST_MAPPINGS_DIR=/whist/resourceMappings/
-USER_CONFIGS_DIR=/whist/userConfigs
-APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
+# # Begin wait loop to get userConfigs
+# WHIST_MAPPINGS_DIR=/whist/resourceMappings/
+# USER_CONFIGS_DIR=/whist/userConfigs
+# APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
 
-block-until-file-exists.sh $WHIST_MAPPINGS_DIR/.configReady >&1
+# block-until-file-exists.sh $WHIST_MAPPINGS_DIR/.configReady >&1
 
-# Symlink loaded user configs into the appropriate folders
+# # Symlink loaded user configs into the appropriate folders
 
-# While perhaps counterintuitive, "source" is the path in the userConfigs directory
-#   and "destination" is the original location of the config file/folder.
-#   This is because when creating symlinks, the userConfig path is the source
-#   and the original location is the destination
-# Iterate through the possible configuration locations and copy
-for row in $(jq -rc '.[]' < $APP_CONFIG_MAP_FILENAME); do
-  SOURCE_CONFIG_SUBPATH=$(echo "${row}" | jq -rc '.source')
-  SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
-  DEST_CONFIG_PATH=$(echo "${row}" | jq -rc '.destination')
+# # While perhaps counterintuitive, "source" is the path in the userConfigs directory
+# #   and "destination" is the original location of the config file/folder.
+# #   This is because when creating symlinks, the userConfig path is the source
+# #   and the original location is the destination
+# # Iterate through the possible configuration locations and copy
+# for row in $(jq -rc '.[]' < $APP_CONFIG_MAP_FILENAME); do
+#   SOURCE_CONFIG_SUBPATH=$(echo "${row}" | jq -rc '.source')
+#   SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
+#   DEST_CONFIG_PATH=$(echo "${row}" | jq -rc '.destination')
 
-  # If original config path does not exist, then continue
-  if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
-    continue
-  fi
+#   # If original config path does not exist, then continue
+#   if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
+#     continue
+#   fi
 
-  # If the source path doesn't exist, then copy default configs to the synced app config folder
-  if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
-    cp -rT "$DEST_CONFIG_PATH" "$SOURCE_CONFIG_PATH"
-  fi
+#   # If the source path doesn't exist, then copy default configs to the synced app config folder
+#   if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
+#     cp -rT "$DEST_CONFIG_PATH" "$SOURCE_CONFIG_PATH"
+#   fi
 
-  # Remove the original configs and symlink the new ones to the original locations
-  rm -rf "$DEST_CONFIG_PATH"
-  ln -sfnT "$SOURCE_CONFIG_PATH" "$DEST_CONFIG_PATH"
-  chown -R whist "$SOURCE_CONFIG_PATH"
-done
+#   # Remove the original configs and symlink the new ones to the original locations
+#   rm -rf "$DEST_CONFIG_PATH"
+#   ln -sfnT "$SOURCE_CONFIG_PATH" "$DEST_CONFIG_PATH"
+#   chown -R whist "$SOURCE_CONFIG_PATH"
+# done
 
-# Delete broken symlinks from config
-find $USER_CONFIGS_DIR -xtype l -delete
+# # Delete broken symlinks from config
+# find $USER_CONFIGS_DIR -xtype l -delete
 
-### END USER CONFIG RETRIEVE ###
+# ### END USER CONFIG RETRIEVE ###
 
 # Set/Retrieve Mandelbox parameters
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 WHIST_LOGS_FOLDER=/var/log/whist
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
-BROWSER_DATA_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_browser_data_file
-USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
+# BROWSER_DATA_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_browser_data_file
+# USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
@@ -165,19 +165,19 @@ OPTIONS="$OPTIONS --dbus-address=$DBUS_SESSION_BUS_ADDRESS"
 
 # (while true; do DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS python3 -c "import os; os.seteuid(1000); import browser_cookie3; print('COOKIE:', browser_cookie3.get_linux_pass('chrome')); os.seteuid(0);" && sleep 1; done) &
 
-# Set user upload target, if file exists
-if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
-  # Imports user browser data if file exists
-  python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
+# # Set user upload target, if file exists
+# if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
+#   # Imports user browser data if file exists
+#   python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
 
-  # Remove temporary files
-  rm -f "$(cat $BROWSER_DATA_FILE_FILENAME)"
-  rm $BROWSER_DATA_FILE_FILENAME
-fi
+#   # Remove temporary files
+#   rm -f "$(cat $BROWSER_DATA_FILE_FILENAME)"
+#   rm $BROWSER_DATA_FILE_FILENAME
+# fi
 
-# Wait for user data to be populated before starting application
-block-until-file-exists.sh $USER_CONFIGS_DIR/.importComplete
-rm $USER_CONFIGS_DIR/.importComplete
+# # Wait for user data to be populated before starting application
+# block-until-file-exists.sh $USER_CONFIGS_DIR/.importComplete
+# rm $USER_CONFIGS_DIR/.importComplete
 
 WHIST_USER_LOGS_FOLDER=/home/whist
 # To avoid interfering with Filebeat, the logs files should not contain hyphens in the name before the {-out, -err}.log suffix
