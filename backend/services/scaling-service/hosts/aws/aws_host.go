@@ -220,15 +220,15 @@ func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs [
 	}
 
 	terminateOutput, err := host.EC2.TerminateInstances(ctx, terminateInput)
+	if err != nil {
+		return utils.MakeError("error terminating instance %s: %s", instanceIDs, err)
+	}
 
 	// Verify termination output
 	if len(terminateOutput.TerminatingInstances) != len(instanceIDs) {
 		return utils.MakeError("failed to terminate requested number of instances, only terminated %d", len(terminateOutput.TerminatingInstances))
 	}
 
-	if err != nil {
-		return utils.MakeError("error terminating instance %s: %s", instanceIDs, err)
-	}
 	return nil
 }
 
