@@ -17,8 +17,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Working directory is whist/.github/workflows/helpers
 cd "$DIR/.."
 
-# Install pip, if not already installed
-python3 -m ensurepip
+# Install pip, if not already installed (on Linux ensurepip is disabled by default
+# in favor of the system's Python3 version)
+if [[ "$OSTYPE" == "darwin"* || "$OSTYPE" == "win32"* ]]; then
+  python3 -m ensurepip
+fi
 
 # Install the Python dependencies only if the invoker requests them
 # we do this to minimize installing dependencies we do not need.
