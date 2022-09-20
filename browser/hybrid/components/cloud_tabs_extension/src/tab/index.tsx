@@ -5,9 +5,9 @@ import WithInterCom from "./help"
 
 const App = () => {
   return (
-    <>
+    <div className="dark">
       <WithInterCom onClose={() => {}} userEmail={undefined} />
-    </>
+    </div>
   )
 }
 

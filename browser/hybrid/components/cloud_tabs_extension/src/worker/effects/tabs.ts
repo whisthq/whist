@@ -157,7 +157,27 @@ cloudTabCreated.subscribe((tabs: chrome.tabs.Tab[]) => {
 })
 
 webuiOpenSupport.subscribe(() => {
-  void chrome.tabs.create({ url: chrome.runtime.getURL("intercom.html") })
+  const popupWidth = 426
+  const popupHeight = 626
+
+  chrome.tabs.query({ url: chrome.runtime.getURL("intercom.html") }, (tabs) => {
+    if (tabs?.[0] !== undefined) {
+      void chrome.windows.update(tabs?.[0].windowId, {
+        drawAttention: true,
+        focused: true,
+      })
+    } else {
+      void chrome.windows.create({
+        focused: true,
+        url: chrome.runtime.getURL("intercom.html"),
+        type: "popup",
+        width: Math.min(popupWidth, screen.width),
+        height: Math.min(popupHeight, screen.height),
+        left: Math.max(screen.width / 2 - popupWidth / 2, 10),
+        top: Math.max(screen.height / 2 - popupHeight / 2, 10),
+      })
+    }
+  })
 })
 
 cloudTabActivated.subscribe(([tabId]: [number]) => {
