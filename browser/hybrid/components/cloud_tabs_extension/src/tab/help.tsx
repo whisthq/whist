@@ -1,18 +1,10 @@
-import React, { useState, useEffect } from "react"
+import React, { useEffect } from "react"
 import { IntercomProvider, useIntercom } from "react-use-intercom"
+
+const intercomId = "v62favsy"
 
 const Support = (props: { userEmail: string | undefined }) => {
   const { show, update } = useIntercom()
-  const [dark, setDark] = useState(true)
-
-  useEffect(() => {
-    ;(chrome as any).braveTheme.getBraveThemeType((theme: string) =>
-      setDark(theme === "Dark")
-    )
-    ;(chrome as any).braveTheme.onBraveThemeTypeChanged.addListener(
-      (theme: string) => setDark(theme === "Dark")
-    )
-  }, [])
 
   useEffect(() => {
     show()
@@ -23,12 +15,7 @@ const Support = (props: { userEmail: string | undefined }) => {
   }, [props.userEmail])
 
   return (
-    <div
-      className="h-screen w-screen"
-      style={{
-        background: dark ? "#303443" : "#f3f3f3",
-      }}
-    >
+    <div className="h-screen w-screen bg-gray-100 dark:bg-gray-900">
       <div className="w-full h-8 draggable"></div>
     </div>
   )
@@ -38,7 +25,7 @@ const WithInterCom = (props: {
   onClose: () => void
   userEmail: string | undefined
 }) => (
-  <IntercomProvider appId="v62favsy" autoBoot={true} onHide={props.onClose}>
+  <IntercomProvider appId={intercomId} autoBoot={true} onHide={props.onClose}>
     <Support userEmail={props.userEmail} />
   </IntercomProvider>
 )
