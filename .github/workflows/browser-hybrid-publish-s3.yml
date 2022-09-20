@@ -1,0 +1,577 @@
+name: "Hybrid Browser: Publish to S3"
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
+      release_version:
+        required: true
+        type: string
+      publish:
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      SENTRY_AUTH_TOKEN:
+        required: true
+      GHA_USERNAME:
+        required: true
+      GHA_PERSONAL_ACCESS_TOKEN:
+        required: true
+      AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID:
+        required: true
+      AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY:
+        required: true
+      APPLE_API_KEY_ID:
+        required: true
+      MACOS_SIGNING_KEYCHAIN_PASSWORD:
+        required: true
+      MACOS_SIGNING_NOTARYTOOL_PASSWORD:
+        required: true
+      MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED:
+        required: true
+      MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD:
+        required: true
+      MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED:
+        required: true
+      MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD:
+        required: true
+      WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY:
+        required: true
+      WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY:
+        required: true
+      SPARKLE_EDDSA_PRIVATE_KEY:
+        required: true
+      GOOGLE_OAUTH_CLIENT_ID:
+        required: true
+      GOOGLE_OAUTH_SECRET:
+        required: true
+      SLACK_HOOKS_ENDPOINT_DEV:
+        required: true
+      SLACK_HOOKS_ENDPOINT_STAGING:
+        required: true
+      SLACK_HOOKS_ENDPOINT_PROD:
+        required: true
+
+jobs:
+  main:
+    name: "Build & Deploy (${{ matrix.config.display_os }} - ${{ matrix.config.target_arch }})"
+    runs-on: ${{ matrix.config.runner }}
+
+    strategy:
+      matrix:
+        config:
+          - target_arch: "x64"
+            display_os: "macOS"
+            target_os: "macos"
+            runner: [self-hosted, macOS, ARM64]
+          - target_arch: "arm64"
+            display_os: "macOS"
+            target_os: "macos"
+            runner: [self-hosted, macOS, ARM64]
+
+    env:
+      s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ inputs.branch }}
+      s3-bucket-region: us-east-1
+      build_type: "Release"
+
+    steps:
+      ############################## Common Configuration Steps START #############################
+
+      # This helps fix an issue with GitHub Actions not finding the right keychain on macOS self-hosted runners
+      - name: Configure keychain
+        if: runner.os == 'macOS'
+        run: git config --global credential.helper osxkeychain
+
+      - name: Authenticate with GitHub (for pulling the required repositories automatically from the build scripts)
+        env:
+          GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+          GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+        run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
+
+      - name: Manually Git Clone `brave-browser`
+        run: |
+          # Since this is a self-hosted runner, we check if the `brave-browser` repo exists locally,
+          # and if so we pull the latest changes. If it doesn't exist, we clone it.
+          if [ -d "brave-browser" ]; then
+            echo "Entering brave-browser..."
+            cd brave-browser
+
+            git stash
+            git checkout main
+            git fetch -p
+            git reset --hard origin/main
+            git branch
+
+            # Do the same for the `brave-core` repo within the `brave-browser` repo.
+            if [ -d "src/brave" ]; then
+              echo "Entering src/brave (brave-core)..."
+              pushd src/brave
+
+              git stash
+              git checkout "${{ inputs.branch }}"
+              git fetch -p
+              git reset --hard "origin/${{ inputs.branch }}"
+              echo "Checked out brave-core branch: $(git branch)"
+
+              echo "Exiting src/brave (brave-core)..."
+              popd
+            fi
+            # Do the same for the `whist` repo within the `brave-browser` repo.
+            if [ -d "src/whist" ]; then
+              echo "Entering src/whist (whist)..."
+              pushd src/whist
+
+              git stash
+              git checkout "${{ inputs.branch }}"
+              git fetch -p
+              git reset --hard "origin/${{ inputs.branch }}"
+              echo "Checked out whist branch: $(git branch)"
+
+              echo "Exiting src/whist (whist)..."
+              popd
+            fi
+          else
+            git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/whisthq/brave-browser.git" brave-browser
+          fi
+
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.s3-bucket-region }}
+
+      #############################################################################################
+      ############################# Windows Configuration Steps START #############################
+
+      - name: Install cmake via Chocolatey on Windows GHA Machine
+        if: runner.os == 'Windows'
+        uses: crazy-max/ghaction-chocolatey@v2
+        with:
+          args: install cmake --pre --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
+
+      - name: Set up Visual Studio Developer Command Prompt (for nmake)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      #############################################################################################
+      ############################### macOS Configuration Steps START #############################
+
+      # Since we're using a self-hosted runner, we need to comment these two steps out after they
+      # have run once because the keychain entries will then exist and trying to reinstall them will fail.
+      # If you are running this workflow on a new runner, simply uncomment these steps for the first run.
+
+      # - name: Install macOS Codesigning Certificates
+      #   if: runner.os == 'macOS'
+      #   uses: apple-actions/import-codesign-certs@v1
+      #   with:
+      #     keychain: Whist Codesigning
+      #     keychain-password: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
+      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
+      #     p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
+
+      # - name: Install macOS Developer ID Installer Signing Identity
+      #   if: runner.os == 'macOS'
+      #   uses: apple-actions/import-codesign-certs@v1
+      #   with:
+      #     keychain: Whist Codesigning
+      #     create-keychain: false
+      #     keychain-password: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
+      #     p12-file-base64: ${{ secrets.MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
+      #     p12-password: ${{ secrets.MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
+
+      # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
+      - name: Install macOS Notarization API Key
+        if: runner.os == 'macOS'
+        run: mkdir -p ~/private_keys && aws s3 cp s3://whist-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
+
+      #############################################################################################
+      ############################### Linux Configuration Steps START #############################
+
+      # The Linux runner for building Chromium Whist needs to first be configured manually with some other packages. I am
+      # writing them here for reference, in case we need to create a new self-hosted runner
+      #    sudo apt-get install build-essential python-setuptools python3-distutils pkg-config gperf git gh libxdamage1 libgbm1 libatk1.0-0 awscli libdbus-1-dev
+      #    sudo apt-get install libasound2-dev libcurl4-openssl-dev libatk-bridge2.0-0 libxkbcommon-x11-0 libpango-1.0-0 nvidia-cuda-toolkit awscli
+      #    sudo snap install cmake --classic
+      #
+      # Also, the AWS CLI needs to be configured with `aws configure`
+
+      # See: https://github.com/brave/brave-browser/wiki/Linux-Development-Environment
+      - name: Install Linux Ubuntu Brave Browser Dependencies
+        if: runner.os == 'Linux'
+        working-directory: brave-browser
+        run: ./src/build/install-build-deps.sh --no-prompt --no-nacl --no-chromeos-fonts --no-arm
+
+      #############################################################################################
+      ##################################### Build Steps START #####################################
+
+      # Building Brave/Chromium requires specific Node & npm versions, and Xcode. For full
+      # details, see: https://github.com/whisthq/brave-browser#readme
+      # These are fine to set globally even if the self-hosted runner is used by a Whist engineer
+      # since the Node, NPM, and Xcode versions should match for development and deploys.
+      - name: Log NodeJS, NPM and Xcode (on macOS only) Versions
+        run: |
+          # Necessary to use nvm from bash on macOS (needs nvm to be installed already)
+          source ~/.nvm/nvm.sh
+
+          echo "Force NodeJS version 16 and NPM version 8.5.5..."
+          nvm install 16
+          nvm use 16
+          npm install -g npm@8.5.5
+
+          echo ""
+          echo "Verifying NodeJS & NPM versions (Need 16.x and 8.5.5)..."
+          echo -n "NodeJS version: " && node --version
+          echo -n "NPM version: " && npm --version
+
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            echo ""
+            echo "Verifying that Xcode is installed and up-to-date (Need 13.x)..."
+            xcodebuild -version
+          fi
+
+      - name: Initialize the Build Environment
+        working-directory: brave-browser
+        run: |
+          # nvm doesn't scope well across GitHub Actions steps on Linux, so we forcefully make sure that it is using
+          # the proper versions of NodeJS & NPM
+          source ~/.nvm/nvm.sh
+          nvm use 16 && echo -n "NPM version: " && npm --version
+
+          # Install dependencies
+          npm install
+
+      - name: Configure Build Type
+        working-directory: brave-browser
+        run: |
+          # Set the whisthq/brave-core and whisthq/whist branches to `dev`, `staging` or `prod` to be in-sync
+          export npm_config_projects_brave_core_branch=${{ inputs.branch }}
+          export npm_config_projects_whist_branch=${{ inputs.branch }}
+
+          BUILD_OUTPUT_FOLDER="${{ env.build_type }}"
+
+          # When building for ARM, the build output directory contains the
+          # target architecture (e.g. Release_arm64)
+          case "${{ matrix.config.target_arch }}" in
+            arm64)
+              # Use ${var} syntax exceptionally here because otherwise the shell
+              # tries to expand $BUILD_OUTPUT_FOLDER_arm64
+              BUILD_OUTPUT_FOLDER="${BUILD_OUTPUT_FOLDER}_${{ matrix.config.target_arch }}"
+              ;;
+          esac
+
+          echo "BUILD_OUTPUT_FOLDER=$BUILD_OUTPUT_FOLDER" >> "$GITHUB_ENV"
+
+          # We build a Release build for every Whist environment, but target the analoguous Brave release channel
+          # See brave-core/build/config.gni for more info
+          # - dev: "nightly"
+          # - staging: "beta"
+          # - prod: "" (defaults to "stable")
+          if [[ "${{ inputs.branch }}" == "prod" ]]; then
+            # Production build, set Brave release channel as 'Release'
+            echo "release_channel=release" >> $GITHUB_ENV
+
+            # Set the proper package name for the build
+            # We generate two copies, one as "latest" (to avoid needing to update download links), and one with
+            # the current app version, so that we can generate binary diffs between versions for our autoupdate framework
+            if [[ "${{ runner.os }}" == "macOS" ]]; then
+              echo "executable_name=signed/Whist Browser.dmg" >> $GITHUB_ENV
+              echo "installer_name=Whist-latest-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
+              echo "current_app_version_executable=Whist-${{ inputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
+            elif [[ "${{ runner.os }}" == "Linux" ]]; then
+              # TODO: We need to rename this to something like `whist-browser`, and add the release channel
+              echo "executable_name=brave" >> $GITHUB_ENV
+            else
+              echo "Unsupported OS for setting Whist Browser executable name!"
+              exit 1
+            fi
+          elif [[ "${{ inputs.branch }}" == "staging" ]]; then
+            # Staging build, set Brave release channel as 'Beta'
+            echo "release_channel=beta" >> $GITHUB_ENV
+
+            # Set the proper package name for the build
+            #
+            # TODO: Sign the macOS package and update the file path accordingly
+            if [[ "${{ runner.os }}" == "macOS" ]]; then
+              echo "executable_name=signed/Whist Browser Beta.dmg" >> $GITHUB_ENV
+              echo "installer_name=Whist-Beta-latest-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
+              echo "current_app_version_executable=Whist-Beta-${{ inputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
+            elif [[ "${{ runner.os }}" == "Linux" ]]; then
+              # TODO: We need to rename this to something like `whist-browser`, and add the release channel
+              echo "executable_name=brave" >> $GITHUB_ENV
+            else
+              echo "Unsupported OS for setting Whist Browser executable name!"
+              exit 1
+            fi
+          else
+            # Dev build, set Brave release channel as 'Nightly'
+            echo "release_channel=nightly" >> $GITHUB_ENV
+
+            # Set the proper package name for the build
+            if [[ "${{ runner.os }}" == "macOS" ]]; then
+              echo "executable_name=signed/Whist Browser Nightly.dmg" >> $GITHUB_ENV
+              echo "installer_name=Whist-Nightly-latest-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
+              echo "current_app_version_executable=Whist-Nightly-${{ inputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
+            elif [[ "${{ runner.os }}" == "Linux" ]]; then
+              # TODO: We need to rename this to something like `whist-browser`, and add the release channel
+              echo "executable_name=brave" >> $GITHUB_ENV
+            else
+              echo "Unsupported OS for setting Whist Browser executable name!"
+              exit 1
+            fi
+          fi
+
+      - name: Fetch Chromium Source & Dependencies
+        working-directory: brave-browser
+        run: |
+          # nvm doesn't scope well across GitHub Actions steps on Linux, so we forcefully make sure that it is using
+          # the proper versions of NodeJS & NPM
+          source ~/.nvm/nvm.sh
+          nvm use 16 && echo -n "NPM version: " && npm --version
+
+          # Download and prepare Chromium/Brave for building
+          npm run init
+
+      # Note that we don't need to set the version back, because we `git reset --hard` before every run of this workflow
+      - name: Set Brave version to Whist version
+        working-directory: brave-browser
+        run: |
+          # This value is the same for the package.json in `brave-browser` and in `brave-core`, so we just retrieve
+          # it once. We save this value for later, since we'll be overwriting the version in-place to set the
+          # browser to the Whist version, and we want to set it back to Brave's at the end given that we're
+          # running on a self-hosted runner, to avoid unnecessary merge conflicts when pulling changes
+          echo "brave_browser_package_json_version=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+          echo "brave_core_package_json_version=$(jq -r '.version' src/brave/package.json)" >> $GITHUB_ENV
+          echo "Brave-browser initial package.json version before setting to Whist version: $(jq -r '.version' package.json)"
+          echo "Brave-core initial package.json version before setting to Whist version: $(jq -r '.version' src/brave/package.json)"
+
+          # Set the Brave version to the Whist version in both `brave-browser` and `brave-core`
+          echo "\n\nSetting package.json to Whist version: ${{ inputs.release_version }}...\n\n"
+          jq --arg variable "${{ inputs.release_version }}" '.version = $variable' package.json > package.json.tmp && mv package.json.tmp package.json
+          jq --arg variable "${{ inputs.release_version }}" '.version = $variable' src/brave/package.json > src/brave/package.json.tmp && mv src/brave/package.json.tmp src/brave/package.json
+
+          # Log for helpful debugging/checking
+          echo "Brave-browser package.json version after setting to Whist version: $(jq -r '.version' package.json)"
+          echo "Brave-core package.json version after setting to Whist version: $(jq -r '.version' src/brave/package.json)"
+
+      - name: Build Cloud Tabs Extension
+        working-directory: brave-browser
+        run: |
+          # nvm doesn't scope well across GitHub Actions steps on Linux, so we forcefully make sure that it is using
+          # the proper versions of NodeJS & NPM
+          source ~/.nvm/nvm.sh
+          nvm use 16 && echo -n "NPM version: " && npm --version
+
+          # Set the environment variables for the Whist Extension
+          # Note that these values are public, so it's fine to hardcode them here (rather than using GitHub Secrets)
+          if [[ "${{ inputs.branch }}" == "prod" ]]; then
+            export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
+            export WHIST_AUTH0_DOMAIN_URL=auth.whist.com
+            export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
+          elif [[ "${{ inputs.branch }}" == "staging" ]]; then
+            export WHIST_AUTH0_CLIENT_ID=h049JqhybFNXnTARnVF0e3ptUDYJ4pmT
+            export WHIST_AUTH0_DOMAIN_URL=fractal-staging.us.auth0.com
+            export WHIST_SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
+          else
+            export WHIST_AUTH0_CLIENT_ID=DIy0YQZrMeMO97Thjr13EpkGCy792XWx
+            export WHIST_AUTH0_DOMAIN_URL=fractal-dev.us.auth0.com
+            export WHIST_SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
+          fi
+
+          export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
+          export WHIST_AUTH0_REDIRECT_URL=https://com.whist.auth0/callback
+
+          pushd src/whist
+          export WHIST_COMMIT_SHA=$(git rev-parse ${{ inputs.branch }})
+          echo "WHIST_COMMIT_SHA=$WHIST_COMMIT_SHA"
+          popd
+
+          # Build the Cloud Tabs Extension
+          npm run build_whist_extension
+
+      - name: Unlock codesigning keychain
+        if: runner.os == 'macOS'
+        run: security unlock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
+
+      - name: Build and Package Whist Browser
+        working-directory: brave-browser
+        run: |
+          # nvm doesn't scope well across GitHub Actions steps on Linux, so we forcefully make sure that it is using
+          # the proper versions of NodeJS & NPM
+          source ~/.nvm/nvm.sh
+          nvm use 16 && echo -n "NPM version: " && npm --version
+
+          if [[ "${{ inputs.branch }}" == "prod" ]]; then
+            export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
+            export WHIST_AUTH0_DOMAIN_URL=auth.whist.com
+            export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
+          elif [[ "${{ inputs.branch }}" == "staging" ]]; then
+            export WHIST_AUTH0_CLIENT_ID=h049JqhybFNXnTARnVF0e3ptUDYJ4pmT
+            export WHIST_AUTH0_DOMAIN_URL=fractal-staging.us.auth0.com
+            export WHIST_SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
+          else
+            export WHIST_AUTH0_CLIENT_ID=DIy0YQZrMeMO97Thjr13EpkGCy792XWx
+            export WHIST_AUTH0_DOMAIN_URL=fractal-dev.us.auth0.com
+            export WHIST_SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
+          fi
+
+          export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
+          export WHIST_AUTH0_REDIRECT_URL=https://com.whist.auth0/callback
+
+          pushd src/whist
+          export WHIST_COMMIT_SHA=$(git rev-parse ${{ inputs.branch }})
+          echo "WHIST_COMMIT_SHA=$WHIST_COMMIT_SHA"
+          popd
+
+          # Build and Package the browser into an installer
+          # All positional arguments are forwarded to the create_dist
+          # script. Option arguments that appear before the naked '--'
+          # are passed to npm, NOT the create_dist script. Option
+          # arguments to the create_dist script must come after the
+          # naked '--'.
+          # https://docs.npmjs.com/cli/v8/commands/npm-run-script
+          #
+          # Note, we set symbol_level to 1 to retain stack traces but speed up builds. For maximum
+          # build speed, set to 0, and set to 2 to enable line-by-line debugging.
+          npm run create_dist ${{ env.build_type }} \
+              --sccache=ccache \
+              -- \
+              --channel=${{ env.release_channel }} \
+              --target_arch=${{ matrix.config.target_arch }} \
+              --mac_signing_keychain="Whist Codesigning" \
+              --mac_signing_identifier=E9669ADD20174D885A31C49C11604971E8C96019 \
+              --mac_installer_signing_identifier=3AFB7D99DBECA7FEF628634E7EE4DA349AAE75AC \
+              --brave_google_api_key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
+              --uphold_client_id=x \
+              --uphold_client_secret=x \
+              --uphold_staging_client_id=x \
+              --uphold_staging_client_secret=x \
+              --gn=symbol_level:1 \
+              --gn=brave_services_key:${{ secrets.WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY }} \
+              --gn=brave_stats_api_key:x  \
+              --gn=brave_stats_updater_url:x \
+              --gn=brave_sync_endpoint:x \
+              --gn=brave_variations_server_url:x \
+              --gn=gemini_api_url:x \
+              --gn=gemini_oauth_url:x \
+              --gn=gemini_wallet_client_id:x \
+              --gn=gemini_wallet_client_secret:x \
+              --gn=google_default_client_id:${{ secrets.GOOGLE_OAUTH_CLIENT_ID }} \
+              --gn=google_default_client_secret:${{ secrets.GOOGLE_OAUTH_SECRET }} \
+              --gn=rewards_grant_dev_endpoint:x \
+              --gn=rewards_grant_prod_endpoint:x \
+              --gn=rewards_grant_staging_endpoint:x \
+              --gn=safebrowsing_api_endpoint:https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
+              --gn=sparkle_eddsa_private_key:${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }} \
+              --gn=updater_dev_endpoint:https://go-updater-dev.bravesoftware.com/extensions \
+              --gn=updater_prod_endpoint:https://go-updater.brave.com/extensions \
+              --gn=notary_user:owen@whist.com \
+              --gn=notary_password:${{ secrets.MACOS_SIGNING_NOTARYTOOL_PASSWORD }} \
+              --notarize
+
+      # Once we are done, we lock the keychain back
+      - name: Lock codesigning keychain
+        if: runner.os == 'macOS'
+        run: security lock-keychain Whist\ Codesigning.keychain
+
+      # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
+      # IDs to match the debug symbols with the build that crashed to build the backtrace
+      # Note: Sentry makes use of sudo. To make it work on a self-hosted macOS runner, follow:
+      # https://apple.stackexchange.com/questions/257813/enable-sudo-without-a-password-on-macos
+      - name: Copy Client debug symbols to Sentry, on macOS
+        if: inputs.publish == 'true'
+        working-directory: brave-browser/src/out
+        env:
+          SENTRY_ORG: whist
+          SENTRY_PROJECT: protocol
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          PROTOCOL_CLIENT_LIB_DIR="$BUILD_OUTPUT_FOLDER/build-whist-client/client/build64"
+
+          # Uncomment this line to install sentry-cli. Since we're running on a self-hosted runner, we
+          # comment it out after having run it once
+          # curl -sL https://sentry.io/get-cli/ | bash
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            sentry-cli upload-dif $PROTOCOL_CLIENT_LIB_DIR/libWhistClient.dylib
+            sentry-cli upload-dif $PROTOCOL_CLIENT_LIB_DIR/WhistClient.debug
+          elif [[ "${{ runner.os }}" == "Linux" ]]; then
+            sentry-cli upload-dif $PROTOCOL_CLIENT_LIB_DIR/libWhistClient.so
+            sentry-cli upload-dif $PROTOCOL_CLIENT_LIB_DIR/WhistClient.debug
+          else
+            echo "Unsupported OS for uploading Sentry debug symbols!"
+            exit 1
+          fi
+
+      - name: Upload Whist Browser Installer to AWS S3
+        if: inputs.publish == 'true'
+        working-directory: brave-browser/src/out
+        run: |
+          aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/${{ env.installer_name }}"
+          aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/${{ env.current_app_version_executable }}"
+
+        # Expose values that we want to pass to the whisthq/update-appcast
+        # action as outputs of this step. We can't pass environment variables
+        # set by previous steps as inputs to an action in a subsequent step.
+        # For example, this does not work:
+        #
+        # - name: Update appcast
+        #   uses: whisthq/update-appcast@v0.2
+        #     with:
+        #       object-key: ${{ env.current_app_version_executable }}
+        #       ...
+        #
+      - name: Prepare to publish browser update
+        id: prepare-update
+        if: inputs.publish == 'true'
+        run: |
+          S3_BUCKET_URI="${{ env.s3-bucket-uri }}"
+          echo "::set-output name=bucket-name::${S3_BUCKET_URI##*/}"
+          echo "::set-output name=object-key::$current_app_version_executable"
+          echo "::set-output name=sparkle-sig-file::$(pwd)/brave-browser/src/out/$BUILD_OUTPUT_FOLDER/${executable_name##*/}.eddsa"
+
+      - name: Update appcast to publish macOS browser update
+        if: inputs.publish == 'true'
+        uses: whisthq/update-appcast@v0.2
+        with:
+          version: ${{ inputs.release_version }}
+          bucket: ${{ steps.prepare-update.outputs.bucket-name }}
+          object-key: ${{ steps.prepare-update.outputs.object-key }}
+          sparkle-sig-file: ${{ steps.prepare-update.outputs.sparkle-sig-file }}
+
+      ###################################################################################
+
+      - name: Manually Git Clone `whist` (for Slack notifications)
+        if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && failure() }}
+        run: |
+          # Since this is a self-hosted runner, we manually check if the `whist` repo exists locally,
+          # and if so we pull the latest changes. If it doesn't exist, we clone it.
+          if [ -d "whist" ]; then
+            echo "Entering whist..."
+            cd whist
+
+            # Log the branch, should always be `dev`, but we checkout just to be sure
+            git branch
+            git stash
+            git checkout dev
+            git pull
+            git branch
+          else
+            git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/whisthq/whist.git" whist
+          fi
+
+      - name: Setup Python-based Notifications
+        if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && failure() }}
+        working-directory: whist/.github/workflows/helpers
+        run: ./notifications/setup_notifications.sh true
+
+      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+        if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && failure() }}
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+          BODY = f"@releases :rotating_light: Failed to deploy Whist Browser to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
