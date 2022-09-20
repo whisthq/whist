@@ -828,7 +828,7 @@ jobs:
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       release_version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}
-      publish: ${{ needs.whist-publish-build-config.outputs.publish }}
+      publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
     secrets:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       GHA_USERNAME: ${{ secrets.GHA_USERNAME }}
