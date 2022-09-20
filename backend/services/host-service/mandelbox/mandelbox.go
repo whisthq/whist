@@ -132,9 +132,9 @@ type Mandelbox interface {
 	// // their already-downloaded config in the mandelbox.
 	// WriteUserInitialBrowserData(types.BrowserData) error
 
-	// // MarkConfigReady tells the protocol inside the mandelbox that it is ready to
-	// // start and accept connections.
-	// MarkConfigReady() error
+	// MarkConfigReady tells the protocol inside the mandelbox that it is ready to
+	// start and accept connections.
+	MarkConfigReady() error
 
 	// // StartLoadingUserConfigs starts the process of loading user configs without
 	// // blocking.
@@ -536,6 +536,7 @@ func (mandelbox *mandelboxData) GetDeviceMappings() []dockercontainer.DeviceMapp
 
 // InitializeUinputDevices tries to assign uinput devices to the mandelbox.
 func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup) error {
+	logger.Infof("Starting InitializeUinputDevices")
 	devices, mappings, err := uinputdevices.Allocate()
 	if err != nil {
 		return utils.MakeError("couldn't allocate uinput devices: %s", err)
@@ -543,6 +544,8 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()
+
+	logger.Infof("locked mandelbox.rwlock")
 
 	mandelbox.uinputDevices = devices
 	mandelbox.uinputDeviceMappings = mappings

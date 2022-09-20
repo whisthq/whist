@@ -125,6 +125,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 // cancelled, it also aborts (therefore letting us not leak goroutines if a
 // mandelbox dies or fails during creation after this function is called).
 func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.WaitGroup, devices *UinputDevices, socketPath string) error {
+	logger.Infof("Starting SendDeviceFDsOverSocket")
 	// Create our own context so we can safely cancel it.
 	ctx, cancel := context.WithCancel(baseCtx)
 	defer cancel()

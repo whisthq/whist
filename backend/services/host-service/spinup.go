@@ -466,13 +466,13 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	// 	logger.FastInfo("SpinUpMandelbox(): Successfully wrote user initial browser data", contextFields...)
 	// }
 
-	// // Unblock whist-startup.sh to start symlink loaded user configs
-	// err = mandelbox.MarkConfigReady()
-	// if err != nil {
-	// 	incrementErrorRate()
-	// 	return utils.MakeError("error marking configs as ready: %s", err)
-	// }
-	// logger.FastInfo("SpinUpMandelbox(): Successfully marked mandelbox as ready", contextFields...)
+	// Unblock whist-startup.sh to start symlink loaded user configs
+	err = mandelbox.MarkConfigReady()
+	if err != nil {
+		incrementErrorRate()
+		return utils.MakeError("error marking configs as ready: %s", err)
+	}
+	logger.FastInfo("SpinUpMandelbox(): Successfully marked mandelbox as ready", contextFields...)
 
 	// Don't wait for whist-application to start up in local environment. We do
 	// this because in local environments, we want to provide the developer a
