@@ -205,7 +205,7 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 // deploy workflow, and sends the event to the appropiate channel.
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
-		logger.Infof("Running in localenv so not performing deploy actions.")
+		logger.Infof("Running on localdev so not performing deploy actions.")
 		return
 	}
 

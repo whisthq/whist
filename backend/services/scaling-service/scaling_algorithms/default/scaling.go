@@ -32,10 +32,23 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		}
 	}()
 
+	// Acceptable time for an instance to drain, if an instance takes longer it will be considered as lingering.
+	const expectedDrainTime time.Duration = 10 * time.Minute
+
 	var (
-		freeInstances, lingeringInstances []subscriptions.Instance
-		lingeringIDs                      []string
-		err                               error
+		// freeInstances is a list of instances with full-capacity available.
+		freeInstances []subscriptions.Instance
+
+		// lingeringInstances is a list of instances that have been draining for more time than expected.
+		lingeringInstances []subscriptions.Instance
+
+		// drainingInstances is a list of instances that are currently draining, within the expected time.
+		drainingInstances []subscriptions.Instance
+
+		// helper list to store lingering instance IDs.
+		lingeringIDs []string
+
+		err error
 	)
 
 	// Query for the latest image id
@@ -115,7 +128,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 
 	// Check database for draining instances without running mandelboxes
-	drainingInstances, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "DRAINING", event.Region)
+	drainingInstances, err = s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "DRAINING", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for lingering instances: %s", err)
 	}
@@ -125,7 +138,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		if drainingInstance.RemainingCapacity == 0 {
 			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
 			logger.Warningf("Instance %s has associated mandelboxes and is marked as Draining.", drainingInstance.ID)
-		} else if time.Since(drainingInstance.UpdatedAt) > 10*time.Minute {
+		} else if time.Since(drainingInstance.UpdatedAt) > expectedDrainTime {
 			// Mark instance as lingering only if it has taken more than 10 minutes to shut down.
 			lingeringInstances = append(lingeringInstances, drainingInstance)
 			lingeringIDs = append(lingeringIDs, string(drainingInstance.ID))
@@ -170,7 +183,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return nil
 	}
 
-	logger.Infow(utils.Sprintf("Scaling down %d free instances on %s.", len(freeInstances), event.Region), contextFields)
+	logger.Infow(utils.Sprintf("Scaling down %d free instances in %s.", len(freeInstances), event.Region), contextFields)
 
 	for _, instance := range freeInstances {
 		logger.Infow(utils.Sprintf("Scaling down instance %s.", instance.ID), contextFields)
