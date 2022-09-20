@@ -58,8 +58,6 @@ RUN su - whist -c \
 # https://gist.github.com/meets2tarun/2161e544f4c458c2f07641cafbdd186d
 RUN mkdir -p /etc/opt/chrome/policies/managed \
     && echo {} \
-    # Whitelist streamed URI protocols (zoommtg,slack,spotify,discord)
-    | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
     # Disable search suggestions (not necessary since URL bar is local in cloud-hybrid model)
     | jq '.SearchSuggestEnabled=false' \
     # Disable background apps (to prevent apps like Superhuman from

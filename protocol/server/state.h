@@ -79,7 +79,6 @@ typedef struct WhistServerState {
 
     volatile bool exiting;
     volatile bool stop_streaming;
-    bool client_joined_after_window_name_broadcast;
     Client* client;
 
     // This `update_encoder` should be set to true,

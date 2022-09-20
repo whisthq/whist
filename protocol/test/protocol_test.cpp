@@ -263,28 +263,6 @@ TEST_F(ProtocolTest, InitSDL) {
         // TODO: Confirm that the colour has actually changed.
     }
 
-    //  Window title
-    {
-        char* changed_title = generate_random_string(150);
-        title_len = strlen(changed_title);
-        EXPECT_EQ(title_len, 150);
-
-        sdl_set_window_title(0, changed_title);
-
-        const char* old_title = SDL_GetWindowTitle(new_window);
-        EXPECT_FALSE(strcmp(old_title, changed_title) == 0);
-
-        // Empty the event queue, including the window change event.
-        WhistFrontendEvent ignored;
-        while (whist_frontend_poll_event(frontend, &ignored))
-            ;
-
-        const char* changed_title2 = SDL_GetWindowTitle(new_window);
-        EXPECT_EQ(strcmp(changed_title, changed_title2), 0);
-
-        free(changed_title);
-    }
-
     // Set fullscreen
     {
         whist_frontend_get_window_pixel_size(frontend, 0, &width, &height);
