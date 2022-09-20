@@ -88,9 +88,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// This means that the user has requested access to some regions that are not yet enabled,
 	// but could still be allocated to a region that is relatively close.
 	if len(unavailableRegions) != 0 && len(unavailableRegions) != len(requestedRegions) {
-		if metadata.GetAppEnvironment() == metadata.EnvProd {
-			logger.Errorf("user %s requested access to the following unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
-		}
+		logger.Warningf("User %s requested access to the following unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
 	}
 
 	// The user requested access to only unavailable regions. The last resort is to default to us-east-1.
