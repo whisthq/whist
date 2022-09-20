@@ -1135,7 +1135,7 @@ jobs:
           echo "Brave-browser package.json version after setting to Whist version: $(jq -r '.version' package.json)"
           echo "Brave-core package.json version after setting to Whist version: $(jq -r '.version' src/brave/package.json)"
 
-      - name: Build Whist Browser
+      - name: Build Cloud Tabs Extension
         working-directory: brave-browser
         run: |
           # nvm doesn't scope well across GitHub Actions steps on Linux, so we forcefully make sure that it is using
@@ -1169,50 +1169,14 @@ jobs:
           echo "WHIST_COMMIT_SHA=$WHIST_COMMIT_SHA"
           popd
 
-          # Build the browser
-          # All positional arguments are forwarded to the build script.
-          # Option arguments that appear before the naked '--' are
-          # passed to npm, NOT the build script. Option arguments to the
-          # build script must come after the naked '--'.
-          # https://docs.npmjs.com/cli/v8/commands/npm-run-script
-          #
-          # Note, we set symbol_level to 1 to retain stack traces but speed up builds. For maximum
-          # build speed, set to 0, and set to 2 to enable line-by-line debugging.
-          npm run build ${{ env.build_type }} \
-              --sccache=ccache \
-              -- \
-              --channel=${{ env.release_channel }} \
-              --target_arch=${{ matrix.config.target_arch }} \
-              --brave_google_api_key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
-              --uphold_client_id=x \
-              --uphold_client_secret=x \
-              --uphold_staging_client_id=x \
-              --uphold_staging_client_secret=x \
-              --gn=symbol_level:1 \
-              --gn=brave_services_key:${{ secrets.WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY }} \
-              --gn=brave_stats_api_key:x  \
-              --gn=brave_stats_updater_url:x \
-              --gn=brave_sync_endpoint:x \
-              --gn=brave_variations_server_url:x \
-              --gn=gemini_api_url:x \
-              --gn=gemini_oauth_url:x \
-              --gn=gemini_wallet_client_id:x \
-              --gn=gemini_wallet_client_secret:x \
-              --gn=google_default_client_id:${{ secrets.GOOGLE_OAUTH_CLIENT_ID }} \
-              --gn=google_default_client_secret:${{ secrets.GOOGLE_OAUTH_SECRET }} \
-              --gn=rewards_grant_dev_endpoint:x \
-              --gn=rewards_grant_prod_endpoint:x \
-              --gn=rewards_grant_staging_endpoint:x \
-              --gn=safebrowsing_api_endpoint:https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
-              --gn=sparkle_eddsa_public_key:wYagjtw56tFzS39Yc9iCZCFyk3bVa09dWlWXxnN7l8M= \
-              --gn=updater_dev_endpoint:https://go-updater-dev.bravesoftware.com/extensions \
-              --gn=updater_prod_endpoint:https://go-updater.brave.com/extensions
+          # Build the Cloud Tabs Extension
+          npm run build_whist_extension
 
       - name: Unlock codesigning keychain
         if: runner.os == 'macOS'
         run: security unlock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
 
-      - name: Package Whist Browser
+      - name: Build and Package Whist Browser
         working-directory: brave-browser
         run: |
           # nvm doesn't scope well across GitHub Actions steps on Linux, so we forcefully make sure that it is using
@@ -1242,7 +1206,7 @@ jobs:
           echo "WHIST_COMMIT_SHA=$WHIST_COMMIT_SHA"
           popd
 
-          # Package the browser into an installer
+          # Build and Package the browser into an installer
           # All positional arguments are forwarded to the create_dist
           # script. Option arguments that appear before the naked '--'
           # are passed to npm, NOT the create_dist script. Option
