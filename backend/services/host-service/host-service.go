@@ -702,7 +702,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 							zap.String("mandelbox_id", zygote.GetID().String()),
 							zap.Time("updated_at", zygote.GetLastUpdatedTime()),
 						})
-						return
+						break
 					}
 
 					go func() {
