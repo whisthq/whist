@@ -33,8 +33,6 @@ Includes
 #define _NET_WM_STATE_TOGGLE 2
 
 static Display* display;
-static char last_window_name[WINDOW_NAME_MAXLEN + 1];
-static bool last_window_name_valid;
 
 /*
 ============================
@@ -132,7 +130,6 @@ void init_window_info_getter(void) {
         display = XOpenDisplay(NULL);
     }
     XSetErrorHandler(handler);
-    last_window_name_valid = false;
 }
 
 void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
@@ -291,68 +288,6 @@ static Window get_focused_window(void) {
     int revert;
     XGetInputFocus(display, &w, &revert);
     return w;
-}
-
-bool get_focused_window_name(char** name_return) {
-    /*
-     * Get the name of the focused window.
-     *
-     * Arguments:
-     *     name_return (char**): Location to write char* of window title name.
-     *                           NULL on failure.
-     *
-     *  Return:
-     *      ret (int): true on new window name, false if the same window name or failure
-     */
-
-    Window w = get_focused_window();
-
-    *name_return = NULL;
-
-    if (!w) {
-        // No window is active.
-        return false;
-    }
-
-    // Ask all Whist & library functions to use the locale defined by the environment. This
-    // prevents encoding problems (for example, when it comes to encoding strings in UTF8
-    // format).
-    setlocale(LC_ALL, "");
-
-    // https://gist.github.com/kui/2622504
-    XTextProperty prop;
-    Status s;
-    int count = 0;
-    int result = 0;
-    char** list = NULL;
-
-    XLockDisplay(display);
-    s = XGetWMName(display, w, &prop);
-    if (s) {
-        result = XmbTextPropertyToTextList(display, &prop, &list, &count);
-    } else {
-        LOG_INFO("Focused window %lu has no name", w);
-    }
-    XUnlockDisplay(display);
-    if (!count) {
-        return false;
-    }
-    if (result == Success) {
-        static char cur_window_name[WINDOW_NAME_MAXLEN + 1];
-        safe_strncpy(cur_window_name, list[0], WINDOW_NAME_MAXLEN + 1);
-        // trim down any dangling utf8 multi-byte characters
-        trim_utf8_string(cur_window_name);
-        XFreeStringList(list);
-        bool same_string =
-            !last_window_name_valid || strcmp(last_window_name, cur_window_name) == 0;
-        safe_strncpy(last_window_name, cur_window_name, WINDOW_NAME_MAXLEN + 1);
-        last_window_name_valid = true;
-        *name_return = cur_window_name;
-        return !same_string;
-    } else {
-        LOG_ERROR("XmbTextPropertyToTextList failed to convert window name to string");
-    }
-    return false;
 }
 
 bool is_focused_window_fullscreen(void) {

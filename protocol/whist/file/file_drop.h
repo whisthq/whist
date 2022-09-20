@@ -99,4 +99,4 @@ int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* fi
  */
 void destroy_file_drop_handler(void);
 
-#endif  // WINDOW_NAME_H
+#endif  // FILE_DROP_H

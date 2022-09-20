@@ -291,15 +291,6 @@ void sdl_render_window_titlebar_color(int id, WhistRGBColor color) {
     }
 }
 
-void sdl_set_window_title(int id, const char* requested_window_title) {
-    size_t len = strlen(requested_window_title) + 1;
-    char* new_window_title = safe_malloc(len);
-    safe_strncpy(new_window_title, requested_window_title, len);
-
-    // whist_frontend_set_title is now responsible for free'ing new_window_title
-    whist_frontend_set_title(event_frontend, id, new_window_title);
-}
-
 void sdl_set_fullscreen(int id, bool is_fullscreen) {
     whist_frontend_set_window_fullscreen(event_frontend, id, is_fullscreen);
 }

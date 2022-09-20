@@ -107,11 +107,6 @@ bool whist_frontend_is_any_window_visible(WhistFrontend* frontend) {
     return frontend->call->is_any_window_visible(frontend);
 }
 
-WhistStatus whist_frontend_set_title(WhistFrontend* frontend, int id, const char* title) {
-    FRONTEND_ENTRY();
-    return frontend->call->set_title(frontend, id, title);
-}
-
 bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     FRONTEND_ENTRY();
     return frontend->call->poll_event(frontend, event);

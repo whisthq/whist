@@ -448,10 +448,6 @@ COPY --chmod=555 main/run-whist-application.sh $HYDRAULIC_ROOT/usr/bin/run-whist
 COPY --chmod=555 --from=whist-teleport-drag-drop /whist-teleport-drag-drop/build/whist-teleport-drag-drop $HYDRAULIC_ROOT/opt/teleport/drag-drop
 COPY --chmod=555 teleport/drag-drop/run-whist-teleport-drag-drop.sh $HYDRAULIC_ROOT/usr/bin/run-whist-teleport-drag-drop.sh
 
-# Install whist-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
-# See whist-teleport-uri-handler.desktop for a list of currently-supported protocols.
-COPY --chmod=555 teleport/uri-handler/whist-teleport-uri-handler.sh $HYDRAULIC_ROOT/opt/teleport/uri-handler
-
 # Service which launches the server protocol and application
 COPY --chmod=550 main/run-whist-server.sh $HYDRAULIC_ROOT/usr/share/whist/run-whist-server.sh
 COPY --chown=root:root --chmod=600 main/whist-main.service $HYDRAULIC_ROOT/etc/systemd/system
@@ -878,9 +874,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 
 # Symlink relevant applications
 # Set default whist-application to xeyes
-RUN ln -sf "$(which xeyes)" /usr/bin/whist-application \
-    # Overwrite xdg-open with our URI handler
-    && ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
+RUN ln -sf "$(which xeyes)" /usr/bin/whist-application
 
 # Install protocol dependencies
 COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh
