@@ -12,6 +12,7 @@ import {
 
 import { AsyncReturnType } from "@app/@types/api"
 import { CloudTabError } from "@app/constants/errors"
+import { HostSpinUpResponse, hostSpinUpUnauthorized } from "../utils/host"
 
 const showPopup = (type: CloudTabError) => {
   whistState.waitingCloudTabs.forEach((tab) => {
@@ -24,9 +25,14 @@ const showPopup = (type: CloudTabError) => {
   whistState.waitingCloudTabs = []
 }
 
-hostError.subscribe(() => {
-  showPopup(CloudTabError.HOST_ERROR)
+hostError.subscribe((response: HostSpinUpResponse) => {
+  if (hostSpinUpUnauthorized(response)) {
+    showPopup(CloudTabError.AUTH_ERROR)
+  } else {
+    showPopup(CloudTabError.HOST_ERROR)
+  }
 })
+
 authNetworkError.subscribe(() => {
   showPopup(CloudTabError.NETWORK_ERROR)
 })

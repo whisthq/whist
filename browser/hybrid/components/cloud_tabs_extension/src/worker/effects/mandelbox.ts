@@ -1,4 +1,4 @@
-import { zip, merge } from "rxjs"
+import { merge } from "rxjs"
 import { withLatestFrom } from "rxjs/operators"
 
 import {
@@ -16,6 +16,7 @@ import { whistState } from "@app/worker/utils/state"
 
 import { MandelboxState } from "@app/constants/storage"
 import { Socket } from "socket.io-client"
+import { HostInfo, MandelboxInfo } from "@app/@types/payload"
 
 mandelboxNeeded.subscribe(() => {
   whistState.mandelboxState = MandelboxState.MANDELBOX_WAITING
@@ -27,22 +28,24 @@ merge(mandelboxNeeded, socketReconnectFailed)
     socket.close()
   })
 
-zip(mandelboxSuccess, hostSuccess).subscribe(([mandelbox, host]: any) => {
-  const s = serializeProtocolArgs({ ...mandelbox, ...host })
-  ;(chrome as any).whist.broadcastWhistMessage(
-    JSON.stringify({
-      type: "MANDELBOX_INFO",
-      value: {
-        "server-ip": s.mandelboxIP,
-        p: s.mandelboxPorts,
-        k: s.mandelboxSecret,
-      },
-    })
-  )
+hostSuccess
+  .pipe(withLatestFrom(mandelboxSuccess))
+  .subscribe(([host, mandelbox]: [HostInfo, MandelboxInfo]) => {
+    const s = serializeProtocolArgs({ ...mandelbox, ...host })
+    ;(chrome as any).whist.broadcastWhistMessage(
+      JSON.stringify({
+        type: "MANDELBOX_INFO",
+        value: {
+          "server-ip": s.mandelboxIP,
+          p: s.mandelboxPorts,
+          k: s.mandelboxSecret,
+        },
+      })
+    )
 
-  whistState.mandelboxState = MandelboxState.MANDELBOX_CONNECTED
-  whistState.mandelboxInfo = { ...mandelbox, ...host }
-})
+    whistState.mandelboxState = MandelboxState.MANDELBOX_CONNECTED
+    whistState.mandelboxInfo = { ...mandelbox, ...host }
+  })
 
 webuiMandelboxNeeded.subscribe(() => {
   if (whistState.mandelboxState !== MandelboxState.MANDELBOX_WAITING) {

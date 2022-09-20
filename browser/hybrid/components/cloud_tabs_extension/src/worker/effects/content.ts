@@ -7,9 +7,7 @@ showUpdatePage.subscribe(() => {
 })
 
 showLoginPage.subscribe(() => {
-  ;(chrome as any).whist.setWhistIsLoggedIn(false, () => {
-    void chrome.tabs.create({
-      url: "whist://welcome",
-    })
+  void chrome.tabs.create({
+    url: "whist://welcome",
   })
 })

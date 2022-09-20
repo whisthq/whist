@@ -68,4 +68,11 @@ const hostSpinUpSuccess = (res: HostSpinUpResponse) => {
   )
 }
 
-export { hostSpinUp, hostSpinUpSuccess, HostSpinUpResponse }
+const hostSpinUpUnauthorized = (res: HostSpinUpResponse) => res.status === 401
+
+export {
+  hostSpinUp,
+  hostSpinUpSuccess,
+  hostSpinUpUnauthorized,
+  HostSpinUpResponse,
+}

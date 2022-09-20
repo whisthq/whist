@@ -18,7 +18,9 @@ const mandelboxNeeded = stateDidChange("waitingCloudTabs")
   .pipe(filter((change: any) => change?.applyData?.name === "push"))
   .pipe(
     filter(
-      () => whistState.mandelboxState === MandelboxState.MANDELBOX_NONEXISTENT
+      () =>
+        whistState.mandelboxState === MandelboxState.MANDELBOX_NONEXISTENT &&
+        whistState.isLoggedIn
     ),
     share()
   )
