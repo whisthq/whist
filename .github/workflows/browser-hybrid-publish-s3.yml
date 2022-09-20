@@ -311,8 +311,6 @@ jobs:
             echo "release_channel=nightly" >> $GITHUB_ENV
 
             # Set the proper package name for the build
-            #
-            # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser Nightly.dmg" >> $GITHUB_ENV
               echo "installer_name=Whist-Nightly-latest-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
@@ -369,8 +367,6 @@ jobs:
 
           # Set the environment variables for the Whist Extension
           # Note that these values are public, so it's fine to hardcode them here (rather than using GitHub Secrets)
-          #
-          # TODO: Create a per-environment Amplitude project, and have a different key for each environment
           if [[ "${{ inputs.branch }}" == "prod" ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
             export WHIST_AUTH0_DOMAIN_URL=auth.whist.com
