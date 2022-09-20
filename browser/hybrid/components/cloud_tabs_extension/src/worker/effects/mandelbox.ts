@@ -58,6 +58,7 @@ merge(mandelboxError, hostError, socketReconnectFailed).subscribe(() => {
 
 merge(webuiMandelboxNeeded, socketReconnectFailed).subscribe(() => {
   whistState.activeCloudTabs = []
+  whistState.waitingCloudTabs = []
 
   chrome.tabs.query({}, (tabs: chrome.tabs.Tab[]) => {
     const cloudTabs = tabs.filter((tab) => tab.url?.startsWith("cloud:"))
