@@ -683,7 +683,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                 context->fec_controller);
             }
             if(no_burst_mode) context->network_settings.burst_bitrate = context->network_settings.video_bitrate;
-            
+
             whist_plotter_insert_sample("target_bitrate", get_timestamp_sec(), context->network_settings.video_bitrate/1000.0/100.0);
             whist_plotter_insert_sample("burst_bitrate", get_timestamp_sec(), context->network_settings.burst_bitrate/1000.0/100.0);
             whist_plotter_insert_sample("saturate", get_timestamp_sec(), context->network_settings.saturate_bandwidth *100);
@@ -2152,6 +2152,7 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     // Calculate latency
     context->short_term_latency = PING_LAMBDA_SHORT_TERM * context->short_term_latency +
                                   (1 - PING_LAMBDA_SHORT_TERM) * ping_time;
+    whist_plotter_insert_sample("ping_time", get_timestamp_sec(), ping_time*MS_IN_SECOND);
     // Don't update long term latency during congestion
     if (!context->network_settings.congestion_detected) {
         context->long_term_latency = PING_LAMBDA_LONG_TERM * context->long_term_latency +
