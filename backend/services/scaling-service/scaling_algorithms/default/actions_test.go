@@ -120,6 +120,13 @@ func (db *mockDBClient) QueryImage(scalingCtx context.Context, graphQLClient sub
 	return testImages, nil
 }
 
+func (db *mockDBClient) QueryLatestImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) (subscriptions.Image, error) {
+	testLock.Lock()
+	defer testLock.Unlock()
+
+	return testImages[0], nil
+}
+
 func (db *mockDBClient) InsertImages(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Image) (int, error) {
 	testLock.Lock()
 	defer testLock.Unlock()

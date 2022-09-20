@@ -5,6 +5,7 @@ import (
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/utils"
 )
 
 // QueryImage queries the database for an instance image (AMI) that matches the given id.
@@ -18,6 +19,21 @@ func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient sub
 	err := graphQLClient.Query(scalingCtx, &latestImageQuery, queryParams)
 	imageResult := subscriptions.ToImages(latestImageQuery.WhistImages)
 	return imageResult, err
+}
+
+// QueryLatestImage will query the database and try to find the most recent image registered in the database
+// for a specific cloud-provider and region.
+func (client *DBClient) QueryLatestImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) (subscriptions.Image, error) {
+	imageResult, err := client.QueryImage(scalingCtx, graphQLClient, provider, region) // TODO: set different provider when doing multi-cloud.
+	if err != nil {
+		return subscriptions.Image{}, utils.MakeError("failed to query database for current image: %s", err)
+	}
+
+	if len(imageResult) == 0 {
+		return subscriptions.Image{}, utils.MakeError("image not found in %s", region)
+	}
+
+	return imageResult[0], nil
 }
 
 // InsertInstances adds the received instances to the database.

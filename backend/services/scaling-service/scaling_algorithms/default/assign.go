@@ -107,21 +107,17 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return err
 	}
 
+	// TODO: set different cloud provider when doing multi-cloud
+	latestImage, err := s.DBClient.QueryLatestImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
+	if err != nil {
+		return err
+	}
+
 	// This condition is to accomodate the worflow for developers of the Whist frontend
 	// to test their changes without needing to update the development database with
 	// commit_hashes on their local machines.
 	if metadata.IsLocalEnv() || mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
-		// Query for the latest image id
-		imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
-		if err != nil {
-			return utils.MakeError("failed to query database for current image: %s", err)
-		}
-
-		if len(imageResult) == 0 {
-			return utils.MakeError("image not found in %s", event.Region)
-		}
-
-		mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
+		mandelboxRequest.CommitHash = string(latestImage.ClientSHA)
 	}
 
 	// This is the "main" loop that does all the work and tries to find an instance for a user. first, it will iterate
@@ -144,11 +140,12 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 		var instanceFound bool
 
-		// Iterate over available instances, try to find one with a matching commit hash
+		// Iterate over available instances, try to find one with a matching commit hash and image.
 		for i := range instanceResult {
 			assignedInstance = instanceResult[i]
 
-			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash {
+			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash &&
+				assignedInstance.ImageID == latestImage.ImageID {
 				logger.Infow(utils.Sprintf("Found instance %s with commit hash %s.", assignedInstance.ID, assignedInstance.ClientSHA), contextFields)
 				instanceFound = true
 				break
