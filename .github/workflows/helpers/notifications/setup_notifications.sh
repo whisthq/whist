@@ -17,6 +17,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Working directory is whist/.github/workflows/helpers
 cd "$DIR/.."
 
+# Install pip, if not already installed
+python3 -m ensurepip
+
 # Install the Python dependencies only if the invoker requests them
 # we do this to minimize installing dependencies we do not need.
 # For example, the Slack bot only requires the `requests` library,
