@@ -3,12 +3,10 @@ import has from "lodash.has"
 import {
   parseAuthInfo,
   requestAuthInfoRefresh,
-  authInfoCallbackRequest,
   generateRandomConfigToken,
 } from "@app/@core-ts/auth"
 import { getStorage, setStorage } from "@app/worker/utils/storage"
 
-import { config } from "@app/constants/app"
 import { Storage } from "@app/constants/storage"
 import { AuthInfo, ConfigTokenInfo } from "@app/@types/payload"
 
@@ -29,36 +27,6 @@ const initWhistAuth = async () => {
   }
 
   return refreshedAuthInfo
-}
-
-const initGoogleAuthHandler = async () => {
-  /*
-    Description:
-      Opens the Google auth window when requested by the user
-  */
-  const authPromise = new Promise<AuthInfo>((resolve) => {
-    chrome.webRequest.onBeforeRequest.addListener(
-      (details: { url: string }) => {
-        const callbackUrl = details.url
-
-        void authInfoCallbackRequest(callbackUrl).then((response: any) => {
-          const authInfo = parseAuthInfo(response)
-          const refreshToken = response?.json.refresh_token
-          resolve({
-            ...authInfo,
-            refreshToken,
-            isFirstAuth: true,
-          })
-        })
-      },
-      {
-        urls: [`${<string>config.AUTH0_REDIRECT_URL}*`],
-      },
-      ["blocking"]
-    )
-  })
-
-  return await authPromise
 }
 
 const initConfigTokenHandler = async () => {
@@ -101,7 +69,6 @@ const authFailure = (payload: AuthInfo) => {
 
 export {
   initWhistAuth,
-  initGoogleAuthHandler,
   initConfigTokenHandler,
   authSuccess,
   authNetworkError,

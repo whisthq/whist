@@ -1,15 +1,23 @@
-import { take } from "rxjs/operators"
+import { merge } from "rxjs"
+import { filter, take } from "rxjs/operators"
 
 import { initConfigTokenHandler } from "@app/worker/utils/auth"
 import { authSuccess, authFailure } from "@app/worker/events/auth"
-import { getStorage, setStorage } from "@app/worker/utils/storage"
-import { getActiveTab, updateTabUrl } from "@app/worker/utils/tabs"
+import { hostError } from "@app/worker/events/host"
+import { mandelboxError } from "@app/worker/events/mandelbox"
+
+import { setStorage } from "@app/worker/utils/storage"
 import { whistState } from "@app/worker/utils/state"
+import { mandelboxCreateErrorUnauthorized } from "@app/worker/utils/mandelbox"
+import { hostSpinUpUnauthorized } from "@app/worker/utils/host"
+import { getActiveTab, updateTabUrl } from "@app/worker/utils/tabs"
 
 import { PopupMessage, PopupMessageType } from "@app/@types/messaging"
 import { AuthInfo } from "@app/@types/payload"
 import { Storage } from "@app/constants/storage"
-import { welcomePageOpened } from "../events/webui"
+import { welcomePageOpened } from "@app/worker/events/webui"
+
+import { config } from "@app/constants/app"
 
 void initConfigTokenHandler()
 
@@ -18,8 +26,12 @@ authSuccess.subscribe(async (auth: AuthInfo) => {
   whistState.isLoggedIn = true
 
   if (auth.isFirstAuth) {
-    const { id } = await getActiveTab()
-    void updateTabUrl(id ?? -1, "chrome://welcome")
+    const { id, url } = await getActiveTab()
+    if ((url ?? "").includes(config.AUTH0_REDIRECT_URL)) {
+      void updateTabUrl(id ?? -1, "chrome://welcome")
+    } else {
+      void chrome.tabs.create({ url: "chrome://welcome" })
+    }
   }
 
   void chrome.runtime.sendMessage(<PopupMessage>{
@@ -41,7 +53,13 @@ authSuccess.subscribe(async (auth: AuthInfo) => {
 })
 
 // Tell the browser that auth failed
-authFailure.subscribe(async () => {
+merge(
+  authFailure,
+  mandelboxError.pipe(
+    filter((response) => mandelboxCreateErrorUnauthorized(response))
+  ),
+  hostError.pipe(filter((response) => hostSpinUpUnauthorized(response)))
+).subscribe(async () => {
   whistState.isLoggedIn = false
   ;(chrome as any).whist.broadcastWhistMessage(
     JSON.stringify({
@@ -60,16 +78,11 @@ authFailure.subscribe(async () => {
   })
 })
 
-authFailure.pipe(take(1)).subscribe(async () => {
-  const { id } = await getActiveTab()
-  const authInfo = await getStorage<AuthInfo>(Storage.AUTH_INFO)
-
-  if (authInfo?.accessToken === undefined)
-    void updateTabUrl(id ?? -1, "chrome://welcome")
+authFailure.pipe(take(1)).subscribe(() => {
+  void chrome.tabs.create({ url: "chrome://welcome" })
 })
 
 welcomePageOpened.subscribe(() => {
-  console.log("welcome page opened", whistState.isLoggedIn)
   ;(chrome as any).whist.broadcastWhistMessage(
     JSON.stringify({
       type: "IS_LOGGED_IN",

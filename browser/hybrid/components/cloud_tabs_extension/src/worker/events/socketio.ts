@@ -1,13 +1,13 @@
-import { zip, fromEvent, of, merge } from "rxjs"
+import { fromEvent, of, merge } from "rxjs"
 import {
   map,
   switchMap,
   filter,
   share,
   startWith,
-  withLatestFrom,
   count,
   take,
+  withLatestFrom,
 } from "rxjs/operators"
 
 import { mandelboxSuccess } from "@app/worker/events/mandelbox"
@@ -16,8 +16,9 @@ import { io, Socket } from "socket.io-client"
 import { MandelboxInfo, HostInfo } from "@app/@types/payload"
 import { JQueryStyleEventEmitter } from "rxjs/internal/observable/fromEvent"
 
-const socket = zip(mandelboxSuccess, hostSuccess).pipe(
-  map(([mandelbox, host]: [MandelboxInfo, HostInfo]) =>
+const socket = hostSuccess.pipe(
+  withLatestFrom(mandelboxSuccess),
+  map(([host, mandelbox]: [HostInfo, MandelboxInfo]) =>
     io(`http://${mandelbox.mandelboxIP}:${host.mandelboxPorts.port_32261}`, {
       reconnectionDelayMax: 500,
       transports: ["websocket"],
