@@ -36,7 +36,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	const expectedDrainTime time.Duration = 10 * time.Minute
 
 	var (
-		// freeInstances is a list of instances with full-capacity available.
+		// freeInstances is a list of instances with full-capacity available that have no running mandelboxes assigned to them.
 		freeInstances []subscriptions.Instance
 
 		// lingeringInstances is a list of instances that have been draining for more time than expected.
