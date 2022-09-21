@@ -128,7 +128,6 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
 	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
 	for _, region := range availableRegions {
-		contextFields = append(contextFields, zap.String("assign_region", region))
 		logger.Infow(utils.Sprintf("Trying to find instance in region %s, with commit hash %s.",
 			region, mandelboxRequest.CommitHash), contextFields)
 
