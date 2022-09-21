@@ -61,8 +61,8 @@ const initializeWhistFreezeAllHandler = () => {
         JSON.stringify({
           type: "WEB_UIS_FROZEN",
           value: {
-            new_active_tab_id: getTabId(),
-            spotlight_id: spotlightId
+            newActiveTabId: getTabId(),
+            spotlightId: spotlightId
           },
         })
       )

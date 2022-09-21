@@ -73,8 +73,8 @@ const webUisFrozen = fromEventPattern(
   map((message: string) => JSON.parse(message)),
   filter((message: any) => message.type === "WEB_UIS_FROZEN"),
   switchMap((message: any) => zip([
-    from(getTab(message.value.new_active_tab_id)),
-    of(message.value.spotlight_id)
+    from(getTab(message.value.newActiveTabId)),
+    of(message.value.spotlightId)
   ])),
   share()
 )
