@@ -190,7 +190,6 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings", ":", "/whist", "resourceMappings"),
 			path.Join(utils.TempDir, mandelbox.GetID().String(), "sockets", ":", "tmp", "sockets"),
 			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), serverSessionID, ":", "var", "log", "whist"), "/run/udev/data:/run/udev/data:ro",
-			// path.Join(utils.WhistDir, mandelbox.GetID().String(), "userConfigs", "unpacked_configs", ":", "/whist", "userConfigs", ":rshared"),
 		},
 		PortBindings: natPortBindings,
 		CapDrop:      strslice.StrSlice{"ALL"},
@@ -408,12 +407,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		incrementErrorRate()
 		return utils.MakeError("couldn't return host port bindings")
 	}
-
-	// // Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
-	// sendEncryptionInfoChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs(globalCtx, globalCancel, goroutineTracker)
-	// defer close(sendEncryptionInfoChan)
-
-	// logger.FastInfo(utils.Sprintf("SpinUpMandelbox(): Waiting for config encryption token from client..."), contextFields...)
 
 	if req == nil {
 		// Receive the JSON transport request from the client via the httpserver.

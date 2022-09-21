@@ -95,5 +95,8 @@ RUN mkdir -p /home/whist/.config/google-chrome/Default \
     && touch /home/whist/.config/google-chrome/Default/Preferences \
     && chown whist:whist /home/whist/.config/google-chrome/Default/Preferences
 
+# Default profile should be modifiable by whist user
+RUN chown whist:whist /home/whist/.config/google-chrome/Default
+
 # If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/

@@ -128,21 +128,6 @@ type Mandelbox interface {
 	// mandelbox internals.
 	WriteJSONData(types.JSONData) error
 
-	// // WriteUserInitialBrowserData adds data from the user's local browser to
-	// // their already-downloaded config in the mandelbox.
-	// WriteUserInitialBrowserData(types.BrowserData) error
-
-	// // MarkConfigReady tells the protocol inside the mandelbox that it is ready to
-	// // start and accept connections.
-	// MarkConfigReady() error
-
-	// // StartLoadingUserConfigs starts the process of loading user configs without
-	// // blocking.
-	// StartLoadingUserConfigs(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (chan<- ConfigEncryptionInfo, <-chan error)
-
-	// // Backup the user configs to S3
-	// BackupUserConfigs() error
-
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
 
@@ -236,21 +221,6 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		// Clean resource mappings
 		mandelbox.cleanResourceMappingDir()
 		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.GetID())
-
-		// // Only try to backup user configs if the mandelbox was successfully connected to
-		// if mandelbox.GetStatus() == dbdriver.MandelboxStatusRunning ||
-		// 	mandelbox.GetStatus() == dbdriver.MandelboxStatusDying {
-		// 	// Backup and clean user config directory.
-		// 	err := mandelbox.BackupUserConfigs()
-		// 	if err != nil {
-		// 		mandelboxCloseErr = multierror.Append(mandelboxCloseErr, utils.MakeError("error backing up user configs for MandelboxID %s: %s", mandelbox.GetID(), err))
-		// 	} else {
-		// 		logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.GetID())
-		// 	}
-		// 	mandelbox.cleanUserConfigDir()
-		// } else {
-		// 	logger.Infof("No users connected to the mandelbox, so not trying to backup configs.")
-		// }
 
 		if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
 			mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)

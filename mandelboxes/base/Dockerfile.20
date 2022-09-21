@@ -417,12 +417,6 @@ COPY --chown=root:root --chmod=600 audio/whist-audio.service $HYDRAULIC_ROOT/etc
 # Startup
 #########################
 
-# Set up user config map for mandelbox startup
-COPY startup/app-config-map.json $HYDRAULIC_ROOT/usr/share/whist/app-config-map.json
-
-# Set up custom config scripts
-COPY utils/browser-data/import_user_browser_data.py $HYDRAULIC_ROOT/usr/share/whist/import_user_browser_data.py
-
 # Add inotify file watching blockers
 COPY --chmod=555 utils/block-until-file-exists.sh $HYDRAULIC_ROOT/usr/local/bin/block-until-file-exists.sh
 COPY --chmod=555 utils/block-while-file-exists.sh $HYDRAULIC_ROOT/usr/local/bin/block-while-file-exists.sh
