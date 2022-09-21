@@ -82,5 +82,8 @@ RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser/Default \
     && touch /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences \
     && chown whist:whist /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
 
+# Default profile should be modifiable by whist user
+RUN chown whist:whist /home/whist/.config/BraveSoftware/Brave-Browser/Default
+
 # If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/
