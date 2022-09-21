@@ -36,6 +36,7 @@ bool InterArrivalDelta::ComputeDeltas(Timestamp send_time,
                                       TimeDelta* arrival_time_delta,
                                       int* packet_size_delta) {
   bool calculated_deltas = false;
+  //fprintf(stderr,"<%f>",send_time.us()/1000.0);
   if (current_timestamp_group_.IsFirstPacket()) {
     // We don't have enough data to update the filter, so we store it until we
     // have two frames of data to process.
@@ -52,7 +53,7 @@ bool InterArrivalDelta::ComputeDeltas(Timestamp send_time,
           current_timestamp_group_.send_time - prev_timestamp_group_.send_time;
       *arrival_time_delta = current_timestamp_group_.complete_time -
                             prev_timestamp_group_.complete_time;
-
+      //fprintf(stderr,"[[%f,%f;%f,%f]]\n",current_timestamp_group_.send_time.us()/1000.0,prev_timestamp_group_.send_time.us()/1000.0,current_timestamp_group_.complete_time.us()/1000.0,prev_timestamp_group_.complete_time.us()/1000.0);
       TimeDelta system_time_delta = current_timestamp_group_.last_system_time -
                                     prev_timestamp_group_.last_system_time;
 
