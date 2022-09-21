@@ -114,20 +114,23 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return err
 	}
 
-	// This condition is to accomodate the worflow for developers of the Whist frontend
+	// This condition is to accomodate the workflow for developers of the Whist frontend
 	// to test their changes without needing to update the development database with
 	// commit_hashes on their local machines.
 	if metadata.IsLocalEnv() || mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
 		mandelboxRequest.CommitHash = string(latestImage.ClientSHA)
 	}
 
-	var instanceFound bool
+	var (
+		instanceFound          bool
+		instanceProximityIndex int
+	)
 
 	// This is the "main" loop that does all the work and tries to find an instance for a user. first, it will iterate
 	// over the list of regions provided on the request, and will query the database on each to return the list of
 	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
 	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
-	for _, region := range availableRegions {
+	for i, region := range availableRegions {
 		assignContext := contextFields
 		assignContext = append(assignContext, zap.String("assign_region", region))
 
@@ -164,6 +167,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		if instanceFound {
 			// Persist the assigned region context
 			contextFields = assignContext
+			instanceProximityIndex = i
 			break
 		}
 
@@ -178,6 +182,16 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			Error: NO_INSTANCE_AVAILABLE,
 		}, err)
 		return err
+	}
+
+	// If the index of the region we assigned is not the first, it means the
+	// user was not assigned to the closest available region (since the slice
+	// is already sorted by proximity).
+	if instanceProximityIndex > 0 {
+		logger.Errorw(utils.Sprintf("failed to assign user to closest region: assigned to %s instead of %s (region %d of %d)",
+			assignedInstance.Region, availableRegions[0], instanceProximityIndex+1, len(availableRegions)), contextFields)
+	} else {
+		logger.Infow(utils.Sprintf("Successfully assigned user to closest region."), contextFields)
 	}
 
 	var (
