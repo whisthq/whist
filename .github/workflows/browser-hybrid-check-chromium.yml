@@ -120,8 +120,10 @@ jobs:
           # Print clang-format version for local comparison
           clang-format --version
 
-          # Run clang-format
-          find . -iname *.c -o -iname *.cc -o -iname *.cpp -o -iname *.m -o -iname *.mm -o -iname *.h -o -iname *.hpp | xargs clang-format
+          # Run clang-format (we need to use globstar for glob expansion on bash_
+          shopt -s globstar
+          clang-format **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
+          shopt -u globstar
 
           # Show diff in GitHub Actions logs
           git diff HEAD .
