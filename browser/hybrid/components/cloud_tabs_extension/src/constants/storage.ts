@@ -4,6 +4,7 @@ export enum Storage {
   CONFIG_TOKEN_INFO = "CONFIG_TOKEN_INFO",
   SAVED_CLOUD_URLS = "SAVED_CLOUD_URLS",
   WAITLISTED = "WAITLISTED",
+  SIGNIN_SHOWN = "SIGNIN_SHOWN",
 }
 
 export enum MandelboxState {

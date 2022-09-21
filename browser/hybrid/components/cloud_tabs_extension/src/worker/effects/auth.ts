@@ -6,7 +6,7 @@ import { authSuccess, authFailure } from "@app/worker/events/auth"
 import { hostError } from "@app/worker/events/host"
 import { mandelboxError } from "@app/worker/events/mandelbox"
 
-import { setStorage } from "@app/worker/utils/storage"
+import { getStorage, setStorage } from "@app/worker/utils/storage"
 import { whistState } from "@app/worker/utils/state"
 import { mandelboxCreateErrorUnauthorized } from "@app/worker/utils/mandelbox"
 import { hostSpinUpUnauthorized } from "@app/worker/utils/host"
@@ -78,8 +78,13 @@ merge(
   })
 })
 
-authFailure.pipe(take(1)).subscribe(() => {
-  void chrome.tabs.create({ url: "chrome://welcome" })
+authFailure.pipe(take(1)).subscribe(async () => {
+  const signinShown =
+    (await getStorage<boolean | undefined>(Storage.SIGNIN_SHOWN)) ?? false
+  if (!signinShown) {
+    void chrome.tabs.create({ url: "chrome://welcome" })
+    void setStorage(Storage.SIGNIN_SHOWN, true)
+  }
 })
 
 welcomePageOpened.subscribe(() => {
