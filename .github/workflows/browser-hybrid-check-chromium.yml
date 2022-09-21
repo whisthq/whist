@@ -79,8 +79,10 @@ jobs:
           # Print clang-tidy version for local comparison
           clang-tidy --version
 
-          # Run clang-tidy
+          # Run clang-tidy (we need to use globstar for glob expansion on bash)
+          shopt -s globstar
           clang-tidy **/**.c **/**.cc **/**.cpp **/**.h **/**.hpp
+          shopt -u globstar
 
       ###################################################################################
       ################################# MACOS STEPS START ###############################
@@ -103,8 +105,10 @@ jobs:
           # Print clang-tidy version for local comparison
           clang-tidy --version
 
-          # Run clang-tidy
+          # Run clang-tidy (we need to use globstar for glob expansion on bash)
+          shopt -s globstar
           clang-tidy **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
+          shopt -u globstar
 
       ###################################################################################
       ################################# LINUX STEPS START ###############################
@@ -120,7 +124,7 @@ jobs:
           # Print clang-format version for local comparison
           clang-format --version
 
-          # Run clang-format (we need to use globstar for glob expansion on bash_
+          # Run clang-format (we need to use globstar for glob expansion on bash)
           shopt -s globstar
           clang-format **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
           shopt -u globstar
@@ -141,5 +145,7 @@ jobs:
           # Print clang-tidy version for local comparison
           clang-tidy --version
 
-          # Run clang-tidy
+          # Run clang-tidy (we need to use globstar for glob expansion on bash)
+          shopt -s globstar
           clang-tidy **/**.c **/**.cc **/**.cpp **/**.h **/**.hpp
+          shopt -u globstar
