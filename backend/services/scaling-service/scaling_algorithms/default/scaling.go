@@ -51,17 +51,11 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		err error
 	)
 
-	// Query for the latest image id
-	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+	// TODO: set different cloud provider when doing multi-cloud
+	latestImage, err := s.DBClient.QueryLatestImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
 	if err != nil {
-		return utils.MakeError("failed to query database for current image: %s", err)
+		return err
 	}
-
-	if len(imageResult) == 0 {
-		logger.Warningf("Image not found in %s. Not performing any scaling actions.", event.Region)
-		return nil
-	}
-	latestImageID := string(imageResult[0].ImageID)
 
 	// Query database for all active instances (status ACTIVE) without mandelboxes
 	allActive, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
@@ -70,7 +64,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 
 	// Active instances with space to run mandelboxes
-	mandelboxCapacity := helpers.ComputeRealMandelboxCapacity(latestImageID, allActive)
+	mandelboxCapacity := helpers.ComputeRealMandelboxCapacity(latestImage.ImageID, allActive)
 
 	// Extra capacity is considered once we have a full instance worth of capacity
 	// more than the desired free mandelboxes. TODO: Set the instance type once we
@@ -112,7 +106,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			continue
 		}
 
-		if instance.ImageID == latestImageID {
+		if instance.ImageID == latestImage.ImageID {
 			// Current instances
 			// If we have more than one instance worth of extra mandelbox capacity, scale down
 			if mandelboxCapacity >= extraCapacity {

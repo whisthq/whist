@@ -66,22 +66,10 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	logger.Infow("Starting verify capacity action.", contextFields)
 	defer logger.Infow("Finished verify capacity action.", contextFields)
 
-	// Query for the latest image id
-	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+	// TODO: set different cloud provider when doing multi-cloud
+	latestImage, err := s.DBClient.QueryLatestImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
 	if err != nil {
-		return utils.MakeError("failed to query database for current image: %s", err)
-	}
-
-	if len(imageResult) == 0 {
-		logger.Warningf("Image not found in %s. Not performing any scaling actions.", event.Region)
-		return nil
-	}
-	latestImage := subscriptions.Image{
-		Provider:  string(imageResult[0].Provider),
-		Region:    string(imageResult[0].Region),
-		ImageID:   string(imageResult[0].ImageID),
-		ClientSHA: string(imageResult[0].ClientSHA),
-		UpdatedAt: imageResult[0].UpdatedAt,
+		return err
 	}
 
 	// This query will return all instances with the ACTIVE status
@@ -105,7 +93,6 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 			mandelboxCapacity, desiredFreeMandelboxesPerRegion[event.Region], defaultInstanceBuffer), contextFields)
 		err = s.ScaleUpIfNecessary(defaultInstanceBuffer, scalingCtx, event, latestImage)
 		if err != nil {
-			// err is already wrapped here
 			return err
 		}
 	} else {

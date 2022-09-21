@@ -28,6 +28,7 @@ type WhistDBClient interface {
 	UpdateInstance(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Instance) (int, error)
 	DeleteInstance(context.Context, subscriptions.WhistGraphQLClient, string) (int, error)
 	QueryImage(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Image, error)
+	QueryLatestImage(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.Image, error)
 	InsertImages(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Image) (int, error)
 	UpdateImage(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Image) (int, error)
 	QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Mandelbox, error)
