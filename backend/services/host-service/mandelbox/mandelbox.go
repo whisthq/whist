@@ -132,9 +132,9 @@ type Mandelbox interface {
 	// // their already-downloaded config in the mandelbox.
 	// WriteUserInitialBrowserData(types.BrowserData) error
 
-	// MarkConfigReady tells the protocol inside the mandelbox that it is ready to
-	// start and accept connections.
-	MarkConfigReady() error
+	// // MarkConfigReady tells the protocol inside the mandelbox that it is ready to
+	// // start and accept connections.
+	// MarkConfigReady() error
 
 	// // StartLoadingUserConfigs starts the process of loading user configs without
 	// // blocking.

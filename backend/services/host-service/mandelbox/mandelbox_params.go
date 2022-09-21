@@ -68,11 +68,11 @@ func (mandelbox *mandelboxData) MarkParamsReady() error {
 	return mandelbox.writeResourceMappingToFile(".paramsReady", ".paramsReady")
 }
 
-// MarkConfigReady indicates that all configs (including user configs) are in
-// place, and the mandelbox is ready to start the protocol + application.
-func (mandelbox *mandelboxData) MarkConfigReady() error {
-	return mandelbox.writeResourceMappingToFile(".configReady", ".configReady")
-}
+// // MarkConfigReady indicates that all configs (including user configs) are in
+// // place, and the mandelbox is ready to start the protocol + application.
+// func (mandelbox *mandelboxData) MarkConfigReady() error {
+// 	return mandelbox.writeResourceMappingToFile(".configReady", ".configReady")
+// }
 
 func (mandelbox *mandelboxData) getResourceMappingDir() string {
 	return path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings")

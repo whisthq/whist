@@ -25,7 +25,7 @@ set -Eeuo pipefail
 # USER_CONFIGS_DIR=/whist/userConfigs
 # APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
 
-block-until-file-exists.sh $WHIST_MAPPINGS_DIR/.configReady >&1
+# block-until-file-exists.sh $WHIST_MAPPINGS_DIR/.configReady >&1
 
 # # Symlink loaded user configs into the appropriate folders
 
