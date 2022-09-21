@@ -121,7 +121,7 @@ jobs:
           clang-format --version
 
           # Run clang-format
-          clang-format **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
+          find . -iname *.c -o -iname *.cc -o -iname *.cpp -o -iname *.m -o -iname *.mm -o -iname *.h -o -iname *.hpp | xargs clang-format
 
           # Show diff in GitHub Actions logs
           git diff HEAD .
