@@ -4,9 +4,12 @@
 # third_party/blink/renderer/bindings/idl_in_core.gni
 whist_static_idl_files_in_core = [
   "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.idl",
-  "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event.idl",
-  "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event_init.idl",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.idl",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event_init.idl",
 ]
+
+# third_party/blink/renderer/core/BUILD.gn
+whist_blink_core_event_type_names = [ "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_event_type_names.json5" ]
 
 # third_party/blink/renderer/bindings/idl_in_modules.gni
 whist_static_idl_files_in_modules = []
@@ -18,7 +21,7 @@ whist_generated_interface_sources_in_modules = []
 whist_generated_dictionary_sources_in_modules = []
 
 # third_party/blink/renderer/core/BUILD.gn
-whist_blink_renderer_core_event_interfaces = [ "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event.idl" ]
+whist_blink_renderer_core_event_interfaces = [ "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.idl" ]
 
 # third_party/blink/renderer/bindings/generated_in_core.gni
 whist_generated_interface_sources_in_core = [
@@ -49,10 +52,10 @@ whist_blink_renderer_modules_mediastream_deps =
 
 # third_party/blink/renderer/core/html/build.gni
 whist_blink_renderer_core_sources = [
+  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.cc",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.h",
   "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.cc",
   "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.h",
-  "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event.cc",
-  "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event.h",
 ]
 
 # content/browser/BUILD.gn

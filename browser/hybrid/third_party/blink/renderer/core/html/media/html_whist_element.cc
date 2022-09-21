@@ -31,7 +31,7 @@
 #endif
 
 #include "whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.h"
-#include "whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event.h"
+#include "whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.h"
 
 #include "third_party/blink/renderer/core/resize_observer/resize_observer_entry.h"
 #include "third_party/blink/renderer/core/geometry/dom_rect.h"
