@@ -38,19 +38,11 @@ fi
 # leak in any way (probably redundant, but still good practice)
 unset WHIST_AES_KEY
 
-# If WHIST_INITIAL_USER_DATA_FILE is set, then create file
-if [ -n "${WHIST_INITIAL_USER_DATA_FILE+1}" ]; then
-  echo "$WHIST_INITIAL_USER_DATA_FILE" > $WHIST_PRIVATE_DIR/user_browser_data_file
-fi
-
 # If WHIST_DEST_BROWSER is set, then create file
 if [ -n "${WHIST_DEST_BROWSER+1}" ]
 then
   echo "$WHIST_DEST_BROWSER" > $WHIST_PRIVATE_DIR/user_dest_browser
 fi
-
-unset WHIST_INITIAL_USER_DATA_FILE
-unset WHIST_DEST_BROWSER
 
 # Remove a vestigal file that we do not use.
 # This is how LXC used to read environment variables: see that deprecated code in

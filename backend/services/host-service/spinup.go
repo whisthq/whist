@@ -163,7 +163,6 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
-		utils.Sprintf("WHIST_INITIAL_USER_DATA_FILE=%v/%v", mandelboxData.UserInitialBrowserDirInMbox, mandelboxData.UserInitialBrowserFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
