@@ -75,7 +75,7 @@ jobs:
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
           echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
-          
+
           # Print clang-tidy version for local comparison
           clang-tidy --version
 
@@ -141,4 +141,3 @@ jobs:
 
           # Run clang-tidy
           clang-tidy **/**.c **/**.cc **/**.cpp **/**.h **/**.hpp
-
