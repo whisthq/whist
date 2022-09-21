@@ -25,8 +25,8 @@
 
 #include "whist_custom_event.h"
 
-#include "third_party/blink/renderer/bindings/modules/v8/v8_whist_custom_event_init.h"
-#include "third_party/blink/renderer/modules/event_modules.h"
+#include "third_party/blink/renderer/bindings/core/v8/v8_whist_custom_event_init.h"
+#include "third_party/blink/renderer/core/event_interface_names.h"
 
 namespace blink {
 

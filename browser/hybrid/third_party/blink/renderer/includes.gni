@@ -2,33 +2,36 @@
 # src/third_party/blink/renderer/core/BUILD.gn
 
 # third_party/blink/renderer/bindings/idl_in_core.gni
-whist_static_idl_files_in_core = [ "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.idl" ]
+whist_static_idl_files_in_core = [
+  "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.idl",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event.idl",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event_init.idl",
+]
 
 # third_party/blink/renderer/bindings/idl_in_modules.gni
-whist_static_idl_files_in_modules = [
-  "//whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_custom_event.idl",
-  "//whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_custom_event_init.idl",
-]
+whist_static_idl_files_in_modules = []
 
 # third_party/blink/renderer/bindings/generated_in_modules.gni
-whist_generated_interface_sources_in_modules = [
-  "$root_gen_dir/third_party/blink/renderer/bindings/modules/v8/v8_whist_custom_event.cc",
-  "$root_gen_dir/third_party/blink/renderer/bindings/modules/v8/v8_whist_custom_event.h",
-]
+whist_generated_interface_sources_in_modules = []
 
 # third_party/blink/renderer/bindings/generated_in_modules.gni
-whist_generated_dictionary_sources_in_modules = [
-  "$root_gen_dir/third_party/blink/renderer/bindings/modules/v8/v8_whist_custom_event_init.cc",
-  "$root_gen_dir/third_party/blink/renderer/bindings/modules/v8/v8_whist_custom_event_init.h",
-]
+whist_generated_dictionary_sources_in_modules = []
 
-# third_party/blink/renderer/modules/BUILD.gn
-whist_blink_renderer_modules_event_interfaces = [ "//whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_custom_event.idl" ]
+# third_party/blink/renderer/core/BUILD.gn
+whist_blink_renderer_core_event_interfaces = [ "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event.idl" ]
 
 # third_party/blink/renderer/bindings/generated_in_core.gni
 whist_generated_interface_sources_in_core = [
   "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_html_whist_element.h",
   "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_html_whist_element.cc",
+  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_custom_event.cc",
+  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_custom_event.h",
+]
+
+# third_party/blink/renderer/bindings/generated_in_core.gni
+whist_generated_dictionary_sources_in_core = [
+  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_custom_event_init.cc",
+  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_custom_event_init.h",
 ]
 
 # third_party/blink/renderer/modules/mediastream/BUILD.gn
@@ -37,8 +40,6 @@ whist_blink_renderer_modules_mediastream_sources = [
   "//whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/cloud_downloader.h",
   "//whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_compositor.cc",
   "//whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_compositor.h",
-  "//whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_custom_event.cc",
-  "//whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_custom_event.h",
   "//whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_player.cc",
 ]
 
@@ -47,9 +48,11 @@ whist_blink_renderer_modules_mediastream_deps =
     [ "//whist/browser/hybrid/third_party/whist:whist_component" ]
 
 # third_party/blink/renderer/core/html/build.gni
-whist_blink_renderer_core_html = [
+whist_blink_renderer_core_sources = [
   "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.cc",
   "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.h",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event.cc",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/whist_custom_event.h",
 ]
 
 # content/browser/BUILD.gn

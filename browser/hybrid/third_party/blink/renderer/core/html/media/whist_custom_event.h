@@ -1,5 +1,5 @@
-#ifndef THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_WHIST_CUSTOM_EVENT_H_
-#define THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_WHIST_CUSTOM_EVENT_H_
+#ifndef THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_WHIST_CUSTOM_EVENT_H_
+#define THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_WHIST_CUSTOM_EVENT_H_
 
 #include "third_party/blink/renderer/core/dom/events/event.h"
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
@@ -14,8 +14,7 @@ class WhistCustomEvent final : public Event {
 
  public:
   static WhistCustomEvent* Create();
-  static WhistCustomEvent* Create(const AtomicString& type,
-                              const String& value);
+  static WhistCustomEvent* Create(const AtomicString& type, const String& value);
   static WhistCustomEvent* Create(const AtomicString&, const WhistCustomEventInit*);
 
   WhistCustomEvent();
@@ -44,4 +43,4 @@ class WhistCustomEvent final : public Event {
 
 }  // namespace blink
 
-#endif  // THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_WHIST_CUSTOM_EVENT_H_
+#endif  // THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_WHIST_CUSTOM_EVENT_H_
