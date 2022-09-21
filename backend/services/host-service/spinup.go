@@ -422,15 +422,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	}
 	mandelbox.SetStatus(dbdriver.MandelboxStatusConnecting)
 
-	// // Report the config encryption info to the config loader after making sure
-	// // it passes some basic sanity checks.
-	// sendEncryptionInfoChan <- mandelboxData.ConfigEncryptionInfo{
-	// 	Token:                          req.ConfigEncryptionToken,
-	// 	IsNewTokenAccordingToClientApp: req.IsNewConfigToken,
-	// }
-	// // We don't close the channel here, since we defer the close when we first
-	// // make it.
-
 	// While we wait for config decryption, write the config.json file with the
 	// data received from JSON transport.
 	err = mandelbox.WriteJSONData(req.JSONData)
@@ -438,33 +429,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		incrementErrorRate()
 		return utils.MakeError("error writing config.json file for protocol: %s", err)
 	}
-
-	// // Wait for configs to be fully decrypted before we write any user initial
-	// // browser data.
-	// for err := range configDownloadErrChan {
-	// 	// We don't want these user config errors to be fatal, so we log them as
-	// 	// errors and move on.
-	// 	logger.Errorw(utils.Sprintf("%s", err), contextFieldSlice)
-	// }
-
-	// // Write the user's initial browser data
-	// logger.FastInfo("SpinUpMandelbox(): Beginning storing user initial browser data", contextFields...)
-
-	// err = mandelbox.WriteUserInitialBrowserData(req.BrowserData)
-
-	// if err != nil {
-	// 	logger.Errorw(utils.Sprintf("error writing initial browser data: %s", err), contextFieldSlice)
-	// } else {
-	// 	logger.FastInfo("SpinUpMandelbox(): Successfully wrote user initial browser data", contextFields...)
-	// }
-
-	// // Unblock whist-startup.sh to start symlink loaded user configs
-	// err = mandelbox.MarkConfigReady()
-	// if err != nil {
-	// 	incrementErrorRate()
-	// 	return utils.MakeError("error marking configs as ready: %s", err)
-	// }
-	// logger.FastInfo("SpinUpMandelbox(): Successfully marked mandelbox as ready", contextFields...)
 
 	// Don't wait for whist-application to start up in local environment. We do
 	// this because in local environments, we want to provide the developer a
