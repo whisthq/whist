@@ -482,7 +482,7 @@ jobs:
       # Note: Sentry makes use of sudo. To make it work on a self-hosted macOS runner, follow:
       # https://apple.stackexchange.com/questions/257813/enable-sudo-without-a-password-on-macos
       - name: Copy Client debug symbols to Sentry, on macOS
-        if: inputs.publish == 'true'
+        if: ${{ inputs.publish }}
         working-directory: brave-browser/src/out
         env:
           SENTRY_ORG: whist
@@ -506,7 +506,7 @@ jobs:
           fi
 
       - name: Upload Whist Browser Installer to AWS S3
-        if: inputs.publish == 'true'
+        if: ${{ inputs.publish }}
         working-directory: brave-browser/src/out
         run: |
           aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/${{ env.installer_name }}"
@@ -525,7 +525,7 @@ jobs:
         #
       - name: Prepare to publish browser update
         id: prepare-update
-        if: inputs.publish == 'true'
+        if: ${{ inputs.publish }}
         run: |
           S3_BUCKET_URI="${{ env.s3-bucket-uri }}"
           echo "::set-output name=bucket-name::${S3_BUCKET_URI##*/}"
@@ -533,7 +533,7 @@ jobs:
           echo "::set-output name=sparkle-sig-file::$(pwd)/brave-browser/src/out/$BUILD_OUTPUT_FOLDER/${executable_name##*/}.eddsa"
 
       - name: Update appcast to publish macOS browser update
-        if: inputs.publish == 'true'
+        if: ${{ inputs.publish }}
         uses: whisthq/update-appcast@v0.2
         with:
           version: ${{ inputs.release_version }}
