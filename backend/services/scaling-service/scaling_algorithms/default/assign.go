@@ -147,8 +147,6 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			continue
 		}
 
-		var instanceFound bool
-
 		// Iterate over available instances, try to find one with a matching commit hash and image.
 		for i := range instanceResult {
 			assignedInstance = instanceResult[i]
