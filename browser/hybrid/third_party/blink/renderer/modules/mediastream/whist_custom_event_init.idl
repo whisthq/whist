@@ -1,0 +1,3 @@
+dictionary WhistCustomEventInit : EventInit {
+    DOMString value = "";
+};
