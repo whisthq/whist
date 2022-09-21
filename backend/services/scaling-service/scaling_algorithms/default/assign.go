@@ -128,19 +128,19 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
 	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
 	for _, region := range availableRegions {
-		contextFields = append(contextFields, zap.String("assign_region", region))
+		assignContext := contextFields
+		assignContext = append(assignContext, zap.String("assign_region", region))
+
 		logger.Infow(utils.Sprintf("Trying to find instance in region %s, with commit hash %s.",
-			region, mandelboxRequest.CommitHash), contextFields)
+			region, mandelboxRequest.CommitHash), assignContext)
 
 		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region)
 		if err != nil {
-			contextFields = utils.SliceRemove(contextFields, zap.String("assign_region", region))
 			return utils.MakeError("failed to query for instances with capacity in %s: %s", region, err)
 		}
 
 		if len(instanceResult) == 0 {
-			logger.Warningw(utils.Sprintf("Failed to find any instances with capacity in %s. Trying on next region.", region), contextFields)
-			contextFields = utils.SliceRemove(contextFields, zap.String("assign_region", region))
+			logger.Warningw(utils.Sprintf("Failed to find any instances with capacity in %s. Trying on next region.", region), assignContext)
 			continue
 		}
 
@@ -152,20 +152,22 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash &&
 				assignedInstance.ImageID == latestImage.ImageID {
-				logger.Infow(utils.Sprintf("Found instance %s with commit hash %s.", assignedInstance.ID, assignedInstance.ClientSHA), contextFields)
+				logger.Infow(utils.Sprintf("Found instance %s with commit hash %s.", assignedInstance.ID, assignedInstance.ClientSHA), assignContext)
 				instanceFound = true
 				break
 			}
-			logger.Warningw(utils.Sprintf("Found an instance in %s but it has a different commit hash %s. Trying on next region.", region, assignedInstance.ClientSHA), contextFields)
+			logger.Warningw(utils.Sprintf("Found an instance in %s but it has a different commit hash %s. Trying on next region.", region, assignedInstance.ClientSHA), assignContext)
 		}
 
 		// Break of outer loop if instance was found. If no instance with
 		// matching commit hash was found, move on to the next region.
 		if instanceFound {
+			// Persist the assigned region context
+			contextFields = assignContext
 			break
 		}
-		contextFields = utils.SliceRemove(contextFields, zap.String("assign_region", region))
-		logger.Infow(utils.Sprintf("No instances found in %s with commit hash %s", region, mandelboxRequest.CommitHash), contextFields)
+
+		logger.Infow(utils.Sprintf("No instances found in %s with commit hash %s", region, mandelboxRequest.CommitHash), assignContext)
 	}
 
 	// No instances with capacity were found
