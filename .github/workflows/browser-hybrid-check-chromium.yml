@@ -1,27 +1,22 @@
-# workflows/browser-chromium-linting.yml
-#
-# Browser - Chromium: Linting
-# Lint C and C++ Chromium/Brave files created/modified by Whist using Clang.
-
-name: "Browser - Chromium: Linting"
+name: "Hybrid Browser: Check Chromium"
 
 on:
   pull_request:
     paths:
-      - "browser/**/**.c"
-      - "browser/**/**.cc"
-      - "browser/**/**.cpp"
-      - "browser/**/**.m"
-      - "browser/**/**.mm"
-      - "browser/**/**.h"
-      - "browser/**/**.hpp"
-      - ".github/workflows/browser-chromium-linting.yml"
+      - "browser/hybrid/**/**.c"
+      - "browser/hybrid/**/**.cc"
+      - "browser/hybrid/**/**.cpp"
+      - "browser/hybrid/**/**.m"
+      - "browser/hybrid/**/**.mm"
+      - "browser/hybrid/**/**.h"
+      - "browser/hybrid/**/**.hpp"
+      - ".github/workflows/browser-hybrid-check-chromium.yml"
   workflow_dispatch:
 
 # This guarantees that if you push many commits to the same PR, only the latest
 # commit will get run (others get cancelled)
 concurrency:
-  group: browser-chromium-linting-${{ github.head_ref || github.run_id }}
+  group: browser-hybrid-check-chromium-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -76,7 +71,7 @@ jobs:
       - name: Verify builds with clang-tidy on Windows
         if: runner.os == 'Windows'
         shell: powershell
-        working-directory: browser
+        working-directory: browser/hybrid
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
           echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
@@ -100,7 +95,7 @@ jobs:
 
       - name: Verify Builds with clang-tidy on macOS
         if: runner.os == 'macOS'
-        working-directory: browser
+        working-directory: browser/hybrid
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
           echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
@@ -117,7 +112,7 @@ jobs:
       # Verify clang-format on Linux
       - name: Verify Builds with clang-format
         if: runner.os == 'Linux'
-        working-directory: browser
+        working-directory: browser/hybrid
         run: |
           # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
           echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
@@ -136,7 +131,7 @@ jobs:
 
       - name: Verify Builds with clang-tidy on Ubuntu Linux
         if: runner.os == 'Linux'
-        working-directory: browser
+        working-directory: browser/hybrid
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
           echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/matchers/clang_matcher.json"
@@ -146,3 +141,4 @@ jobs:
 
           # Run clang-tidy
           clang-tidy **/**.c **/**.cc **/**.cpp **/**.h **/**.hpp
+
