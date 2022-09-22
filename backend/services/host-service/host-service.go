@@ -393,9 +393,9 @@ func main() {
 	}
 
 	// Set Sentry tags
-	tags, err := metadata.CloudMetadata.PopulateMetadata()
-	if err != nil {
-		logger.Errorf("failed to set Sentry tags: %s", err)
+	tags, errs := metadata.CloudMetadata.PopulateMetadata()
+	if errs != nil {
+		logger.Errorf("failed to set Sentry tags: %s", errs)
 	}
 
 	logger.AddSentryTags(tags)

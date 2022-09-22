@@ -8,6 +8,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
@@ -65,53 +66,53 @@ func (gc *Metadata) GetUserID() types.UserID {
 // PopulateMetadata should be called before trying to get any of the metadata values.
 // This function makes the initial calls to the endpoint and populates the `Metadata`
 // struct.
-func (gc *Metadata) PopulateMetadata() (map[string]string, error) {
-	imageID, err := metadataRetriever("image")
-	if err != nil {
-		return nil, utils.MakeError("failed to get gcp metadata field image: %s", err)
+func (gc *Metadata) PopulateMetadata() (map[string]string, *multierror.Error) {
+	var errors *multierror.Error
+	var metadata = make(map[string]string)
+
+	if imageID, err := metadataRetriever("image"); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get gcp metadata field image: %s", err))
+	} else {
+		metadata["gcp.image_id"] = imageID
+		gc.imageID = types.ImageID(imageID)
 	}
 
-	instanceID, err := metadataRetriever("id")
-	if err != nil {
-		return nil, utils.MakeError("failed to get gcp metadata field id: %s", err)
+	if instanceID, err := metadataRetriever("id"); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get gcp metadata field id: %s", err))
+	} else {
+		metadata["gcp.instance_id"] = instanceID
+		gc.instanceID = types.InstanceID(instanceID)
 	}
 
-	instanceType, err := metadataRetriever("machine-type")
-	if err != nil {
-		return nil, utils.MakeError("failed to get gcp metadata field machine-type: %s", err)
+	if instanceType, err := metadataRetriever("machine-type"); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get gcp metadata field machine-type: %s", err))
+	} else {
+		metadata["gcp.instance_type"] = instanceType
+		gc.instanceType = types.InstanceType(instanceType)
 	}
 
-	region, err := metadataRetriever("zone")
-	if err != nil {
-		return nil, utils.MakeError("failed to get gcp metadata field zone: %s", err)
+	if region, err := metadataRetriever("zone"); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get gcp metadata field zone: %s", err))
+	} else {
+		metadata["gcp.region"] = region
+		gc.region = types.PlacementRegion(region)
 	}
 
-	ip, err := metadataRetriever("network-interfaces/0/ip")
-	if err != nil {
-		return nil, utils.MakeError("failed to get gcp metadata field ip: %s", err)
+	if ip, err := metadataRetriever("network-interfaces/0/ip"); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get gcp metadata field ip: %s", err))
+	} else {
+		metadata["gcp.ip"] = ip
+		gc.ip = net.ParseIP(ip).To4()
 	}
 
-	instanceName, err := metadataRetriever("name")
-	if err != nil {
-		return nil, utils.MakeError("failed to get gcp metadata field name: %s", err)
+	if instanceName, err := metadataRetriever("name"); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get gcp metadata field name: %s", err))
+	} else {
+		metadata["gcp.instance_name"] = instanceName
+		gc.instanceName = types.InstanceName(instanceName)
 	}
 
-	metadata := make(map[string]string)
-	metadata["gcp.image_id"] = imageID
-	metadata["gcp.instance_id"] = instanceID
-	metadata["gcp.instance_name"] = instanceName
-	metadata["gcp.instance_type"] = instanceType
-	metadata["gcp.region"] = region
-	metadata["gcp.ip"] = ip
-
-	gc.imageID = types.ImageID(imageID)
-	gc.instanceID = types.InstanceID(instanceID)
-	gc.instanceName = types.InstanceName(instanceName)
-	gc.instanceType = types.InstanceType(instanceType)
-	gc.region = types.PlacementRegion(region)
-	gc.ip = net.ParseIP(ip).To4()
-
-	return metadata, nil
+	return metadata, errors
 }
 
 func metadataRetriever(resource string) (string, error) {
