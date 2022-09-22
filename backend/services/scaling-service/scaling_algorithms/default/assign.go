@@ -93,10 +93,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	// The user requested access to only unavailable regions. The last resort is to default to us-east-1.
 	if len(unavailableRegions) == len(requestedRegions) {
-		if metadata.GetAppEnvironment() == metadata.EnvProd {
-			logger.Errorf("user %s requested access to only unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
-		}
-		availableRegions = []string{"us-east-1"}
+		logger.Errorf("user %s requested access to only unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
 	}
 
 	if len(availableRegions) == 0 {
