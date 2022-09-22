@@ -29,7 +29,7 @@ jobs:
           - name: Windows
             os: windows-2019
           - name: Linux Ubuntu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - name: macOS (x64)
             os: macos-11.0
             arch: x86_64
