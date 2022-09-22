@@ -7,12 +7,24 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
-// QueryInstance queries for a mandelbox on the given instance with the given status.
+// QueryMandelbox queries for a mandelbox on the given instance with the given status.
 func (client *DBClient) QueryMandelbox(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string, status string) ([]subscriptions.Mandelbox, error) {
 	mandelboxQuery := subscriptions.QueryMandelboxesByInstanceId
 	queryParams := map[string]interface{}{
 		"instance_id": graphql.String(instanceID),
 		"status":      graphql.String(status),
+	}
+	err := graphQLClient.Query(scalingCtx, &mandelboxQuery, queryParams)
+	mandelboxResult := subscriptions.ToMandelboxes(mandelboxQuery.WhistMandelboxes)
+
+	return mandelboxResult, err
+}
+
+// QueryUserMandelboxes find if a user has mandelboxes currently registered in the database.
+func (client *DBClient) QueryUserMandelboxes(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, userID string) ([]subscriptions.Mandelbox, error) {
+	mandelboxQuery := subscriptions.QueryMandelboxesByUserId
+	queryParams := map[string]interface{}{
+		"user_id": graphql.String(userID),
 	}
 	err := graphQLClient.Query(scalingCtx, &mandelboxQuery, queryParams)
 	mandelboxResult := subscriptions.ToMandelboxes(mandelboxQuery.WhistMandelboxes)
