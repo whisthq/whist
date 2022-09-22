@@ -1,5 +1,6 @@
 import "./effects/auth"
 import "./effects/content"
+import "./effects/contextMenus"
 import "./effects/cookies"
 import "./effects/download"
 import "./effects/errors"
