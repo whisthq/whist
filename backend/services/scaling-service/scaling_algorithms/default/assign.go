@@ -91,7 +91,8 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		logger.Warningf("User %s requested access to the following unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
 	}
 
-	// The user requested access to only unavailable regions. The last resort is to default to us-east-1.
+	// The user requested access to only unavailable regions. This means the user is far from
+	// any of the available regions, and the frontend should handle that accordingly.
 	if len(unavailableRegions) == len(requestedRegions) {
 		logger.Errorf("user %s requested access to only unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
 	}
