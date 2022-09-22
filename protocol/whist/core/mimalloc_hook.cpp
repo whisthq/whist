@@ -261,6 +261,8 @@ static void mlock_statics() {
 extern malloc_zone_t* malloc_default_purgeable_zone(void) __attribute__((weak_import));
 
 void init_whist_malloc_hook() {
+    LOG_INFO("mlocking statics");
+    mlock_statics();
     LOG_INFO("Initializing custom malloc");
     // mlock_context.lock = whist_create_mutex();
     page_size = sysconf(_SC_PAGESIZE);
@@ -292,6 +294,4 @@ void init_whist_malloc_hook() {
         malloc_zone_unregister(purgeable_zone);
         malloc_zone_register(purgeable_zone);
     }
-    LOG_INFO("mlocking statics");
-    mlock_statics();
 }
