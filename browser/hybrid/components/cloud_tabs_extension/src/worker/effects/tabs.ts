@@ -1,4 +1,5 @@
 import { merge } from "rxjs"
+import { withLatestFrom } from "rxjs/operators"
 import find from "lodash.find"
 
 import { authSuccess } from "@app/worker/events/auth"
@@ -54,20 +55,22 @@ authSuccess.subscribe(() => {
 })
 
 // If a tab is created or updated and it's a cloud tab, add it to the queue
-merge(tabCreated, tabUpdated).subscribe((tab: chrome.tabs.Tab) => {
-  if (isCloudTab(tab) && !isActiveCloudTab(tab)) addTabToQueue(tab)
-})
+merge(tabCreated, tabUpdated)
+  .pipe(withLatestFrom(authSuccess))
+  .subscribe(([tab, _auth]: [chrome.tabs.Tab, any]) => {
+    if (isCloudTab(tab) && !isActiveCloudTab(tab)) addTabToQueue(tab)
+  })
 
 // If a tab is activated or changed, update its info in the cloud tab queue
-merge(tabActivated, tabUpdated, tabFocused).subscribe(
-  async (tab: chrome.tabs.Tab) => {
+merge(tabActivated, tabUpdated, tabFocused)
+  .pipe(withLatestFrom(authSuccess))
+  .subscribe(async ([tab, _auth]: [chrome.tabs.Tab, any]) => {
     whistState.waitingCloudTabs = await Promise.all(
       whistState.waitingCloudTabs.map(async (tab) => await getTab(tab.id))
     )
 
     if (!isCloudTab(tab)) unmarkActiveCloudTab(tab)
-  }
-)
+  })
 
 // If a tab is removed, remove it from the cloud tab queue
 tabRemoved.subscribe((tabId: number) => {
