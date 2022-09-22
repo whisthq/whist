@@ -106,9 +106,7 @@ jobs:
           clang-tidy --version
 
           # Run clang-tidy (we need to use globstar for glob expansion on bash)
-          shopt -s globstar
           clang-tidy **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
-          shopt -u globstar
 
       ###################################################################################
       ################################# LINUX STEPS START ###############################
