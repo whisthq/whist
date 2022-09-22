@@ -59,9 +59,11 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 		return
 	}
 
-	// Add user id to the request. This way we don't expose the
-	// access token to other processes that don't need access to it.
-	reqdata.UserID = types.UserID(claims.Subject)
+	if !metadata.IsLocalEnv() {
+		// Add user id to the request. This way we don't expose the
+		// access token to other processes that don't need access to it.
+		reqdata.UserID = types.UserID(claims.Subject)
+	}
 
 	// Once we have authenticated and validated the request send it to the scaling
 	// algorithm for processing. Mandelbox assign is region-agnostic so we don't need

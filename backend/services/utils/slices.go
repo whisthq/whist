@@ -1,5 +1,7 @@
 package utils // import "github.com/whisthq/whist/backend/services/utils"
 
+import "golang.org/x/exp/constraints"
+
 // SliceContains returns true if the given slice contains val, and false otherwise.
 func SliceContains(slice []interface{}, val interface{}) bool {
 	for _, v := range slice {
@@ -41,14 +43,19 @@ func StringSliceContains(slice []string, val string) bool {
 	return false
 }
 
-// PrintSlice is a helper function to print the slice elements as a string of comma separated values.
-func PrintSlice(slice []string) string {
+// PrintSlice is a helper function to print a slice as a string of comma separated values.
+// The string is truncated to the first n elements in the slice, to improve readability.
+func PrintSlice[T constraints.Ordered](slice []T, n int) string {
+	if len(slice) < n {
+		n = len(slice)
+	}
+
 	var message string
-	for i, v := range slice {
-		if i+1 == len(slice) {
-			message += Sprintf("%s", v)
+	for i, v := range slice[:n] {
+		if i+1 == n {
+			message += Sprintf("%v", v)
 		} else {
-			message += Sprintf("%s, ", v)
+			message += Sprintf("%v, ", v)
 		}
 	}
 	return message

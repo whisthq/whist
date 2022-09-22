@@ -35,6 +35,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.22.7
 	go.uber.org/zap v1.22.0
 	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
+	golang.org/x/exp v0.0.0-20220915105810-2d61f44442a3
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
 )
@@ -96,7 +97,7 @@ require (
 	go.uber.org/goleak v1.1.12 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/net v0.0.0-20220325170049-de3da57026de // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220328180837-c47567c462d1 // indirect
 	google.golang.org/grpc v1.45.0 // indirect

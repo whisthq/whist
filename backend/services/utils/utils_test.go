@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"os"
 	"path"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -174,4 +175,39 @@ func writeTestFile(testDir string) error {
 // creation errors.
 func cleanupTestDirs() error {
 	return os.RemoveAll(WhistDir)
+}
+
+func TestPrintSlice(t *testing.T) {
+	var tests = []struct {
+		name     string
+		slice    interface{}
+		truncate int
+		expected string
+	}{
+		{"region list", []string{"us-east-1", "us-west-1", "ap-south-1", "ca-central-1", "ap-southeast-1"},
+			3, "us-east-1, us-west-1, ap-south-1"},
+		{"region truncate greater than length", []string{"us-east-1"},
+			3, "us-east-1"},
+		{"ints", []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+			5, "0, 1, 2, 3, 4"},
+		{"ints truncate same length", []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+			10, "0, 1, 2, 3, 4, 5, 6, 7, 8, 9"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			var str string
+			switch tt.slice.(type) {
+			case []string:
+				str = PrintSlice(tt.slice.([]string), tt.truncate)
+			case []int:
+				str = PrintSlice(tt.slice.([]int), tt.truncate)
+			}
+
+			if ok := reflect.DeepEqual(tt.expected, str); !ok {
+				t.Errorf("expected %s, got %s", tt.expected, str)
+			}
+		})
+	}
 }
