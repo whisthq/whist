@@ -23,6 +23,7 @@
   ],
   "permissions": [
     "browserAction",
+    "contextMenus",
     "cookies",
     "downloads",
     "history",
