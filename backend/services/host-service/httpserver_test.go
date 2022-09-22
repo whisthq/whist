@@ -35,10 +35,10 @@ func TestSpinUpHandler(t *testing.T) {
 	}
 
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		JwtAccessToken:        "test_jwt_token",
-		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
-		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
-		ResultChan:            make(chan httputils.RequestResult),
+		JwtAccessToken: "test_jwt_token",
+		MandelboxID:    mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
+		JSONData:       mandelboxtypes.JSONData(deflatedJSONData),
+		ResultChan:     make(chan httputils.RequestResult),
 	}
 
 	testServerQueue := make(chan httputils.ServerRequest)
@@ -133,10 +133,10 @@ func TestHttpServerIntegration(t *testing.T) {
 	}
 
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		JwtAccessToken:        "test_jwt_token",
-		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
-		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
-		ResultChan:            make(chan httputils.RequestResult),
+		JwtAccessToken: "test_jwt_token",
+		MandelboxID:    mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
+		JSONData:       mandelboxtypes.JSONData(deflatedJSONData),
+		ResultChan:     make(chan httputils.RequestResult),
 	}
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
 	if err != nil {
@@ -297,10 +297,10 @@ func TestHandleJSONTransportRequest(t *testing.T) {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		JwtAccessToken:        "test_jwt_token",
-		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
-		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
-		ResultChan:            make(chan httputils.RequestResult),
+		JwtAccessToken: "test_jwt_token",
+		MandelboxID:    mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
+		JSONData:       mandelboxtypes.JSONData(deflatedJSONData),
+		ResultChan:     make(chan httputils.RequestResult),
 	}
 
 	testmux := &sync.Mutex{}

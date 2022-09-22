@@ -190,11 +190,11 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		AppName:               types.AppName(utils.MandelboxApp),
-		JwtAccessToken:        "test_jwt_token",
-		MandelboxID:           testMandelbox.GetID(),
-		JSONData:              types.JSONData(deflatedJSONData),
-		ResultChan:            make(chan httputils.RequestResult),
+		AppName:        types.AppName(utils.MandelboxApp),
+		JwtAccessToken: "test_jwt_token",
+		MandelboxID:    testMandelbox.GetID(),
+		JSONData:       types.JSONData(deflatedJSONData),
+		ResultChan:     make(chan httputils.RequestResult),
 	}
 
 	testmux := &sync.Mutex{}
