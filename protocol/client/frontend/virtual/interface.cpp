@@ -152,8 +152,8 @@ static void vi_api_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data, int*
     *height = frame->height;
     // If video width is rounded to the nearest even number, then crop the last pixel
     FrontendResizeEvent cached = latest_resize.load();
-    if (frame->width - cached.height == 1) {
-        *visible_width = cached.height;
+    if (frame->width - cached.width == 1) {
+        *visible_width = cached.width;
     } else {
         *visible_width = frame->width;
     }
