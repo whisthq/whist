@@ -126,7 +126,7 @@ jobs:
 
           # Run clang-format (we need to use globstar for glob expansion on bash)
           shopt -s globstar
-          clang-format **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
+          clang-format --dry-run --Werror **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
           shopt -u globstar
 
           # Show diff in GitHub Actions logs
