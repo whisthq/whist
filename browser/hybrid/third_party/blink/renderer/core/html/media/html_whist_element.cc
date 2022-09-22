@@ -61,6 +61,7 @@
 #include "third_party/blink/renderer/platform/json/json_values.h"
 #include "third_party/blink/renderer/core/css/css_property_names.h"
 #include "third_party/blink/renderer/core/dom/element.h"
+#include "third_party/blink/renderer/core/whist_event_type_names.h"
 
 namespace blink {
 
@@ -365,18 +366,18 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
     // Stub for now -- we might instead just use whistPause() and whistPlay from the WebUI
     // Javascript to manage the "pause on blur, play on focus, most-recently-active tab"
     // functionality.
-  } else if (event_type == event_type_names::kGesturepinchbegin) {
+  } else if (event_type == whist_event_type_names::kGesturepinchbegin) {
     // Pinch Begin does not have an WhistFrontEnd equivalent. So just mark is as handled.
     event.SetDefaultHandled();
-  } else if (event_type == event_type_names::kGesturepinchupdate ||
-             event_type == event_type_names::kGesturepinchend) {
+  } else if (event_type == whist_event_type_names::kGesturepinchupdate ||
+             event_type == whist_event_type_names::kGesturepinchend) {
       auto* gesture_event = DynamicTo<GestureEvent>(&event);
       WhistClient::WhistFrontendEvent frontend_event;
       frontend_event.type = WhistClient::FRONTEND_EVENT_GESTURE;
       frontend_event.gesture.delta.theta = 0.0;
       frontend_event.gesture.center.x = frontend_event.gesture.center.y = 0.0;
       frontend_event.gesture.num_fingers = 2;
-      if (event_type == event_type_names::kGesturepinchupdate) {
+      if (event_type == whist_event_type_names::kGesturepinchupdate) {
         // This ratio is derived empirically based on the pinch to zoom tests done in
         // native tab vs cloud tab.
         // TODO : If possible, find a systematic way to convert chromium scale value to
@@ -543,7 +544,7 @@ void HTMLWhistElement::UpdateCursorType(String type, bool relative_mouse_mode) {
     // Update the cursor type
     SetInlineStyleProperty(CSSPropertyID::kCursor, type);
 
-    DispatchEvent(*WhistCustomEvent::Create(event_type_names::kWhistcustomevent, "blah blah blah this is text"));
+    DispatchEvent(*WhistCustomEvent::Create(whist_event_type_names::kWhistcustomevent, "blah blah blah this is text"));
 
     // Try to get the document page
     Page* page = GetDocument().GetPage();

@@ -2,7 +2,7 @@
 // event handlers in our subclass of global_event_handlers.h
 {
   metadata: {
-    namespace: "event_type_names",
+    namespace: "whist_event_type_names",
     export: "CORE_EXPORT",
   },
 
