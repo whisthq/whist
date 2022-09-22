@@ -58,7 +58,6 @@ func TestWriteMandelboxParams(t *testing.T) {
 		"session_id",
 		"timeout",
 		".paramsReady",
-		".configReady",
 	}
 
 	for _, tt := range paramsTests {
@@ -116,7 +115,6 @@ func TestWriteMandelboxParamsErrors(t *testing.T) {
 		"session_id",
 		"timeout",
 		".paramsReady",
-		".configReady",
 	}
 
 	resourceDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "/mandelboxResourceMappings/")

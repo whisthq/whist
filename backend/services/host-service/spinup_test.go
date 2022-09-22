@@ -232,15 +232,6 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		t.Errorf("Params ready file contains invalid contents: %s", string(paramsReadyFileContents))
 	}
 
-	configReadyFile := path.Join(resourceMappingDir, ".configReady")
-	configReadyFileContents, err := os.ReadFile(configReadyFile)
-	if err != nil {
-		t.Fatalf("Failed to read resource file %s: %v", configReadyFile, err)
-	}
-	if string(configReadyFileContents) != ".configReady" {
-		t.Errorf("Config ready file contains invalid contents: %s", string(configReadyFileContents))
-	}
-
 	var jsonData map[string]interface{}
 	jsonFile := path.Join(resourceMappingDir, "config.json")
 	jsonFileContents, err := os.ReadFile(jsonFile)
