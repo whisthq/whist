@@ -65,7 +65,7 @@ const webUiMouseEntered = fromEventPattern(
   share()
 )
 
-const webUisFrozen = fromEventPattern(
+const webUisAreFrozen = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
@@ -86,5 +86,5 @@ export {
   webUiMandelboxNeeded,
   welcomePageOpened,
   webUiMouseEntered,
-  webUisFrozen,
+  webUisAreFrozen,
 }
