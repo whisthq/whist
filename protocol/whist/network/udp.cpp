@@ -543,17 +543,23 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
 
     static timestamp_us d_first=0;
     static timestamp_us a_first=0;
+    static double t_first=0;
 
-    if(!d_first) d_first= departure_time;
-    if(!a_first) a_first= arrival_time;
+    if(!t_first)
+    {
+        t_first= get_timestamp_sec();
+        d_first= departure_time;
+        a_first= arrival_time;
+    }
 
-    timestamp_us d_relative= departure_time - d_first;
-    timestamp_us a_relative= arrival_time - a_first;
+    timestamp_us d_relative= departure_time - d_first +t_first*1e6;
+    timestamp_us a_relative= arrival_time - a_first +t_first*1e6;
 
     //whist_plotter_insert_sample("departure_time", get_timestamp_sec(), d_relative/1000.0);
     //whist_plotter_insert_sample("arrival_time", get_timestamp_sec(), a_relative/1000.0);
 
-    whist_plotter_insert_sample("relative one-way delay", get_timestamp_sec(), a_relative/1000.0 - d_relative/1000.0);
+    whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0);
+    whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0-25);
 
     // Initialize desired_network_settings if it is not done yet. Also send that starting bitrate
     // setting to server.
@@ -594,8 +600,11 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             input.min_bitrate=min_rate;
 
             input.packets.emplace_back();
-            input.packets[0].arrival_time_ms= a_relative/1000.0;
-            input.packets[0].depature_time_ms= d_relative/1000.0; 
+            input.packets[0].arrival_time_ms= (a_relative/1000.0);
+            input.packets[0].depature_time_ms= (d_relative/1000.0);
+
+            //input.packets[0].arrival_time_ms= (long long)input.packets[0].arrival_time_ms;
+            //input.packets[0].depature_time_ms= (long long)input.packets[0].depature_time_ms;
 
             whist_plotter_insert_sample("min_rate", get_timestamp_sec(), min_rate/1000.0/100.0);
             whist_plotter_insert_sample("max_rate", get_timestamp_sec(), max_rate/1000.0/100.0);
@@ -1711,7 +1720,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     int udp_packet_size = get_udp_packet_size(udp_packet);
     bool throttle = false;
     if (udp_packet->type == UDP_WHIST_SEGMENT) {
-        udp_packet->udp_whist_segment_data.departure_time = current_time_us();
+        //udp_packet->udp_whist_segment_data.departure_time = current_time_us();  //this time is assigned before pacing, it's wrong!!
         // Throttle only video packet. Audio packets are very small and run on reserved bandwidth
         // and ping/pong packets use negligible bandwidth.
         if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
@@ -1741,6 +1750,10 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 
     // The size of the udp packet that actually needs to be sent over the network
     int udp_network_packet_size = UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size;
+
+    if (udp_packet->type == UDP_WHIST_SEGMENT) {
+        udp_packet->udp_whist_segment_data.departure_time = current_time_us();
+    }
 
     // If sending fails because of no buffer space available on the system, retry a few times.
     for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
