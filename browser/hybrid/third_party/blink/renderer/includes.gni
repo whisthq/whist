@@ -4,8 +4,8 @@
 # third_party/blink/renderer/bindings/idl_in_core.gni
 whist_static_idl_files_in_core = [
   "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.idl",
-  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.idl",
-  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event_init.idl",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_string_event.idl",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_string_event_init.idl",
 ]
 
 # third_party/blink/renderer/bindings/idl_in_modules.gni
@@ -18,20 +18,20 @@ whist_generated_interface_sources_in_modules = []
 whist_generated_dictionary_sources_in_modules = []
 
 # third_party/blink/renderer/core/BUILD.gn
-whist_blink_renderer_core_event_interfaces = [ "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.idl" ]
+whist_blink_renderer_core_event_interfaces = [ "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_string_event.idl" ]
 
 # third_party/blink/renderer/bindings/generated_in_core.gni
 whist_generated_interface_sources_in_core = [
   "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_html_whist_element.h",
   "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_html_whist_element.cc",
-  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_custom_event.cc",
-  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_custom_event.h",
+  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_string_event.cc",
+  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_string_event.h",
 ]
 
 # third_party/blink/renderer/bindings/generated_in_core.gni
 whist_generated_dictionary_sources_in_core = [
-  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_custom_event_init.cc",
-  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_custom_event_init.h",
+  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_string_event_init.cc",
+  "$root_gen_dir/third_party/blink/renderer/bindings/core/v8/v8_whist_string_event_init.h",
 ]
 
 # third_party/blink/renderer/modules/mediastream/BUILD.gn
@@ -49,8 +49,8 @@ whist_blink_renderer_modules_mediastream_deps =
 
 # third_party/blink/renderer/core/html/build.gni
 whist_blink_renderer_core_sources = [
-  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.cc",
-  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.h",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_string_event.cc",
+  "//whist/browser/hybrid/third_party/blink/renderer/core/events/whist_string_event.h",
   "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.cc",
   "//whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.h",
 ]

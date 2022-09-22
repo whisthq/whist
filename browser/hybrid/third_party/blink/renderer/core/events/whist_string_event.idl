@@ -1,0 +1,6 @@
+[
+    Exposed=Window
+] interface WhistStringEvent : Event {
+    constructor(DOMString type, optional WhistStringEventInit eventInitDict = {});
+    readonly attribute DOMString value;
+};

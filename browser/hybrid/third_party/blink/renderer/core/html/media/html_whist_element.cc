@@ -31,7 +31,7 @@
 #endif
 
 #include "whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.h"
-#include "whist/browser/hybrid/third_party/blink/renderer/core/events/whist_custom_event.h"
+#include "whist/browser/hybrid/third_party/blink/renderer/core/events/whist_string_event.h"
 
 #include "third_party/blink/renderer/core/resize_observer/resize_observer_entry.h"
 #include "third_party/blink/renderer/core/geometry/dom_rect.h"
@@ -543,9 +543,6 @@ const char* HTMLWhistElement::GetChosenFile() {
 void HTMLWhistElement::UpdateCursorType(String type, bool relative_mouse_mode) {
     // Update the cursor type
     SetInlineStyleProperty(CSSPropertyID::kCursor, type);
-
-    DispatchEvent(*WhistCustomEvent::Create(whist_event_type_names::kWhistcustomevent, "blah blah blah this is text"));
-
     // Try to get the document page
     Page* page = GetDocument().GetPage();
     if (page == nullptr) {
