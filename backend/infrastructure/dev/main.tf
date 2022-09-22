@@ -29,21 +29,6 @@ module "s3" {
   env    = var.env
 }
 
-module "s3-control" {
-  source = "../modules/aws_s3control"
-  env    = var.env
-  # Its necessary to specify static map keys so that
-  # Terraform is able to determine the length of it
-  # with unknown values.
-  buckets = {
-    1 = module.user-configs-us-east-1.bucket_name,
-    2 = module.user-configs-us-west-1.bucket_name,
-    3 = module.user-configs-eu-central-1.bucket_name,
-    4 = module.user-configs-ap-south-1.bucket_name,
-    5 = module.user-configs-ap-southeast-2.bucket_name,
-  }
-}
-
 # Region-specific modules, these are enabled only on certain regions
 
 # Enable all AWS regions on Terraform. Doing this will create

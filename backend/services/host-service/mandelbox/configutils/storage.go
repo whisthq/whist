@@ -68,69 +68,6 @@ func GetAccountNumber() (string, error) {
 	return aws.ToString(output.Account), nil
 }
 
-// GetAccessPoint returns the ARN of the multi-region access point used to
-// access encrypted user configs.
-var GetAccessPoint func() string = func(unmemoized func() string) func() string {
-	// This nested function syntax is used to memoize the result of the first call
-	// to GetAccessPoint() and cache the result for all future calls.
-
-	var isCached = false
-	var cache string
-
-	return func() string {
-		if isCached {
-			return cache
-		}
-		cache = unmemoized()
-		isCached = true
-		return cache
-	}
-}(func() string {
-	// For some reason, AWS routes all requests to manage the multi-region
-	// access point to Oregon, so the region needs to be set to us-west-2.
-	client, err := NewS3ControlClient("us-west-2")
-	if err != nil {
-		logger.Errorf("couldn't create s3control client: %s", err)
-		return ""
-	}
-
-	account, err := GetAccountNumber()
-	if err != nil {
-		logger.Errorf("couldn't get account number: %s", err)
-		return ""
-	}
-
-	var input *s3control.GetMultiRegionAccessPointInput
-	env := metadata.GetAppEnvironmentLowercase()
-	if env == string(metadata.EnvDev) || env == string(metadata.EnvStaging) || env == string(metadata.EnvProd) {
-		// Return the appropiate mmulti-region access point depending on current environment
-		input = &s3control.GetMultiRegionAccessPointInput{
-			AccountId: aws.String(account),
-			Name:      aws.String(utils.Sprintf("whist-user-configs-access-point-%s", env)),
-		}
-	} else {
-		// Default to dev
-		input = &s3control.GetMultiRegionAccessPointInput{
-			AccountId: aws.String(account),
-			Name:      aws.String("whist-user-configs-access-point-dev"),
-		}
-	}
-	output, err := client.GetMultiRegionAccessPoint(context.Background(), input)
-	if err != nil {
-		logger.Errorf("failed to get access point: %s", err)
-		return ""
-	}
-
-	accessPointARN := arn.ARN{
-		Partition: "aws",
-		AccountID: account,
-		Service:   "s3",
-		Resource:  utils.Sprintf("accesspoint/%s", aws.ToString(output.AccessPoint.Alias)),
-	}
-
-	return accessPointARN.String()
-})
-
 // GetHeadObject returns the head object of the given bucket and key.
 func GetHeadObject(client *s3.Client, bucket, key string) (*s3.HeadObjectOutput, error) {
 	return client.HeadObject(context.Background(), &s3.HeadObjectInput{
@@ -167,26 +104,4 @@ func UploadFileToBucket(client *s3.Client, bucket, key string, data []byte) (*ma
 func GetMD5Hash(data []byte) string {
 	hash := md5.Sum(data)
 	return hex.EncodeToString(hash[:])
-}
-
-// UpdateMostRecentToken updates the user's most recently used config token
-// file in S3 with the provided token.
-func UpdateMostRecentToken(client *s3.Client, user types.UserID, token string) error {
-	recentTokenPath := path.Join("last-used-tokens", string(user))
-	_, err := UploadFileToBucket(client, GetAccessPoint(), recentTokenPath, []byte(token))
-	if err != nil {
-		return utils.MakeError("failed to update most recent token: %s", err)
-	}
-	return nil
-}
-
-// GetMostRecentToken returns the most recently used token for the given user.
-func GetMostRecentToken(client *s3.Client, user types.UserID) (string, error) {
-	recentTokenPath := path.Join("last-used-tokens", string(user))
-	dataBuffer := manager.NewWriteAtBuffer([]byte{})
-	_, err := DownloadObjectToBuffer(client, GetAccessPoint(), recentTokenPath, dataBuffer)
-	if err != nil {
-		return "", utils.MakeError("failed to get most recent token: %s", err)
-	}
-	return string(dataBuffer.Bytes()), nil
 }

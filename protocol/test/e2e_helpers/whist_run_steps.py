@@ -270,7 +270,7 @@ def run_mandelbox_on_instance(pexpect_process, role, json_data=None, simulate_sc
         ).decode("utf-8")
         json_data_from_server = f"--json-data='{compressed_json_data}'"
 
-    command = f"cd ~/whist/mandelboxes && ./run.sh {mandelbox_name} --new-user-config-token {json_data_from_server} | tee ~/server_mandelbox_run.log"
+    command = f"cd ~/whist/mandelboxes && ./run.sh {mandelbox_name} {json_data_from_server} | tee ~/server_mandelbox_run.log"
     pexpect_process.sendline(command)
 
     # Need to wait for special mandelbox prompt ":/#". prompt_printed_twice must always be set to False in this case.

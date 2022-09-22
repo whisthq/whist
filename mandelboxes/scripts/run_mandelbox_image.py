@@ -60,23 +60,6 @@ parser.add_argument(
         "certificate '/whist/cert.pem'. By default, this flag is disabled."
     ),
 )
-parser.add_argument(
-    "--user-config-encryption-token",
-    default="RaR9Olgvqj+/AtNUHAPXjRZ26FkrFIVd",
-    help=(
-        "Config encryption token for the user. This would normally be passed in "
-        "by the Whist frontend, but by default we use a fake token instead."
-    ),
-)
-parser.add_argument(
-    "--new-user-config-token",
-    action="store_true",
-    help=(
-        "Treat a passed-in config encryption token as if it is new. This will "
-        "cause a fresh config store to be created in the S3 bucket, and will "
-        "wipe any existing config under this token."
-    ),
-)
 args = parser.parse_args()
 
 
