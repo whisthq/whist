@@ -443,6 +443,7 @@ jobs:
       - name: Checkout mimalloc Git Repository
         uses: actions/checkout@v3
         with:
+          path: mimalloc
           repository: microsoft/mimalloc
           ref: "1.7.6" # GitHub Tag of the Sentry release we use
           submodules: recursive # Sentry uses (nested) submodules for external dependencies
@@ -456,10 +457,12 @@ jobs:
 
       - name: Checkout whisthq/whist
         uses: actions/checkout@v3
+        with:
+          path: whist
 
       - name: Apply patch to mimalloc
         run: |
-          git apply .github/workflows/helpers/protocol/serina-mimalloc.patch
+          git apply whist/.github/workflows/helpers/protocol/serina-mimalloc.patch
 
       ###################################################################################
       ################################# MACOS STEPS START ###############################
@@ -469,6 +472,7 @@ jobs:
         env:
           CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
+          cd mimalloc
           mkdir -p out/release && cd out/release
           if [[ "${{ matrix.config.arch }}" == "x86_64" ]]; then
             # configure Cmake and build mimalloc for native compilation on x64 systems
