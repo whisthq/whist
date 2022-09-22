@@ -33,29 +33,31 @@
 #include "whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.h"
 #include "whist/browser/hybrid/third_party/blink/renderer/core/events/whist_string_event.h"
 
-#include "third_party/blink/renderer/core/resize_observer/resize_observer_entry.h"
 #include "third_party/blink/renderer/core/geometry/dom_rect.h"
+#include "third_party/blink/renderer/core/resize_observer/resize_observer_entry.h"
 
+#include "third_party/blink/public/mojom/input/focus_type.mojom-blink.h"
+#include "third_party/blink/public/platform/file_path_conversion.h"
 #include "third_party/blink/renderer/core/clipboard/data_transfer.h"
-#include "third_party/blink/renderer/core/clipboard/data_transfer_item_list.h"
 #include "third_party/blink/renderer/core/clipboard/data_transfer_item.h"
+#include "third_party/blink/renderer/core/clipboard/data_transfer_item_list.h"
+#include "third_party/blink/renderer/core/css/css_property_names.h"
+#include "third_party/blink/renderer/core/dom/element.h"
 #include "third_party/blink/renderer/core/dom/events/event.h"
 #include "third_party/blink/renderer/core/dom/events/native_event_listener.h"
+#include "third_party/blink/renderer/core/dom/focus_params.h"
 #include "third_party/blink/renderer/core/events/drag_event.h"
+#include "third_party/blink/renderer/core/events/focus_event.h"
 #include "third_party/blink/renderer/core/events/gesture_event.h"
 #include "third_party/blink/renderer/core/events/keyboard_event.h"
 #include "third_party/blink/renderer/core/events/mouse_event.h"
 #include "third_party/blink/renderer/core/events/wheel_event.h"
-#include "third_party/blink/renderer/core/events/focus_event.h"
 #include "third_party/blink/renderer/core/input/keyboard_event_manager.h"
-#include "third_party/blink/public/mojom/input/focus_type.mojom-blink.h"
-#include "third_party/blink/renderer/core/dom/focus_params.h"
-#include "whist/browser/hybrid/third_party/whist/protocol_client_interface.h"
-#include "third_party/blink/renderer/platform/json/json_parser.h"
-#include "third_party/blink/renderer/core/page/pointer_lock_controller.h"
 #include "third_party/blink/renderer/core/page/chrome_client.h"
-#include "third_party/blink/public/platform/file_path_conversion.h"
 #include "third_party/blink/renderer/core/page/page.h"
+#include "third_party/blink/renderer/core/page/pointer_lock_controller.h"
+#include "third_party/blink/renderer/platform/json/json_parser.h"
+#include "third_party/blink/renderer/platform/json/json_values.h"
 #include "third_party/blink/renderer/platform/scheduler/public/post_cross_thread_task.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
 #include "third_party/blink/renderer/platform/json/json_values.h"
@@ -67,11 +69,12 @@ namespace blink {
 
 using mojom::blink::FileChooserParams;
 
-template<typename...T>
-static void WhistElementSequencedTask(HTMLWhistElement* element, void (HTMLWhistElement::*cb)(T...), T... args) {
-  PostCrossThreadTask(
-      *(element->sequenced_task_runner_), FROM_HERE,
-      CrossThreadBindOnce(cb, element->GetWeakPtr(), args...));
+template <typename... T>
+static void WhistElementSequencedTask(HTMLWhistElement* element,
+                                      void (HTMLWhistElement::*cb)(T...),
+                                      T... args) {
+  PostCrossThreadTask(*(element->sequenced_task_runner_), FROM_HERE,
+                      CrossThreadBindOnce(cb, element->GetWeakPtr(), args...));
 }
 
 class HTMLWhistElement::HTMLWhistElementResizeObserverDelegate final
@@ -93,9 +96,10 @@ class HTMLWhistElement::HTMLWhistElementResizeObserverDelegate final
     DOMRectReadOnly* new_size = entries[0]->contentRect();
     float dpr = element_->GetDocument().DevicePixelRatio();
     LOG(INFO) << "HTMLWhistElement OnResize: width: " << new_size->width()
-              << " height: " << new_size->height()
-              << " DevicePixelRatio: " << element_->GetDocument().DevicePixelRatio();
-    element_->CacheResize(new_size->width() * dpr, new_size->height() * dpr, kDefaultDPI * dpr);
+              << " height: " << new_size->height() << " DevicePixelRatio: "
+              << element_->GetDocument().DevicePixelRatio();
+    element_->CacheResize(new_size->width() * dpr, new_size->height() * dpr,
+                          kDefaultDPI * dpr);
     element_->ProcessCachedResize();
   }
 
@@ -131,14 +135,21 @@ class HTMLWhistElement::WheelEventListener : public NativeEventListener {
     WhistClient::WhistFrontendEvent frontend_event;
     frontend_event.type = WhistClient::FRONTEND_EVENT_MOUSE_WHEEL;
 
-    if (wheel_event->NativeEvent().momentum_phase == WebMouseWheelEvent::Phase::kPhaseBegan)
-      frontend_event.mouse_wheel.momentum_phase = WhistClient::MOUSEWHEEL_MOMENTUM_BEGIN;
-    else if (wheel_event->NativeEvent().momentum_phase == WebMouseWheelEvent::Phase::kPhaseChanged)
-      frontend_event.mouse_wheel.momentum_phase = WhistClient::MOUSEWHEEL_MOMENTUM_ACTIVE;
-    else if (wheel_event->NativeEvent().momentum_phase == WebMouseWheelEvent::Phase::kPhaseEnded)
-      frontend_event.mouse_wheel.momentum_phase = WhistClient::MOUSEWHEEL_MOMENTUM_END;
+    if (wheel_event->NativeEvent().momentum_phase ==
+        WebMouseWheelEvent::Phase::kPhaseBegan)
+      frontend_event.mouse_wheel.momentum_phase =
+          WhistClient::MOUSEWHEEL_MOMENTUM_BEGIN;
+    else if (wheel_event->NativeEvent().momentum_phase ==
+             WebMouseWheelEvent::Phase::kPhaseChanged)
+      frontend_event.mouse_wheel.momentum_phase =
+          WhistClient::MOUSEWHEEL_MOMENTUM_ACTIVE;
+    else if (wheel_event->NativeEvent().momentum_phase ==
+             WebMouseWheelEvent::Phase::kPhaseEnded)
+      frontend_event.mouse_wheel.momentum_phase =
+          WhistClient::MOUSEWHEEL_MOMENTUM_END;
     else
-      frontend_event.mouse_wheel.momentum_phase = WhistClient::MOUSEWHEEL_MOMENTUM_NONE;
+      frontend_event.mouse_wheel.momentum_phase =
+          WhistClient::MOUSEWHEEL_MOMENTUM_NONE;
 
     frontend_event.mouse_wheel.precise_delta.x =
         (float)wheel_event->deltaX() / WheelEvent::kTickMultiplier;
@@ -174,27 +185,32 @@ HTMLWhistElement::HTMLWhistElement(Document& document)
       resize_observer_(ResizeObserver::Create(
           GetDocument().domWindow(),
           MakeGarbageCollected<HTMLWhistElementResizeObserverDelegate>(this))),
-      wheel_event_listener_(
-          MakeGarbageCollected<WheelEventListener>(this)),
-      whist_window_id_(WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.create_window))
-{
+      wheel_event_listener_(MakeGarbageCollected<WheelEventListener>(this)),
+      whist_window_id_(WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.create_window)) {
   resize_observer_->observe(this);
   wheel_event_listener_->StartListening();
 
   // Create a whist window for this htmlwhistelement
-  WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.register_context, whist_window_id_, this);
+  WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.register_context, whist_window_id_,
+                               this);
 
   // Set input callbacks
 
-  WHIST_VIRTUAL_INTERFACE_CALL(file.set_on_file_upload_callback, whist_window_id_, [](void* ctx) -> const char* {
-    HTMLWhistElement* element = (HTMLWhistElement*)ctx;
-    WhistElementSequencedTask(element, &HTMLWhistElement::OpenFileChooser);
-    return element->GetChosenFile();
-  });
+  WHIST_VIRTUAL_INTERFACE_CALL(
+      file.set_on_file_upload_callback, whist_window_id_,
+      [](void* ctx) -> const char* {
+        HTMLWhistElement* element = (HTMLWhistElement*)ctx;
+        WhistElementSequencedTask(element, &HTMLWhistElement::OpenFileChooser);
+        return element->GetChosenFile();
+      });
 
-  WHIST_VIRTUAL_INTERFACE_CALL(video.set_on_cursor_change_callback, whist_window_id_, [](void* ctx, const char* cursor_type, bool relative_mouse_mode) {
-    WhistElementSequencedTask((HTMLWhistElement*)ctx, &HTMLWhistElement::UpdateCursorType, String(cursor_type), relative_mouse_mode);
-  });
+  WHIST_VIRTUAL_INTERFACE_CALL(
+      video.set_on_cursor_change_callback, whist_window_id_,
+      [](void* ctx, const char* cursor_type, bool relative_mouse_mode) {
+        WhistElementSequencedTask((HTMLWhistElement*)ctx,
+                                  &HTMLWhistElement::UpdateCursorType,
+                                  String(cursor_type), relative_mouse_mode);
+      });
 
   WHIST_VIRTUAL_INTERFACE_CALL(events.set_get_modifier_key_state, []() -> int {
     int modifier_flags = 0;
@@ -210,7 +226,8 @@ HTMLWhistElement::HTMLWhistElement(Document& document)
     if (GetKeyState(VK_MENU) & HIGHBITMASKSHORT) {
       modifier_flags |= WhistClient::ALT;
     }
-    if ((GetKeyState(VK_LWIN) & HIGHBITMASKSHORT) || (GetKeyState(VK_RWIN) & HIGHBITMASKSHORT)) {
+    if ((GetKeyState(VK_LWIN) & HIGHBITMASKSHORT) ||
+        (GetKeyState(VK_RWIN) & HIGHBITMASKSHORT)) {
       modifier_flags |= WhistClient::GUI;
     }
 #else
@@ -236,14 +253,15 @@ HTMLWhistElement::HTMLWhistElement(Document& document)
     return modifier_flags;
   });
 
-  // Uncomment this if we want the Whist element to have focus as soon as it is created:
-  // GetDocument().SetFocusedElement(
+  // Uncomment this if we want the Whist element to have focus as soon as it is
+  // created: GetDocument().SetFocusedElement(
   //   this, FocusParams(SelectionBehaviorOnFocus::kRestore,
   //                     mojom::blink::FocusType::kNone, nullptr));
 }
 
 HTMLWhistElement::~HTMLWhistElement() {
-  // lifecycle.destroy_window is called in the WhistPlayer's FrameDeliverer destructor.
+  // lifecycle.destroy_window is called in the WhistPlayer's FrameDeliverer
+  // destructor.
 }
 
 void HTMLWhistElement::Trace(Visitor* visitor) const {
@@ -258,22 +276,27 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
   // HTMLWhistElement. Hence not making this as member variable.
   static int group_id = 0;
 
-  // Reference blink/renderer/core/dom/node.cc to see how the default handler behaves
+  // Reference blink/renderer/core/dom/node.cc to see how the default handler
+  // behaves
   if (event.target() != this)
     return;
 
-  // Reference blink/renderer/core/events/event_type_names.json5 to see all the different event types
+  // Reference blink/renderer/core/events/event_type_names.json5 to see all the
+  // different event types
   const AtomicString& event_type = event.type();
   if (event_type == event_type_names::kKeydown ||
-    event_type == event_type_names::kKeyup) {
+      event_type == event_type_names::kKeyup) {
     auto* keyboard_event = DynamicTo<KeyboardEvent>(&event);
     WhistClient::WhistFrontendEvent frontend_event;
     frontend_event.type = WhistClient::FRONTEND_EVENT_KEYPRESS;
-    frontend_event.keypress.code = (WhistClient::WhistKeycode)(keyboard_event->KeyEvent()->dom_code & 0xFFFF);
+    frontend_event.keypress.code = (WhistClient::WhistKeycode)(
+        keyboard_event->KeyEvent()->dom_code & 0xFFFF);
     // mod is anyways ignored by the server. No use in populating this value.
-    // Guess keyboard state message is used by the server to sync the state of modifier keys.
+    // Guess keyboard state message is used by the server to sync the state of
+    // modifier keys.
     frontend_event.keypress.mod = WhistClient::MOD_NONE;
-    frontend_event.keypress.pressed = event_type == event_type_names::kKeydown ? true : false;
+    frontend_event.keypress.pressed =
+        event_type == event_type_names::kKeydown ? true : false;
     WHIST_VIRTUAL_INTERFACE_CALL(events.send, &frontend_event);
     // Stateful keys namely CapsLock, NumLock and ScrollLock needs to be handled
     // both locally and in cloud server. For all other keys, the handling is
@@ -290,12 +313,16 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
     WhistClient::WhistFrontendEvent frontend_event;
     frontend_event.type = WhistClient::FRONTEND_EVENT_MOUSE_MOTION;
     if (GetDocument().GetPage()->GetPointerLockController().IsPointerLocked()) {
-      frontend_event.mouse_motion.relative.x = (int)mouse_event->movementX() * dpr;
-      frontend_event.mouse_motion.relative.y = (int)mouse_event->movementY() * dpr;
+      frontend_event.mouse_motion.relative.x =
+          (int)mouse_event->movementX() * dpr;
+      frontend_event.mouse_motion.relative.y =
+          (int)mouse_event->movementY() * dpr;
       frontend_event.mouse_motion.relative_mode = true;
     } else {
-      frontend_event.mouse_motion.absolute.x = (int)mouse_event->clientX() * dpr;
-      frontend_event.mouse_motion.absolute.y = (int)mouse_event->clientY() * dpr;
+      frontend_event.mouse_motion.absolute.x =
+          (int)mouse_event->clientX() * dpr;
+      frontend_event.mouse_motion.absolute.y =
+          (int)mouse_event->clientY() * dpr;
       frontend_event.mouse_motion.relative_mode = false;
     }
     WHIST_VIRTUAL_INTERFACE_CALL(events.send, &frontend_event);
@@ -304,26 +331,32 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
     auto* mouse_event = DynamicTo<MouseEvent>(&event);
     // Switch focus to Whist element as soon as it is clicked
     GetDocument().SetFocusedElement(
-      this, FocusParams(SelectionBehaviorOnFocus::kRestore,
-                        mojom::blink::FocusType::kNone, nullptr));
+        this, FocusParams(SelectionBehaviorOnFocus::kRestore,
+                          mojom::blink::FocusType::kNone, nullptr));
 
     WhistClient::WhistFrontendEvent frontend_event;
     frontend_event.type = WhistClient::FRONTEND_EVENT_MOUSE_BUTTON;
-    if (mouse_event->button() == static_cast<int>(WebPointerProperties::Button::kLeft)) {
+    if (mouse_event->button() ==
+        static_cast<int>(WebPointerProperties::Button::kLeft)) {
       frontend_event.mouse_button.button = WhistClient::MOUSE_L;
-    } else if (mouse_event->button() == static_cast<int>(WebPointerProperties::Button::kMiddle)) {
+    } else if (mouse_event->button() ==
+               static_cast<int>(WebPointerProperties::Button::kMiddle)) {
       frontend_event.mouse_button.button = WhistClient::MOUSE_MIDDLE;
-    } else if (mouse_event->button() == static_cast<int>(WebPointerProperties::Button::kRight)) {
+    } else if (mouse_event->button() ==
+               static_cast<int>(WebPointerProperties::Button::kRight)) {
       frontend_event.mouse_button.button = WhistClient::MOUSE_R;
-    } else if (mouse_event->button() == static_cast<int>(WebPointerProperties::Button::kBack)) {
+    } else if (mouse_event->button() ==
+               static_cast<int>(WebPointerProperties::Button::kBack)) {
       frontend_event.mouse_button.button = WhistClient::MOUSE_X1;
-    } else if (mouse_event->button() == static_cast<int>(WebPointerProperties::Button::kForward)) {
+    } else if (mouse_event->button() ==
+               static_cast<int>(WebPointerProperties::Button::kForward)) {
       frontend_event.mouse_button.button = WhistClient::MOUSE_X2;
     } else {
       LOG(ERROR) << "Unmapped button value : " << mouse_event->button();
       return;
     }
-    frontend_event.mouse_button.pressed = event_type == event_type_names::kMousedown ? true : false;
+    frontend_event.mouse_button.pressed =
+        event_type == event_type_names::kMousedown ? true : false;
     WHIST_VIRTUAL_INTERFACE_CALL(events.send, &frontend_event);
     mouse_event->SetDefaultHandled();
   } else if (event_type == event_type_names::kDragenter) {
@@ -332,10 +365,10 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
     group_id++;
     for (uint32_t i = 0; i < item_list->length(); i++) {
       SendFileDragEvent(item_list->item(i)
-                                   ->GetDataObjectItem()
-                                   ->GetAsFile()
-                                   ->GetPath()
-                                   .Utf8(),
+                            ->GetDataObjectItem()
+                            ->GetAsFile()
+                            ->GetPath()
+                            .Utf8(),
                         false, group_id, drag_event);
     }
     drag_event->SetDefaultHandled();
@@ -354,10 +387,10 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
     DataTransferItemList* item_list = drag_event->getDataTransfer()->items();
     for (uint32_t i = 0; i < item_list->length(); i++) {
       SendFileDropEvent(item_list->item(i)
-                                   ->GetDataObjectItem()
-                                   ->GetAsFile()
-                                   ->GetPath()
-                                   .Utf8(),
+                            ->GetDataObjectItem()
+                            ->GetAsFile()
+                            ->GetPath()
+                            .Utf8(),
                         false, drag_event);
     }
     SendFileDropEvent({}, true, drag_event);
@@ -400,7 +433,8 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
 }
 
 void HTMLWhistElement::whistPause() {
-  WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_playing, whist_window_id_, false);
+  WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_playing, whist_window_id_,
+                               false);
 }
 
 void HTMLWhistElement::whistPlay() {
@@ -411,7 +445,8 @@ void HTMLWhistElement::whistPlay() {
 }
 
 bool HTMLWhistElement::isWhistConnected() {
-  bool is_whist_connected = WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.is_connected);
+  bool is_whist_connected =
+      WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.is_connected);
   return is_whist_connected;
 }
 
@@ -421,15 +456,16 @@ void HTMLWhistElement::whistConnect(const String& whist_parameters) {
 
   // Send parameters for this new whist connection
   if (new_connection) {
-    // IMPORTANT: Calling lifecycle.connect() flushes the event queue, so we must re-submit
-    // the resize event from element startup. This is to ensure that the protocol has the
-    // correct dimensions and DPI at startup.
+    // IMPORTANT: Calling lifecycle.connect() flushes the event queue, so we
+    // must re-submit the resize event from element startup. This is to ensure
+    // that the protocol has the correct dimensions and DPI at startup.
     ProcessCachedResize();
 
     WhistClient::WhistFrontendEvent event = {};
     event.type = WhistClient::FRONTEND_EVENT_STARTUP_PARAMETER;
     event.startup_parameter.error = false;
-    // TODO: Validate that this is actually a valid JSONObject so that we don't die on bad parameter values..
+    // TODO: Validate that this is actually a valid JSONObject so that we don't
+    // die on bad parameter values..
     auto json_object = JSONObject::From(ParseJSON(whist_parameters));
     for (wtf_size_t i = 0; i < json_object->size(); ++i) {
       JSONObject::Entry entry = json_object->at(i);
@@ -442,8 +478,10 @@ void HTMLWhistElement::whistConnect(const String& whist_parameters) {
       std::string str_value = wtf_value.Utf8();
 
       // Allocate and populate the whist-owned strings
-      event.startup_parameter.key = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, str_key.size() + 1);
-      event.startup_parameter.value = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, str_value.size() + 1);
+      event.startup_parameter.key =
+          (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, str_key.size() + 1);
+      event.startup_parameter.value = (char*)WHIST_VIRTUAL_INTERFACE_CALL(
+          utils.malloc, str_value.size() + 1);
       strcpy(event.startup_parameter.key, str_key.c_str());
       strcpy(event.startup_parameter.value, str_value.c_str());
 
@@ -452,7 +490,8 @@ void HTMLWhistElement::whistConnect(const String& whist_parameters) {
     }
 
     // Mark as finished, so that whist may connect
-    event.startup_parameter.key = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, strlen("finished") + 1);
+    event.startup_parameter.key = (char*)WHIST_VIRTUAL_INTERFACE_CALL(
+        utils.malloc, strlen("finished") + 1);
     strcpy(event.startup_parameter.key, "finished");
     event.startup_parameter.value = NULL;
     WHIST_VIRTUAL_INTERFACE_CALL(events.send, &event);
@@ -461,7 +500,8 @@ void HTMLWhistElement::whistConnect(const String& whist_parameters) {
 
 Node::InsertionNotificationRequest HTMLWhistElement::InsertedInto(
     ContainerNode& insertion_point) {
-  SetSrcObject(nullptr); // placeholder for launching the functions that create the whistplayer
+  SetSrcObject(nullptr);  // placeholder for launching the functions that create
+                          // the whistplayer
 
   if (!resize_observer_) {
     resize_observer_ = ResizeObserver::Create(
@@ -483,8 +523,7 @@ void HTMLWhistElement::RemovedFrom(ContainerNode& insertion_point) {
 }
 
 void HTMLWhistElement::ParseAttribute(
-    const AttributeModificationParams& params) {
-}
+    const AttributeModificationParams& params) {}
 
 void HTMLWhistElement::OpenFileChooser() {
 #if defined(WIN32)
@@ -512,12 +551,13 @@ void HTMLWhistElement::OpenFileChooser() {
   return;
 }
 
-// Warning: On Windows, Blink uses std::wstring, so converting wstring to char* may lead to issues.
-// As a result, we may need to rewrite GetChosenFile() for Windows.
+// Warning: On Windows, Blink uses std::wstring, so converting wstring to char*
+// may lead to issues. As a result, we may need to rewrite GetChosenFile() for
+// Windows.
 const char* HTMLWhistElement::GetChosenFile() {
   base::TimeDelta timeout = base::Milliseconds(50);
-  while(!waitable_event_.TimedWait(timeout)) {
-    FileChooser *file_chooser = FileChooserOrNull();
+  while (!waitable_event_.TimedWait(timeout)) {
+    FileChooser* file_chooser = FileChooserOrNull();
     // Handle the case where user could have closed the file chooser popup
     // without selecting any file
     if (!file_chooser || !file_chooser->FrameOrNull())
@@ -528,8 +568,7 @@ const char* HTMLWhistElement::GetChosenFile() {
 #if defined(WIN32)
   if (chosen_file_ == L"")
     return NULL;
-  else
-  {
+  else {
     return (char*)chosen_file_.c_str();
   }
 #else
@@ -541,24 +580,25 @@ const char* HTMLWhistElement::GetChosenFile() {
 }
 
 void HTMLWhistElement::UpdateCursorType(String type, bool relative_mouse_mode) {
-    // Update the cursor type
-    SetInlineStyleProperty(CSSPropertyID::kCursor, type);
-    // Try to get the document page
-    Page* page = GetDocument().GetPage();
-    if (page == nullptr) {
-      return;
-    }
-    // Update cursor mouse mode
-    bool locked = page->GetPointerLockController().IsPointerLocked();
-    if (locked && !relative_mouse_mode) {
-      page->GetPointerLockController().ExitPointerLock();
-    } else if (!locked && relative_mouse_mode) {
-      page->GetPointerLockController().RequestPointerLock(this, base::BindOnce([](mojom::blink::PointerLockResult result) {}));
-    }
+  // Update the cursor type
+  SetInlineStyleProperty(CSSPropertyID::kCursor, type);
+  // Try to get the document page
+  Page* page = GetDocument().GetPage();
+  if (page == nullptr) {
+    return;
+  }
+  // Update cursor mouse mode
+  bool locked = page->GetPointerLockController().IsPointerLocked();
+  if (locked && !relative_mouse_mode) {
+    page->GetPointerLockController().ExitPointerLock();
+  } else if (!locked && relative_mouse_mode) {
+    page->GetPointerLockController().RequestPointerLock(
+        this, base::BindOnce([](mojom::blink::PointerLockResult result) {}));
+  }
 }
 
 void HTMLWhistElement::FilesChosen(FileChooserFileInfoList files,
-                                const base::FilePath& base_dir) {
+                                   const base::FilePath& base_dir) {
   for (wtf_size_t i = 0; i < files.size();) {
     // Drop files of which names can not be converted to WTF String. We
     // can't expose such files via File API.
@@ -602,7 +642,8 @@ void HTMLWhistElement::SendFileDragEvent(std::optional<std::string> file_name,
   WhistClient::WhistFrontendEvent frontend_event = {};
   frontend_event.type = WhistClient::FRONTEND_EVENT_FILE_DRAG;
   if (file_name.has_value()) {
-    frontend_event.file_drag.filename = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, file_name->size() + 1);
+    frontend_event.file_drag.filename = (char*)WHIST_VIRTUAL_INTERFACE_CALL(
+        utils.malloc, file_name->size() + 1);
     strcpy(frontend_event.file_drag.filename, file_name->c_str());
   } else {
     frontend_event.file_drag.filename = NULL;
@@ -620,7 +661,8 @@ void HTMLWhistElement::SendFileDropEvent(std::optional<std::string> file_name,
   WhistClient::WhistFrontendEvent frontend_event = {};
   frontend_event.type = WhistClient::FRONTEND_EVENT_FILE_DROP;
   if (file_name.has_value()) {
-    frontend_event.file_drop.filename = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, file_name->size() + 1);
+    frontend_event.file_drop.filename = (char*)WHIST_VIRTUAL_INTERFACE_CALL(
+        utils.malloc, file_name->size() + 1);
     strcpy(frontend_event.file_drop.filename, file_name->c_str());
   } else {
     frontend_event.file_drop.filename = NULL;
@@ -639,7 +681,8 @@ void HTMLWhistElement::CacheResize(int width, int height, int dpi) {
 }
 
 void HTMLWhistElement::ProcessCachedResize() {
-  if (!cached_resize_.set) return;
+  if (!cached_resize_.set)
+    return;
   WhistClient::WhistFrontendEvent event;
   event.type = WhistClient::FRONTEND_EVENT_RESIZE;
   event.resize.width = cached_resize_.width;
@@ -648,4 +691,4 @@ void HTMLWhistElement::ProcessCachedResize() {
   WHIST_VIRTUAL_INTERFACE_CALL(events.send, &event);
 }
 
-} // namespace blink
+}  // namespace blink

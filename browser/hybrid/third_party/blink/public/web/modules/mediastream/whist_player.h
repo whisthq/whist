@@ -17,6 +17,7 @@
 #include "build/build_config.h"
 #include "media/renderers/paint_canvas_video_renderer.h"
 #include "media/video/gpu_video_accelerator_factories.h"
+#include "third_party/blink/public/common/browser_interface_broker_proxy.h"
 #include "third_party/blink/public/common/media/display_type.h"
 #include "third_party/blink/public/common/media/watch_time_reporter.h"
 #include "third_party/blink/public/platform/media/webmediaplayer_delegate.h"
@@ -24,7 +25,6 @@
 #include "third_party/blink/public/platform/web_common.h"
 #include "third_party/blink/public/platform/web_media_player.h"
 #include "third_party/blink/public/platform/web_surface_layer_bridge.h"
-#include "third_party/blink/public/common/browser_interface_broker_proxy.h"
 
 namespace media {
 class GpuMemoryBufferVideoFramePool;
@@ -67,9 +67,8 @@ class WebVideoFrameSubmitter;
 //
 // WebMediaPlayerClient
 //   WebKit client of this media player object.
-class BLINK_MODULES_EXPORT WhistPlayer
-    : public WebMediaPlayer,
-      public WebSurfaceLayerBridgeObserver {
+class BLINK_MODULES_EXPORT WhistPlayer : public WebMediaPlayer,
+                                         public WebSurfaceLayerBridgeObserver {
  public:
   // Construct a WhistPlayer with reference to the client, and
   // a MediaStreamClient which provides WebMediaStreamVideoRenderer.
@@ -93,9 +92,9 @@ class BLINK_MODULES_EXPORT WhistPlayer
 
   // WebMediaPlayer::LoadTiming Load() override;
   WebMediaPlayer::LoadTiming Load(LoadType,
-                          const WebMediaPlayerSource&,
-                          CorsMode,
-                          bool is_cache_disabled) override;
+                                  const WebMediaPlayerSource&,
+                                  CorsMode,
+                                  bool is_cache_disabled) override;
 
   // WebSurfaceLayerBridgeObserver implementation.
   void OnWebLayerUpdated() override;
@@ -111,9 +110,11 @@ class BLINK_MODULES_EXPORT WhistPlayer
   void SetVolume(double volume) override;
   void SetLatencyHint(double seconds) override;
   void SetPreservesPitch(bool preserves_pitch) override;
-  void SetWasPlayedWithUserActivation(bool was_played_with_user_activation) override;
+  void SetWasPlayedWithUserActivation(
+      bool was_played_with_user_activation) override;
   void OnRequestPictureInPicture() override;
-  bool SetSinkId(const WebString& sink_id, WebSetSinkIdCompleteCallback completion_callback) override;
+  bool SetSinkId(const WebString& sink_id,
+                 WebSetSinkIdCompleteCallback completion_callback) override;
   void SetPreload(WebMediaPlayer::Preload preload) override;
   WebTimeRanges Buffered() const override;
   WebTimeRanges Seekable() const override;
@@ -168,7 +169,8 @@ class BLINK_MODULES_EXPORT WhistPlayer
   void SetVolumeMultiplier(double multiplier) override;
   void SuspendForFrameClosed() override;
 
-  // TODO: WebMediaPlayerDelegate::Observer might be useful for when the frame is hidden and reshown
+  // TODO: WebMediaPlayerDelegate::Observer might be useful for when the frame
+  // is hidden and reshown
 
   void OnFirstFrameReceived(media::VideoTransformation video_transform,
                             bool is_opaque);
@@ -206,7 +208,9 @@ class BLINK_MODULES_EXPORT WhistPlayer
   void SetReadyState(WebMediaPlayer::ReadyState state);
 
   // Getter method to |client_|.
-  WebMediaPlayerClient* get_client() { return client_; }
+  WebMediaPlayerClient* get_client() {
+    return client_;
+  }
 
   // To be run when tracks are added or removed.
   void Reload();

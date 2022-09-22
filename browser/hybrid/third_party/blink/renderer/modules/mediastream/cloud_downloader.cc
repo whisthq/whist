@@ -7,7 +7,6 @@
 #include "cloud_downloader.h"
 
 #include "base/memory/weak_ptr.h"
-#include "whist/browser/hybrid/third_party/whist/protocol_client_interface.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "third_party/blink/public/common/thread_safe_browser_interface_broker_proxy.h"
 #include "third_party/blink/public/platform/platform.h"
@@ -15,6 +14,7 @@
 #include "third_party/blink/renderer/platform/scheduler/public/post_cross_thread_task.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_media.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
+#include "whist/browser/hybrid/third_party/whist/protocol_client_interface.h"
 
 namespace blink {
 
@@ -61,9 +61,11 @@ CloudDownloader::CloudDownloader(BrowserInterfaceBrokerProxy* broker) {
   broker->GetInterface(cloud_downloader_host_.BindNewPipeAndPassReceiver());
 }
 
-void CloudDownloader::OnDownloadStart(const std::string& file_path, int64_t file_size) {
+void CloudDownloader::OnDownloadStart(const std::string& file_path,
+                                      int64_t file_size) {
   cloud_downloader_host_->DownloadStart(
-      file_path, file_size, WTF::Bind(&CloudDownloader::DownloadStartCallback, GetWeakPtr()));
+      file_path, file_size,
+      WTF::Bind(&CloudDownloader::DownloadStartCallback, GetWeakPtr()));
 }
 
 void CloudDownloader::OnDownloadUpdate(int64_t opaque,
@@ -79,7 +81,7 @@ void CloudDownloader::OnDownloadComplete(int64_t opaque) {
 void* CloudDownloader::GetOpaqueContext() {
   waitable_event_.Wait();
   waitable_event_.Reset();
-  return (void *)opaque_;
+  return (void*)opaque_;
 }
 
 void CloudDownloader::DownloadStartCallback(int64_t opaque) {

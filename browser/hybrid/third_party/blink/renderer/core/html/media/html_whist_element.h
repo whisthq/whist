@@ -29,13 +29,13 @@
 #ifndef THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_HTML_WHIST_ELEMENT_H_
 #define THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_HTML_WHIST_ELEMENT_H_
 
+#include "base/memory/weak_ptr.h"
 #include "third_party/blink/renderer/core/core_export.h"
+#include "third_party/blink/renderer/core/html/forms/file_chooser.h"
 #include "third_party/blink/renderer/core/html/media/html_video_element.h"
 #include "third_party/blink/renderer/core/resize_observer/resize_observer.h"
-#include "third_party/blink/renderer/core/html/forms/file_chooser.h"
-#include "base/memory/weak_ptr.h"
-#include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_media.h"
+#include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
 
 namespace blink {
 
@@ -47,71 +47,72 @@ class CORE_EXPORT HTMLWhistElement final
       private FileChooserClient {
   DEFINE_WRAPPERTYPEINFO();
 
-  public:
-    explicit HTMLWhistElement(Document&);
-    HTMLWhistElement(const HTMLWhistElement&) = delete;
-    HTMLWhistElement& operator=(const HTMLWhistElement&) = delete;
-    ~HTMLWhistElement() override;
-    void Trace(Visitor* visitor) const override;
+ public:
+  explicit HTMLWhistElement(Document&);
+  HTMLWhistElement(const HTMLWhistElement&) = delete;
+  HTMLWhistElement& operator=(const HTMLWhistElement&) = delete;
+  ~HTMLWhistElement() override;
+  void Trace(Visitor* visitor) const override;
 
-    bool IsHTMLWhistElement() const final { return true; }
-    int GetWhistWindowId() const final { return whist_window_id_; }
-    bool IsKeyboardFocusable() const override { return true; }
-    // TODO: There's some weird logic in layout_theme.cc that makes the below not quite work
-    // (there's still a blue ring around the whist tag when focused.)
-    bool ShouldHaveFocusAppearance() const override { return false; }
+  bool IsHTMLWhistElement() const final { return true; }
+  int GetWhistWindowId() const final { return whist_window_id_; }
+  bool IsKeyboardFocusable() const override { return true; }
+  // TODO: There's some weird logic in layout_theme.cc that makes the below not
+  // quite work (there's still a blue ring around the whist tag when focused.)
+  bool ShouldHaveFocusAppearance() const override { return false; }
 
-    void ParseAttribute(const AttributeModificationParams& params) override;
+  void ParseAttribute(const AttributeModificationParams& params) override;
 
-    // Node override.
-    void DefaultEventHandler(Event& event) override;
-    Node::InsertionNotificationRequest InsertedInto(ContainerNode&) override;
-    void RemovedFrom(ContainerNode& insertion_point) override;
-    void OpenFileChooser();
-    void UpdateCursorType(String type, bool relative_mouse_mode);
-    auto GetWeakPtr() { return weak_ptr_factory_.GetWeakPtr(); }
-    const char* GetChosenFile();
-    const scoped_refptr<base::SequencedTaskRunner> sequenced_task_runner_;
-    void CacheResize(int width, int height, int dpi);
-    void ProcessCachedResize();
+  // Node override.
+  void DefaultEventHandler(Event& event) override;
+  Node::InsertionNotificationRequest InsertedInto(ContainerNode&) override;
+  void RemovedFrom(ContainerNode& insertion_point) override;
+  void OpenFileChooser();
+  void UpdateCursorType(String type, bool relative_mouse_mode);
+  auto GetWeakPtr() { return weak_ptr_factory_.GetWeakPtr(); }
+  const char* GetChosenFile();
+  const scoped_refptr<base::SequencedTaskRunner> sequenced_task_runner_;
+  void CacheResize(int width, int height, int dpi);
+  void ProcessCachedResize();
 
-    // These functions are called from JavaScript -- see html_whist_element.idl for bindings.
-    void whistPause();
-    void whistPlay();
-    bool isWhistConnected();
-    void whistConnect(const String& whist_parameters);
+  // These functions are called from JavaScript -- see html_whist_element.idl
+  // for bindings.
+  void whistPause();
+  void whistPlay();
+  bool isWhistConnected();
+  void whistConnect(const String& whist_parameters);
 
-  private:
-    class HTMLWhistElementResizeObserverDelegate;
-    class WheelEventListener;
-    void SendFileDragEvent(std::optional<std::string> file_name,
-                           bool end_drag,
-                           int group_id,
-                           DragEvent* drag_event);
-    void SendFileDropEvent(std::optional<std::string> file_name,
-                           bool end_drop,
-                           DragEvent* drag_event);
-    // FileChooserClient implementation.
-    void FilesChosen(FileChooserFileInfoList files,
-                     const base::FilePath& base_dir) override;
-    LocalFrame* FrameOrNull() const override;
-    ChromeClient* GetChromeClient() const;
+ private:
+  class HTMLWhistElementResizeObserverDelegate;
+  class WheelEventListener;
+  void SendFileDragEvent(std::optional<std::string> file_name,
+                         bool end_drag,
+                         int group_id,
+                         DragEvent* drag_event);
+  void SendFileDropEvent(std::optional<std::string> file_name,
+                         bool end_drop,
+                         DragEvent* drag_event);
+  // FileChooserClient implementation.
+  void FilesChosen(FileChooserFileInfoList files,
+                   const base::FilePath& base_dir) override;
+  LocalFrame* FrameOrNull() const override;
+  ChromeClient* GetChromeClient() const;
 
-    // PopupOpeningObserver implementation.
-    void WillOpenPopup() override;
+  // PopupOpeningObserver implementation.
+  void WillOpenPopup() override;
 
-    Member<ResizeObserver> resize_observer_;
-    Member<WheelEventListener> wheel_event_listener_;
-    int whist_window_id_;
-    struct {
-      int width;
-      int height;
-      int dpi;
-      bool set;
-    } cached_resize_;
-    base::WaitableEvent waitable_event_;
-    base::FilePath::StringType chosen_file_;
-    base::WeakPtrFactory<HTMLWhistElement> weak_ptr_factory_{this};
+  Member<ResizeObserver> resize_observer_;
+  Member<WheelEventListener> wheel_event_listener_;
+  int whist_window_id_;
+  struct {
+    int width;
+    int height;
+    int dpi;
+    bool set;
+  } cached_resize_;
+  base::WaitableEvent waitable_event_;
+  base::FilePath::StringType chosen_file_;
+  base::WeakPtrFactory<HTMLWhistElement> weak_ptr_factory_{this};
 };
 
 }  // namespace blink

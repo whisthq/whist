@@ -1,31 +1,31 @@
 #include "whist_web_ui_controller_factory.h"
-#include "whist/browser/hybrid/browser/ui/webui/cloud_tabs_ui/cloud_tabs_ui.h"
-#include "chrome/common/url_constants.h"
-#include "base/logging.h"
 #include <memory>
+#include "base/logging.h"
+#include "chrome/common/url_constants.h"
+#include "whist/browser/hybrid/browser/ui/webui/cloud_tabs_ui/cloud_tabs_ui.h"
 
 using content::WebUI;
 using content::WebUIController;
 
 namespace {
-  typedef WebUIController* (*WebUIFactoryFunction)(WebUI* web_ui,
-                                                   const GURL& url);
+typedef WebUIController* (*WebUIFactoryFunction)(WebUI* web_ui,
+                                                 const GURL& url);
 
-  WebUIController* NewWebUI(WebUI* web_ui, const GURL& url) {
-    if(url.SchemeIs(content::kCloudScheme)) {
-      return new WhistCloudUI(web_ui, url);
-    }
-
-    return nullptr;
+WebUIController* NewWebUI(WebUI* web_ui, const GURL& url) {
+  if (url.SchemeIs(content::kCloudScheme)) {
+    return new WhistCloudUI(web_ui, url);
   }
 
-  WebUIFactoryFunction GetWebUIFactoryFunction(WebUI* web_ui, const GURL& url) {
-    if (url.SchemeIs(content::kCloudScheme)) {
-      return &NewWebUI;
-    }
+  return nullptr;
+}
 
-    return nullptr;
+WebUIFactoryFunction GetWebUIFactoryFunction(WebUI* web_ui, const GURL& url) {
+  if (url.SchemeIs(content::kCloudScheme)) {
+    return &NewWebUI;
   }
+
+  return nullptr;
+}
 }  // namespace
 
 WebUI::TypeID WhistWebUIControllerFactory::GetWebUIType(
@@ -44,7 +44,7 @@ WhistWebUIControllerFactory::CreateWebUIControllerForURL(WebUI* web_ui,
   WebUIFactoryFunction function = GetWebUIFactoryFunction(web_ui, url);
   if (!function) {
     return BraveWebUIControllerFactory::CreateWebUIControllerForURL(web_ui,
-                                                                     url);
+                                                                    url);
   }
 
   return base::WrapUnique((*function)(web_ui, url));

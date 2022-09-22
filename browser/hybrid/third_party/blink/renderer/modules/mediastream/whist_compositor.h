@@ -24,14 +24,14 @@
 #include "third_party/blink/public/platform/web_video_frame_submitter.h"
 #include "third_party/blink/renderer/modules/mediastream/video_renderer_algorithm_wrapper.h"
 #include "third_party/blink/renderer/modules/modules_export.h"
-#include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_media.h"
+#include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
 #include "third_party/blink/renderer/platform/wtf/thread_safe_ref_counted.h"
 
 namespace base {
 class SingleThreadTaskRunner;
 class WaitableEvent;
-}
+}  // namespace base
 
 namespace gfx {
 class Size;
@@ -60,21 +60,18 @@ struct WhistCompositorTraits;
 // frame, and submit it whenever asked by the compositor.
 class MODULES_EXPORT WhistCompositor
     : public cc::VideoFrameProvider,
-      public WTF::ThreadSafeRefCounted<WhistCompositor,
-                                       WhistCompositorTraits> {
+      public WTF::ThreadSafeRefCounted<WhistCompositor, WhistCompositorTraits> {
  public:
   using OnNewFramePresentedCB = base::OnceClosure;
 
-  WhistCompositor(
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner,
-      scoped_refptr<base::SingleThreadTaskRunner> io_task_runner,
-      std::unique_ptr<WebVideoFrameSubmitter> submitter,
-      WebMediaPlayer::SurfaceLayerMode surface_layer_mode,
-      const base::WeakPtr<WhistPlayer>& player);
+  WhistCompositor(scoped_refptr<base::SingleThreadTaskRunner> task_runner,
+                  scoped_refptr<base::SingleThreadTaskRunner> io_task_runner,
+                  std::unique_ptr<WebVideoFrameSubmitter> submitter,
+                  WebMediaPlayer::SurfaceLayerMode surface_layer_mode,
+                  const base::WeakPtr<WhistPlayer>& player);
 
   WhistCompositor(const WhistCompositor&) = delete;
-  WhistCompositor& operator=(const WhistCompositor&) =
-      delete;
+  WhistCompositor& operator=(const WhistCompositor&) = delete;
 
   // Can be called from any thread.
   cc::UpdateSubmissionStateCB GetUpdateSubmissionStateCallback() {
@@ -91,10 +88,9 @@ class MODULES_EXPORT WhistCompositor
 
   // Signals the VideoFrameSubmitter to prepare to receive BeginFrames and
   // submit video frames given by WhistCompositor.
-  virtual void EnableSubmission(
-      const viz::SurfaceId& id,
-      media::VideoTransformation transformation,
-      bool force_submit);
+  virtual void EnableSubmission(const viz::SurfaceId& id,
+                                media::VideoTransformation transformation,
+                                bool force_submit);
 
   // Notifies the |submitter_| that the frames must be submitted.
   void SetForceSubmit(bool force_submit);
@@ -199,7 +195,8 @@ class MODULES_EXPORT WhistCompositor
   // which is renderer main thread in this class.
   THREAD_CHECKER(thread_checker_);
 
-  const scoped_refptr<base::SingleThreadTaskRunner> video_frame_compositor_task_runner_;
+  const scoped_refptr<base::SingleThreadTaskRunner>
+      video_frame_compositor_task_runner_;
   const scoped_refptr<base::SingleThreadTaskRunner> io_task_runner_;
   const scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
 

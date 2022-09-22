@@ -8,8 +8,8 @@
 #define THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_CLOUD_DOWNLOADER_H_
 
 #include "base/synchronization/waitable_event.h"
-#include "whist/browser/hybrid/third_party/blink/public/mojom/cloud_tab/download.mojom.h"
 #include "third_party/blink/public/common/browser_interface_broker_proxy.h"
+#include "whist/browser/hybrid/third_party/blink/public/mojom/cloud_tab/download.mojom.h"
 
 namespace blink {
 
@@ -21,10 +21,13 @@ class CloudDownloader {
   CloudDownloader& operator=(const CloudDownloader&) = delete;
   auto GetWeakPtr() { return weak_ptr_factory_.GetWeakPtr(); }
   void OnDownloadStart(const std::string& file_path, int64_t file_size);
-  void OnDownloadUpdate(int64_t opaque, int64_t bytes_so_far, int64_t bytes_per_sec);
+  void OnDownloadUpdate(int64_t opaque,
+                        int64_t bytes_so_far,
+                        int64_t bytes_per_sec);
   void OnDownloadComplete(int64_t opaque);
   void* GetOpaqueContext();
   void DownloadStartCallback(int64_t opaque);
+
  private:
   CloudDownloader(BrowserInterfaceBrokerProxy* broker);
   mojo::Remote<blink::mojom::CloudDownloaderHost> cloud_downloader_host_;
@@ -33,6 +36,6 @@ class CloudDownloader {
   base::WeakPtrFactory<CloudDownloader> weak_ptr_factory_{this};
 };
 
-}
+}  // namespace blink
 
 #endif  // THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_CLOUD_DOWNLOADER_H_

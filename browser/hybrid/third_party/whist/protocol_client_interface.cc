@@ -7,16 +7,16 @@
 #include "protocol_client_interface.h"
 
 #include <string.h>
+#include <fstream>
 #include <thread>
 #include <vector>
-#include <fstream>
 
 #include "base/base_paths.h"
 #include "base/files/file_path.h"
-#include "base/synchronization/lock.h"
 #include "base/logging.h"
 #include "base/native_library.h"
 #include "base/path_service.h"
+#include "base/synchronization/lock.h"
 #include "chrome/common/chrome_paths.h"
 #if BUILDFLAG(IS_MAC)
 #include "base/mac/bundle_locations.h"
@@ -39,9 +39,10 @@ typedef const WhistClient::VirtualInterface* (*VirtualInterfaceCreator)(void);
 const WhistClient::VirtualInterface* whist_virtual_interface = NULL;
 static base::Lock whist_virtual_interface_lock;
 
-// These must be static; can't be on the stack since the protocol thread will always expect them
-// to be around.
-static const char* protocol_argv[] = {LIB_FILENAME_UTF8, "--frontend=virtual", "--dynamic-arguments", NULL};
+// These must be static; can't be on the stack since the protocol thread will
+// always expect them to be around.
+static const char* protocol_argv[] = {LIB_FILENAME_UTF8, "--frontend=virtual",
+                                      "--dynamic-arguments", NULL};
 static int protocol_argc = sizeof(protocol_argv) / sizeof(protocol_argv[0]) - 1;
 
 // This implementation is inspired gl_initializer_*.cc and gl_implementation.cc
@@ -75,10 +76,11 @@ static base::NativeLibrary LoadWhistClientLibrary() {
 
   // Using the computed path, attempt to load the library.
   base::NativeLibraryLoadError error;
-  base::NativeLibrary library = base::LoadNativeLibrary(lib_whist_client_path, &error);
+  base::NativeLibrary library =
+      base::LoadNativeLibrary(lib_whist_client_path, &error);
   if (!library) {
-    LOG(ERROR) << "Failed to load " << lib_whist_client_path.MaybeAsASCII() << ": "
-               << error.ToString();
+    LOG(ERROR) << "Failed to load " << lib_whist_client_path.MaybeAsASCII()
+               << ": " << error.ToString();
     return NULL;
   }
   return library;
@@ -103,14 +105,16 @@ void InitializeWhistClient() {
                                                     "get_virtual_interface"));
 
   if (get_virtual_interface_ptr == NULL) {
-    LOG(ERROR) << "Got value of NULL, or could not find, symbol get_virtual_interface";
+    LOG(ERROR)
+        << "Got value of NULL, or could not find, symbol get_virtual_interface";
     return;
   } else {
     whist_virtual_interface = get_virtual_interface_ptr();
   }
 
   // Initialize whist, so that connections can be made from javascript later
-  WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
+  WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc,
+                               protocol_argv);
   // TODO: lifecycle.destroy sometime? If necessary?
 
   // Pipe protocol logs to a .log file
@@ -119,7 +123,7 @@ void InitializeWhistClient() {
   path = path.Append("whist_protocol_client.log");
   whist_logs_out.open(path.AsUTF8Unsafe().c_str());
 
-  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line) {
-    whist_logs_out << line;
-  });
+  WHIST_VIRTUAL_INTERFACE_CALL(
+      logging.set_callback,
+      [](unsigned int level, const char* line) { whist_logs_out << line; });
 }

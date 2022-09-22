@@ -10,17 +10,17 @@
 #include "base/callback.h"
 #include "base/sequence_checker.h"
 #include "base/thread_annotations.h"
-#include "whist/browser/hybrid/third_party/blink/public/mojom/cloud_tab/download.mojom.h"
 #include "content/common/content_export.h"
 #include "content/public/browser/global_routing_id.h"
 #include "mojo/public/cpp/bindings/receiver_set.h"
 #include "mojo/public/cpp/bindings/remote_set.h"
 #include "url/origin.h"
+#include "whist/browser/hybrid/third_party/blink/public/mojom/cloud_tab/download.mojom.h"
 
 namespace download {
-    struct DownloadCreateInfo;
-    class DownloadItemImpl;
-}
+struct DownloadCreateInfo;
+class DownloadItemImpl;
+}  // namespace download
 
 namespace content {
 
@@ -37,7 +37,9 @@ class CONTENT_EXPORT CloudDownloaderHost
   void DownloadStart(const std::string& filepath,
                      int64_t file_size,
                      DownloadStartCallback callback) override;
-  void DownloadUpdate(int64_t opaque, int64_t bytes_so_far, int64_t bytes_per_sec) override;
+  void DownloadUpdate(int64_t opaque,
+                      int64_t bytes_so_far,
+                      int64_t bytes_per_sec) override;
   void DownloadComplete(int64_t opaque) override;
   void StartDownloadItemCallback(
       std::unique_ptr<download::DownloadCreateInfo> info,

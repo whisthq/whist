@@ -30,14 +30,15 @@ namespace blink {
  * and the WhistPlayer gets the ID from the WhistSource.
  */
 class WhistSource {
-  public:
-    WhistSource() : is_whist_(false) {}
-    WhistSource(int window_id) : is_whist_(true), window_id_(window_id) {}
-    bool IsWhist() const { return is_whist_; }
-    int GetWindowId() const { return window_id_; }
-  private:
-    bool is_whist_;
-    int window_id_;
+ public:
+  WhistSource() : is_whist_(false) {}
+  WhistSource(int window_id) : is_whist_(true), window_id_(window_id) {}
+  bool IsWhist() const { return is_whist_; }
+  int GetWindowId() const { return window_id_; }
+
+ private:
+  bool is_whist_;
+  int window_id_;
 };
 
 }  // namespace blink

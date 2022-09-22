@@ -25,8 +25,7 @@ CloudDownloaderHost::~CloudDownloaderHost() {}
 void CloudDownloaderHost::DownloadStart(const std::string& file_path,
                                         int64_t file_size,
                                         DownloadStartCallback callback) {
-  auto download_create_info =
-      std::make_unique<download::DownloadCreateInfo>();
+  auto download_create_info = std::make_unique<download::DownloadCreateInfo>();
   download_create_info->cloud_download = true;
   // TODO : Get the real URL from Whist Server
   download_create_info->url_chain.push_back(
@@ -35,7 +34,7 @@ void CloudDownloaderHost::DownloadStart(const std::string& file_path,
   download_create_info->total_bytes = file_size;
 #ifdef _WIN32
   std::wstring w_file_path;
-  for(char c : file_path) {
+  for (char c : file_path) {
     w_file_path.push_back(std::btowc(c));
   }
   download_create_info->save_info->file_path = base::FilePath(w_file_path);
@@ -49,10 +48,12 @@ void CloudDownloaderHost::DownloadStart(const std::string& file_path,
   download_manager->StartDownloadItem(
       std::move(download_create_info),
       download::DownloadUrlParameters::OnStartedCallback(),
-      base::BindOnce(&CloudDownloaderHost::StartDownloadItemCallback, base::Unretained(this)));
+      base::BindOnce(&CloudDownloaderHost::StartDownloadItemCallback,
+                     base::Unretained(this)));
 }
 
-void CloudDownloaderHost::DownloadUpdate(int64_t opaque, int64_t bytes_so_far,
+void CloudDownloaderHost::DownloadUpdate(int64_t opaque,
+                                         int64_t bytes_so_far,
                                          int64_t bytes_per_sec) {
   download::DownloadItemImpl* impl = (download::DownloadItemImpl*)opaque;
   const std::vector<download::DownloadItem::ReceivedSlice> received_slices;
@@ -64,8 +65,8 @@ void CloudDownloaderHost::DownloadComplete(int64_t opaque) {
   std::unique_ptr<crypto::SecureHash> hash_state(
       crypto::SecureHash::Create(crypto::SecureHash::SHA256));
   impl->DestinationCompleted(impl->GetTotalBytes(), std::move(hash_state));
-  // TODO : Need to check where impl is freed. Does Download Manager free it internally?
-  // If not it has to be freed here.
+  // TODO : Need to check where impl is freed. Does Download Manager free it
+  // internally? If not it has to be freed here.
 }
 
 void CloudDownloaderHost::StartDownloadItemCallback(

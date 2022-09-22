@@ -49,13 +49,12 @@
 #include "third_party/blink/renderer/platform/mediastream/media_stream_descriptor.h"
 #include "third_party/blink/renderer/platform/mediastream/media_stream_source.h"
 #include "third_party/blink/renderer/platform/scheduler/public/post_cross_thread_task.h"
+#include "third_party/blink/renderer/platform/scheduler/public/thread.h"
 #include "third_party/blink/renderer/platform/timer.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
-#include "third_party/blink/renderer/platform/scheduler/public/thread.h"
 #include "whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/cloud_downloader.h"
 #include "whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_compositor.h"
 #include "whist/browser/hybrid/third_party/whist/protocol_client_interface.h"
-
 
 #include <iostream>
 #include <thread>
@@ -72,7 +71,7 @@ struct CrossThreadCopier<viz::SurfaceId>
 
 namespace blink {
 
-  namespace {
+namespace {
 
 enum class RendererReloadAction {
   KEEP_RENDERER,
@@ -124,7 +123,8 @@ class WhistPlayer::FrameDeliverer {
   using RepaintCB = WTF::CrossThreadRepeatingFunction<
       void(scoped_refptr<media::VideoFrame> frame, bool is_copy)>;
   FrameDeliverer(const base::WeakPtr<WhistPlayer>& player,
-                 RepaintCB enqueue_frame_cb, int window_id)
+                 RepaintCB enqueue_frame_cb,
+                 int window_id)
       : whist_window_id(window_id),
         main_task_runner_(base::ThreadTaskRunnerHandle::Get()),
         player_(player),
@@ -138,7 +138,8 @@ class WhistPlayer::FrameDeliverer {
   ~FrameDeliverer() {
     DCHECK_CALLED_ON_VALID_THREAD(io_thread_checker_);
     // Clear the video frame callback
-    WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.destroy_window, this->whist_window_id);
+    WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.destroy_window,
+                                 this->whist_window_id);
   }
 
   void StartFrameGetter() {
@@ -148,19 +149,30 @@ class WhistPlayer::FrameDeliverer {
 
     // Store lambda info
     static std::mutex lambda_info_mutex;
-    static std::map<int, std::pair<FrameDeliverer*, base::SingleThreadTaskRunner*>> lambda_info;
+    static std::map<int,
+                    std::pair<FrameDeliverer*, base::SingleThreadTaskRunner*>>
+        lambda_info;
     lambda_info_mutex.lock();
     lambda_info[this->whist_window_id].first = this;
-    lambda_info[this->whist_window_id].second = base::ThreadTaskRunnerHandle::Get().get();
+    lambda_info[this->whist_window_id].second =
+        base::ThreadTaskRunnerHandle::Get().get();
     lambda_info_mutex.unlock();
 
     // Using the same task runner that called StartFrameGetter,
-    // Set the callback to take the frames, and then process them on our task runner
-    WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_frame_callback, this->whist_window_id, [](int whist_window_id, void* frame_ref) -> void {
-      std::lock_guard<std::mutex> guard(lambda_info_mutex);
-      // Pass the frame_ref into GetAndEnqueueFrame, using the taskrunner for single-threaded usage
-      lambda_info[whist_window_id].second->PostTask(FROM_HERE, base::BindOnce(&FrameDeliverer::GetAndEnqueueFrame, CrossThreadUnretained(lambda_info[whist_window_id].first), frame_ref));
-    });
+    // Set the callback to take the frames, and then process them on our task
+    // runner
+    WHIST_VIRTUAL_INTERFACE_CALL(
+        video.set_video_frame_callback, this->whist_window_id,
+        [](int whist_window_id, void* frame_ref) -> void {
+          std::lock_guard<std::mutex> guard(lambda_info_mutex);
+          // Pass the frame_ref into GetAndEnqueueFrame, using the taskrunner
+          // for single-threaded usage
+          lambda_info[whist_window_id].second->PostTask(
+              FROM_HERE, base::BindOnce(&FrameDeliverer::GetAndEnqueueFrame,
+                                        CrossThreadUnretained(
+                                            lambda_info[whist_window_id].first),
+                                        frame_ref));
+        });
   }
 
   void GetAndEnqueueFrame(void* frame_ref) {
@@ -174,17 +186,17 @@ class WhistPlayer::FrameDeliverer {
       int visible_width;
       int visible_height;
 
-      WHIST_VIRTUAL_INTERFACE_CALL(video.get_frame_ref_yuv_data, frame_ref, &data, &stride, &width, &height,
-                                                                 &visible_width, &visible_height);
+      WHIST_VIRTUAL_INTERFACE_CALL(video.get_frame_ref_yuv_data, frame_ref,
+                                   &data, &stride, &width, &height,
+                                   &visible_width, &visible_height);
 
       scoped_refptr<media::VideoFrame> frame =
           media::VideoFrame::WrapExternalYuvData(
               media::PIXEL_FORMAT_I420, gfx::Size(width, height),
-              gfx::Rect(visible_width, visible_height), gfx::Size(width, height),
-              stride[0], stride[1], stride[2],
-              const_cast<uint8_t*>(data[0]),
-              const_cast<uint8_t*>(data[1]), const_cast<uint8_t*>(data[2]),
-              produce_data_timestamp_);
+              gfx::Rect(visible_width, visible_height),
+              gfx::Size(width, height), stride[0], stride[1], stride[2],
+              const_cast<uint8_t*>(data[0]), const_cast<uint8_t*>(data[1]),
+              const_cast<uint8_t*>(data[2]), produce_data_timestamp_);
 
       frame->AddDestructionObserver(base::BindOnce(free_frame_ref, frame_ref));
       enqueue_frame_cb_.Run(std::move(frame), false);
@@ -239,9 +251,8 @@ WhistPlayer::WhistPlayer(
       surface_layer_mode_(surface_layer_mode) {
   DCHECK(client);
   weak_this_ = weak_factory_.GetWeakPtr();
-  SendLogMessage(String::Format(
-      "%s({is_audio_element=%s})", __func__,
-      client->IsAudioElement() ? "true" : "false"));
+  SendLogMessage(String::Format("%s({is_audio_element=%s})", __func__,
+                                client->IsAudioElement() ? "true" : "false"));
 
   CloudDownloader::CreateCloudDownloader(broker);
   // TODO(tmathmeyer) WebMediaPlayerImpl gets the URL from the WebLocalFrame.
@@ -251,8 +262,7 @@ WhistPlayer::WhistPlayer(
 
 WhistPlayer::~WhistPlayer() {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
-  SendLogMessage(
-      String::Format("%s()", __func__));
+  SendLogMessage(String::Format("%s()", __func__));
 
   if (frame_deliverer_)
     io_task_runner_->DeleteSoon(FROM_HERE, frame_deliverer_.release());
@@ -286,9 +296,9 @@ void WhistPlayer::OnAudioRenderErrorCallback() {
 
 // WebMediaPlayer::LoadTiming WhistPlayer::Load() {
 WebMediaPlayer::LoadTiming WhistPlayer::Load(LoadType,
-                          const WebMediaPlayerSource& source,
-                          CorsMode,
-                          bool is_cache_disabled) {
+                                             const WebMediaPlayerSource& source,
+                                             CorsMode,
+                                             bool is_cache_disabled) {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
   // SendLogMessage(String::Format("%s({load_type=%s})", __func__,
   //                               LoadTypeToString(load_type)));
@@ -302,8 +312,8 @@ WebMediaPlayer::LoadTiming WhistPlayer::Load(LoadType,
   //       from HTMLMediaElement, so we can call the equivalent from
   //       HTMLWhistElement.
   compositor_ = base::MakeRefCounted<WhistCompositor>(
-      compositor_task_runner_, io_task_runner_,
-      std::move(submitter_), surface_layer_mode_, weak_this_);
+      compositor_task_runner_, io_task_runner_, std::move(submitter_),
+      surface_layer_mode_, weak_this_);
 
   compositor_->StartRendering();
 
@@ -312,8 +322,7 @@ WebMediaPlayer::LoadTiming WhistPlayer::Load(LoadType,
 
   frame_deliverer_ = std::make_unique<WhistPlayer::FrameDeliverer>(
       weak_this_,
-      CrossThreadBindRepeating(&WhistCompositor::EnqueueFrame,
-                               compositor_),
+      CrossThreadBindRepeating(&WhistCompositor::EnqueueFrame, compositor_),
       source.GetAsWhistSource().GetWindowId());
 
   PostCrossThreadTask(
@@ -385,9 +394,8 @@ void WhistPlayer::SetWasPlayedWithUserActivation(
 
 void WhistPlayer::OnRequestPictureInPicture() {}
 
-bool WhistPlayer::SetSinkId(
-    const WebString& sink_id,
-    WebSetSinkIdCompleteCallback completion_callback) {
+bool WhistPlayer::SetSinkId(const WebString& sink_id,
+                            WebSetSinkIdCompleteCallback completion_callback) {
   return true;
 }
 
@@ -405,7 +413,8 @@ bool WhistPlayer::HasAudio() const {
   return false;
 }
 
-// NOTE: leaving NaturalSize and VisibleSize as is because they don't manipulate anything
+// NOTE: leaving NaturalSize and VisibleSize as is because they don't manipulate
+// anything
 gfx::Size WhistPlayer::NaturalSize() const {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
   const gfx::Size& current_size = compositor_->GetCurrentSize();
@@ -468,8 +477,7 @@ WebMediaPlayer::ReadyState WhistPlayer::GetReadyState() const {
   return WebMediaPlayer::ReadyState::kReadyStateHaveNothing;
 }
 
-WebMediaPlayer::SurfaceLayerMode WhistPlayer::GetVideoSurfaceLayerMode()
-    const {
+WebMediaPlayer::SurfaceLayerMode WhistPlayer::GetVideoSurfaceLayerMode() const {
   return WebMediaPlayer::SurfaceLayerMode::kAlways;
 }
 
@@ -493,12 +501,13 @@ bool WhistPlayer::DidLoadingProgress() {
 }
 
 void WhistPlayer::Paint(cc::PaintCanvas* canvas,
-                             const gfx::Rect& rect,
-                             cc::PaintFlags& flags) {
+                        const gfx::Rect& rect,
+                        cc::PaintFlags& flags) {
   DVLOG(3) << __func__;
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
 
-  // const scoped_refptr<media::VideoFrame> frame = compositor_->GetCurrentFrame();
+  // const scoped_refptr<media::VideoFrame> frame =
+  // compositor_->GetCurrentFrame();
 
   // scoped_refptr<viz::RasterContextProvider> provider;
   // if (frame && frame->HasTextures()) {
@@ -508,7 +517,8 @@ void WhistPlayer::Paint(cc::PaintCanvas* canvas,
   //     return;
   // }
   // const gfx::RectF dest_rect(rect);
-  // video_renderer_.Paint(frame, canvas, dest_rect, flags, video_transformation_,
+  // video_renderer_.Paint(frame, canvas, dest_rect, flags,
+  // video_transformation_,
   //                       provider.get());
 }
 
@@ -553,7 +563,6 @@ bool WhistPlayer::HasAvailableVideoFrame() const {
   return has_first_frame_;
 }
 
-
 void WhistPlayer::SuspendForFrameClosed() {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
 }
@@ -579,9 +588,9 @@ void WhistPlayer::ActivateSurfaceLayerForVideo() {
 
   PostCrossThreadTask(
       *compositor_task_runner_, FROM_HERE,
-      CrossThreadBindOnce(&WhistCompositor::EnableSubmission,
-                          compositor_, bridge_->GetSurfaceId(),
-                          video_transformation_, IsInPictureInPicture()));
+      CrossThreadBindOnce(&WhistCompositor::EnableSubmission, compositor_,
+                          bridge_->GetSurfaceId(), video_transformation_,
+                          IsInPictureInPicture()));
 
   // If the element is already in Picture-in-Picture mode, it means that it
   // was set in this mode prior to this load, with a different
@@ -677,8 +686,7 @@ void WhistPlayer::SetReadyState(WebMediaPlayer::ReadyState state) {
   get_client()->ReadyStateChanged();
 }
 
-media::PaintCanvasVideoRenderer*
-WhistPlayer::GetPaintCanvasVideoRenderer() {
+media::PaintCanvasVideoRenderer* WhistPlayer::GetPaintCanvasVideoRenderer() {
   return &video_renderer_;
 }
 

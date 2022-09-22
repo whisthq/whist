@@ -5,20 +5,19 @@
 #include <utility>
 
 #include "base/rand_util.h"
-#include "brave/common/pref_names.h"
 #include "brave/browser/ui/webui/brave_webui_source.h"
+#include "brave/common/pref_names.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/common/url_constants.h"
+#include "components/grit/brave_components_resources.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/web_ui.h"
-#include "content/public/browser/web_ui_data_source.h"
-#include "content/public/browser/web_ui_message_handler.h"
 #include "content/public/browser/web_ui_controller.h"
 #include "content/public/browser/web_ui_data_source.h"
+#include "content/public/browser/web_ui_message_handler.h"
 #include "content/public/common/url_constants.h"
-#include "components/grit/brave_components_resources.h"
 
 #include "whist/browser/hybrid/components/cloud_tabs_ui/resources/grit/cloud_tabs_ui_generated_map.h"
 
@@ -44,7 +43,7 @@ class CloudUIHandler : public WebUIMessageHandler {
 
 // Added by Whist
 void CloudUIHandler::RegisterMessages() {}
-}
+}  // namespace
 
 std::string RandomString() {
   std::string random_string;
@@ -57,8 +56,8 @@ std::string RandomString() {
 WhistCloudUI::WhistCloudUI(content::WebUI* web_ui, const GURL& url)
     : content::WebUIController(web_ui) {
   content::WebUIDataSource* source = CreateAndAddWebUIDataSource(
-      web_ui, content::kCloudScheme, kCloudTabsUiGenerated, kCloudTabsUiGeneratedSize,
-      IDR_WHIST_CLOUD_TABS_UI_HTML,
+      web_ui, content::kCloudScheme, kCloudTabsUiGenerated,
+      kCloudTabsUiGeneratedSize, IDR_WHIST_CLOUD_TABS_UI_HTML,
       /*disable_trusted_types_csp=*/true);
 
   web_ui->AddMessageHandler(std::make_unique<CloudUIHandler>());
@@ -66,8 +65,9 @@ WhistCloudUI::WhistCloudUI(content::WebUI* web_ui, const GURL& url)
   // Generate random nonce and set security policy accordingly
   std::string random_nonce = RandomString();
   source->OverrideContentSecurityPolicy(
-    network::mojom::CSPDirectiveName::ScriptSrc,
-    "script-src cloud: chrome://resources 'nonce-" + random_nonce + "' 'self';");
+      network::mojom::CSPDirectiveName::ScriptSrc,
+      "script-src cloud: chrome://resources 'nonce-" + random_nonce +
+          "' 'self';");
   source->AddString("whistUINonce", random_nonce);
   // Required resources.
   source->UseStringsJs();

@@ -90,9 +90,9 @@ WhistCompositor::WhistCompositor(
                             weak_ptr_factory_.GetWeakPtr()));
     update_submission_state_callback_ = base::BindPostTask(
         video_frame_compositor_task_runner_,
-        ConvertToBaseRepeatingCallback(CrossThreadBindRepeating(
-            &WhistCompositor::SetIsSurfaceVisible,
-            weak_ptr_factory_.GetWeakPtr())));
+        ConvertToBaseRepeatingCallback(
+            CrossThreadBindRepeating(&WhistCompositor::SetIsSurfaceVisible,
+                                     weak_ptr_factory_.GetWeakPtr())));
   }
 }
 
@@ -110,14 +110,13 @@ WhistCompositor::~WhistCompositor() {
 }
 
 // static
-void WhistCompositorTraits::Destruct(
-    const WhistCompositor* compositor) {
+void WhistCompositorTraits::Destruct(const WhistCompositor* compositor) {
   if (!compositor->video_frame_compositor_task_runner_
            ->BelongsToCurrentThread()) {
-    PostCrossThreadTask(
-        *compositor->video_frame_compositor_task_runner_, FROM_HERE,
-        CrossThreadBindOnce(&WhistCompositorTraits::Destruct,
-                            CrossThreadUnretained(compositor)));
+    PostCrossThreadTask(*compositor->video_frame_compositor_task_runner_,
+                        FROM_HERE,
+                        CrossThreadBindOnce(&WhistCompositorTraits::Destruct,
+                                            CrossThreadUnretained(compositor)));
     return;
   }
   delete compositor;
@@ -128,9 +127,8 @@ void WhistCompositor::InitializeSubmitter() {
   submitter_->Initialize(this, /* is_media_stream = */ true);
 }
 
-void WhistCompositor::SetIsSurfaceVisible(
-    bool state,
-    base::WaitableEvent* done_event) {
+void WhistCompositor::SetIsSurfaceVisible(bool state,
+                                          base::WaitableEvent* done_event) {
   DCHECK(video_frame_compositor_task_runner_->BelongsToCurrentThread());
   submitter_->SetIsSurfaceVisible(state);
   if (done_event)
@@ -190,7 +188,8 @@ void WhistCompositor::SetIsPageVisible(bool is_visible) {
 gfx::Size WhistCompositor::GetCurrentSize() {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
   base::AutoLock auto_lock(current_frame_lock_);
-  return current_frame_ ? current_frame_->natural_size() : gfx::Size(500, 500);;
+  return current_frame_ ? current_frame_->natural_size() : gfx::Size(500, 500);
+  ;
 }
 
 base::TimeDelta WhistCompositor::GetCurrentTime() {
@@ -226,9 +225,8 @@ void WhistCompositor::SetVideoFrameProviderClient(
   //   video_frame_provider_client_->StartRendering();
 }
 
-void WhistCompositor::EnqueueFrame(
-    scoped_refptr<media::VideoFrame> frame,
-    bool is_copy) {
+void WhistCompositor::EnqueueFrame(scoped_refptr<media::VideoFrame> frame,
+                                   bool is_copy) {
   DCHECK(io_task_runner_->BelongsToCurrentThread());
   base::AutoLock auto_lock(current_frame_lock_);
   TRACE_EVENT_INSTANT1("media", "WhistCompositor::EnqueueFrame",
@@ -240,9 +238,8 @@ void WhistCompositor::EnqueueFrame(
   return;
 }
 
-bool WhistCompositor::UpdateCurrentFrame(
-    base::TimeTicks deadline_min,
-    base::TimeTicks deadline_max) {
+bool WhistCompositor::UpdateCurrentFrame(base::TimeTicks deadline_min,
+                                         base::TimeTicks deadline_max) {
   DCHECK(video_frame_compositor_task_runner_->BelongsToCurrentThread());
   return false;
 }
@@ -301,9 +298,8 @@ void WhistCompositor::StopUsingProvider() {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
   PostCrossThreadTask(
       *video_frame_compositor_task_runner_, FROM_HERE,
-      CrossThreadBindOnce(
-          &WhistCompositor::StopUsingProviderInternal,
-          WrapRefCounted(this)));
+      CrossThreadBindOnce(&WhistCompositor::StopUsingProviderInternal,
+                          WrapRefCounted(this)));
 }
 
 void WhistCompositor::RenderWithoutAlgorithm(
@@ -312,9 +308,8 @@ void WhistCompositor::RenderWithoutAlgorithm(
   DCHECK(io_task_runner_->BelongsToCurrentThread());
   PostCrossThreadTask(
       *video_frame_compositor_task_runner_, FROM_HERE,
-      CrossThreadBindOnce(
-          &WhistCompositor::RenderWithoutAlgorithmOnCompositor,
-          WrapRefCounted(this), std::move(frame), is_copy));
+      CrossThreadBindOnce(&WhistCompositor::RenderWithoutAlgorithmOnCompositor,
+                          WrapRefCounted(this), std::move(frame), is_copy));
 }
 
 void WhistCompositor::RenderWithoutAlgorithmOnCompositor(
@@ -423,10 +418,9 @@ void WhistCompositor::CheckForFrameChanges(
   }
 
   if (new_frame_transform.has_value()) {
-    PostCrossThreadTask(
-        *main_task_runner_, FROM_HERE,
-        CrossThreadBindOnce(&WhistPlayer::OnTransformChanged, player_,
-                            *new_frame_transform));
+    PostCrossThreadTask(*main_task_runner_, FROM_HERE,
+                        CrossThreadBindOnce(&WhistPlayer::OnTransformChanged,
+                                            player_, *new_frame_transform));
     if (submitter_)
       submitter_->SetTransform(*new_frame_transform);
   }
@@ -468,10 +462,7 @@ void WhistCompositor::StopUsingProviderInternal() {
   // video_frame_provider_client_ = nullptr;
 }
 
-void WhistCompositor::SetAlgorithmEnabledForTesting(
-    bool algorithm_enabled) {
-
-}
+void WhistCompositor::SetAlgorithmEnabledForTesting(bool algorithm_enabled) {}
 
 void WhistCompositor::SetOnFramePresentedCallback(
     OnNewFramePresentedCB presented_cb) {
