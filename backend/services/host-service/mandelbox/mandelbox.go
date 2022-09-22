@@ -113,8 +113,7 @@ type Mandelbox interface {
 	// this mandelbox.
 	WriteProtocolTimeout(protocolTimeout int) error
 
-	// MarkParamsReady indicates that processes that do not depend on user configs
-	// are ready to be initialized.
+	// MarkParamsReady indicates that processes are ready to be initialized.
 	MarkParamsReady() error
 
 	// WriteSessionID writes the session ID received from the client to a file
@@ -534,6 +533,6 @@ func (mandelbox *mandelboxData) GetContext() context.Context {
 // and clean up all its resources.
 func (mandelbox *mandelboxData) Close() {
 	// Cancel context, triggering the freeing up of all resources, including
-	// tracked by goroutines (like cloud storage directories)
+	// tracked by goroutines
 	mandelbox.cancel()
 }
