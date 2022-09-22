@@ -416,7 +416,7 @@ jobs:
   #######################################################################################
   
   # Dependency #3 -- mimalloc (mac only)
-  build-and-publish-sentry:
+  build-and-publish-mimalloc:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
