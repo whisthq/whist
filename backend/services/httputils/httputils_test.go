@@ -75,7 +75,6 @@ func TestParseRequest(t *testing.T) {
 			IP:                    "0.0.0.0",
 			AppName:               "CHROME",
 			MandelboxID:           types.MandelboxID(uuid.MustParse("e0aa0e21-3350-49b6-95a6-152dd2a13e3c")),
-			IsNewConfigToken:      false,
 			JSONData:              types.JSONData(`"location":"Americas/NewYork"`),
 		}},
 		{"Empty JSON transport request", &JSONTransportRequest{}, `{}`, &JSONTransportRequest{}},

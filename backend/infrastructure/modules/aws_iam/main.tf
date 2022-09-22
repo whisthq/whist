@@ -91,10 +91,6 @@ resource "aws_iam_role" "EC2DeploymentRole" {
   }
 }
 
-output "replication_role_arn" {
-  value = aws_iam_role.BucketReplicationRole.arn
-}
-
 # We create an instance profile for the deployment role because 
 # Terraform doesn't create it by default. We use a different instance
 # profile for each environment.
