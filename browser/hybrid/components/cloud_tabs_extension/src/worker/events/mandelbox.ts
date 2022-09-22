@@ -14,16 +14,15 @@ import { AsyncReturnType } from "@app/@types/api"
 import { AWSRegion, AWSRegionOrdering } from "@app/constants/location"
 import { AuthInfo } from "@app/@types/payload"
 
-const mandelboxNeeded = stateDidChange("waitingCloudTabs")
-  .pipe(filter((change: any) => change?.applyData?.name === "push"))
-  .pipe(
-    filter(
-      () =>
-        whistState.mandelboxState === MandelboxState.MANDELBOX_NONEXISTENT &&
-        whistState.isLoggedIn
-    ),
-    share()
-  )
+const mandelboxNeeded = stateDidChange("waitingCloudTabs").pipe(
+  filter((change: any) => change?.applyData?.name === "push"),
+  filter(
+    () =>
+      whistState.mandelboxState === MandelboxState.MANDELBOX_NONEXISTENT &&
+      whistState.isLoggedIn
+  ),
+  share()
+)
 
 const mandelboxInfo = mandelboxNeeded.pipe(
   switchMap(() =>
