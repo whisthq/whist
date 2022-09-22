@@ -29,32 +29,15 @@ type JSONTransportResult struct {
 // TestSpinUpHandler calls processSpinUpMandelboxRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
-	browserData := `{
-		"cookies": [{"creation_utc": 13280861983875934, "host_key": "whist.com"}],
-		"extensions": "not_real_extension_id,not_real_second_extension_id"
-	}`
-
-	marshalledBrowserData, err := json.Marshal(browserData)
-	if err != nil {
-		t.Fatalf("could not marshal browser data: %v", err)
-	}
-
-	deflatedBrowserData, err := configutils.GzipDeflateString(string(marshalledBrowserData))
-	if err != nil {
-		t.Fatalf("could not deflate browser data: %v", err)
-	}
-
 	deflatedJSONData, err := configutils.GzipDeflateString(string("test_json_data"))
 	if err != nil {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		ConfigEncryptionToken: "test_token",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
-		BrowserData:           mandelboxtypes.BrowserData(deflatedBrowserData),
 		ResultChan:            make(chan httputils.RequestResult),
 	}
 
@@ -112,7 +95,6 @@ func TestSpinUpHandler(t *testing.T) {
 		key       string
 		want, got string
 	}{
-		{"ConfigEncryptionToken", string(testJSONTransportRequest.ConfigEncryptionToken), string(gotRequestMap.ConfigEncryptionToken)},
 		{"JWTAccessToken", testJSONTransportRequest.JwtAccessToken, gotRequestMap.JwtAccessToken},
 		{"JSONData", string(testJSONTransportRequest.JSONData), string(gotRequestMap.JSONData)},
 	}
@@ -145,32 +127,15 @@ func TestHttpServerIntegration(t *testing.T) {
 	// Wait for server startup
 	time.Sleep(5 * time.Second)
 
-	browserData := `{
-		"cookies": [{"creation_utc": 13280861983875934, "host_key": "whist.com"}],
-		"extensions": "not_real_extension_id,not_real_second_extension_id"
-	}`
-
-	marshalledBrowserData, err := json.Marshal(browserData)
-	if err != nil {
-		t.Fatalf("could not marshal browser data: %v", err)
-	}
-
-	deflatedBrowserData, err := configutils.GzipDeflateString(string(marshalledBrowserData))
-	if err != nil {
-		t.Fatalf("could not deflate browser data: %v", err)
-	}
-
 	deflatedJSONData, err := configutils.GzipDeflateString(string("test_json_data"))
 	if err != nil {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		ConfigEncryptionToken: "test_token",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
-		BrowserData:           mandelboxtypes.BrowserData(deflatedBrowserData),
 		ResultChan:            make(chan httputils.RequestResult),
 	}
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
@@ -230,7 +195,6 @@ func TestHttpServerIntegration(t *testing.T) {
 		key       string
 		want, got string
 	}{
-		{"ConfigEncryptionToken", string(testJSONTransportRequest.ConfigEncryptionToken), string(gotRequestMap.ConfigEncryptionToken)},
 		{"JWTAccessToken", testJSONTransportRequest.JwtAccessToken, gotRequestMap.JwtAccessToken},
 		{"JSONData", string(testJSONTransportRequest.JSONData), string(gotRequestMap.JSONData)},
 	}
@@ -333,7 +297,6 @@ func TestHandleJSONTransportRequest(t *testing.T) {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),

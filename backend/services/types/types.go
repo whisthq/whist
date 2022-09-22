@@ -39,9 +39,6 @@ type (
 	// mandelbox gets assigned to a user, it's represented by a Unix timestamp.
 	SessionID string
 
-	// ConfigEncryptionToken is the token used to decrypt the user configurations.
-	ConfigEncryptionToken string
-
 	// ClientAppAccessToken is a JWT created by the authentication provider and used to
 	// authenticate the user to Whist. It contains custom claims and metadata.
 	ClientAppAccessToken string
@@ -54,10 +51,6 @@ type (
 	// JSONData is a set of configurations sent by the frontend that can only be set before launching Chrome.
 	// Some examples are timezone, location, dark mode, DPI.
 	JSONData string
-
-	// BrowserData is the collection of data imported from a local Chrome to the Chrome instance running inside the
-	// mandelbox. This can be a combination of cookies, extensions and local storage.
-	BrowserData string
 
 	// Cookies is a json file containing user cookies.
 	Cookies string

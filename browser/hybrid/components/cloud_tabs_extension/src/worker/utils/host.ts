@@ -18,33 +18,17 @@ import { AsyncReturnType } from "@app/@types/api"
 /* eslint-disable @typescript-eslint/naming-convention */
 const hostSpinUp = async ({
   ip,
-  config_encryption_token,
-  is_new_config_encryption_token,
   jwt_access_token,
   mandelbox_id,
   json_data,
-  importedData,
 }: {
   ip: string
-  config_encryption_token: string
-  is_new_config_encryption_token: boolean
   jwt_access_token: string
   mandelbox_id: string
   json_data: string
-  importedData:
-    | {
-        cookies?: string
-        bookmarks?: string
-        extensions?: string
-        preferences?: string
-        localStorage?: string
-      }
-    | undefined
 }) => {
   return await put({
     body: {
-      config_encryption_token,
-      is_new_config_encryption_token: is_new_config_encryption_token ?? false,
       mandelbox_id,
       json_data,
       ip,

@@ -11,12 +11,9 @@ import (
 type JSONTransportRequest struct {
 	IP                    string                               `json:"ip"`                             // The public IPv4 address of the instance running the mandelbox
 	AppName               mandelboxtypes.AppName               `json:"app_name,omitempty"`             // The app name to spin up (used when running in localdev, but in deployment the app name is set to `utils.MandelboxApp`).
-	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"`        // User-specific private encryption token
 	JwtAccessToken        string                               `json:"jwt_access_token"`               // User's JWT access token
 	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id"`                   // MandelboxID, used for the json transport request map
-	IsNewConfigToken      bool                                 `json:"is_new_config_encryption_token"` // Flag indicating we should expect a new config encryption token and to skip config decryption this run
 	JSONData              mandelboxtypes.JSONData              `json:"json_data"`                      // Arbitrary stringified JSON data to pass to mandelbox
-	BrowserData           mandelboxtypes.BrowserData           `json:"browser_data"`                   // A collection of all possible browser data items a user can generate
 	ResultChan            chan RequestResult                   `json:"-"`                              // Channel to pass the request result between goroutines
 }
 

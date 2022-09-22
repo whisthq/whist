@@ -66,8 +66,6 @@ const hostInfo = mandelboxSuccess.pipe(
     from(
       hostSpinUp({
         ip: mandelbox.mandelboxIP ?? "",
-        config_encryption_token: generateRandomConfigToken(),
-        is_new_config_encryption_token: true,
         jwt_access_token: auth.accessToken ?? "",
         mandelbox_id: mandelbox.mandelboxID,
         json_data: JSON.stringify({
@@ -76,7 +74,6 @@ const hostInfo = mandelboxSuccess.pipe(
           load_extension: true,
           ...jsonData,
         }),
-        importedData: undefined,
       })
     ).pipe(
       timeout(10000), // If nothing is emitted for 10s, we assume a timeout so that an error can be shown

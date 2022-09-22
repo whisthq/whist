@@ -191,7 +191,6 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
 		AppName:               types.AppName(utils.MandelboxApp),
-		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           testMandelbox.GetID(),
 		JSONData:              types.JSONData(deflatedJSONData),

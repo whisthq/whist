@@ -84,9 +84,6 @@ type Mandelbox interface {
 	GetDockerID() types.DockerID
 	GetAppName() types.AppName
 
-	SetConfigEncryptionToken(types.ConfigEncryptionToken)
-	GetConfigEncryptionToken() types.ConfigEncryptionToken
-
 	GetClientAppAccessToken() types.ClientAppAccessToken
 	SetClientAppAccessToken(types.ClientAppAccessToken)
 
@@ -263,7 +260,6 @@ type mandelboxData struct {
 	tty       ttys.TTY
 	gpuIndex  gpus.Index
 
-	configEncryptionToken types.ConfigEncryptionToken
 	clientAppAccessToken  types.ClientAppAccessToken
 	privateKey            types.PrivateKey
 
@@ -332,20 +328,6 @@ func (mandelbox *mandelboxData) GetLastUpdatedTime() time.Time {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.updatedAt
-}
-
-// GetConfigEncryptionToken returns the config encryption token.
-func (mandelbox *mandelboxData) GetConfigEncryptionToken() types.ConfigEncryptionToken {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
-	return mandelbox.configEncryptionToken
-}
-
-// SetConfigEncryptionToken sets the config encryption token.
-func (mandelbox *mandelboxData) SetConfigEncryptionToken(token types.ConfigEncryptionToken) {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-	mandelbox.configEncryptionToken = token
 }
 
 // GetPrivateKey returns the private key.
