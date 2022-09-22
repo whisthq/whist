@@ -97,6 +97,7 @@ jobs:
 
       - name: Verify Builds with clang-tidy on macOS
         if: runner.os == 'macOS'
+        shell: bash --noprofile --norc -eo pipefail {0}
         working-directory: browser/hybrid
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
@@ -106,7 +107,9 @@ jobs:
           clang-tidy --version
 
           # Run clang-tidy (we need to use globstar for glob expansion on bash)
+          shopt -s globstar
           clang-tidy **/**.c **/**.cc **/**.cpp **/**.m **/**.mm **/**.h **/**.hpp
+          shopt -u globstar
 
       ###################################################################################
       ################################# LINUX STEPS START ###############################
