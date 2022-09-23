@@ -130,11 +130,12 @@ bool InterArrivalDelta::BelongsToBurst(Timestamp arrival_time,
   TimeDelta send_time_delta = send_time - current_timestamp_group_.send_time;
   if (send_time_delta.IsZero())
     return true;
+  /*
   if (ENABLE_WHIST_CHANGE)
   {
     if(send_time_delta.us()<30)
       return true;
-  }
+  }*/
   TimeDelta propagation_delta = arrival_time_delta - send_time_delta;
   if (propagation_delta < TimeDelta::Zero() &&
       arrival_time_delta <= kBurstDeltaThreshold &&
