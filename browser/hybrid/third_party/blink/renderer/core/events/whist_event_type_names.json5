@@ -1,0 +1,15 @@
+{
+  metadata: {
+    namespace: "whist_event_type_names",
+    export: "CORE_EXPORT",
+  },
+
+  data: [
+    "gesturepinchbegin",
+    "gesturepinchupdate",
+    "gesturepinchend",
+    // Your event type goes here, and is accessible using
+    // #include "third_party/blink/renderer/core/whist_event_type_names.h"
+    // as whist_event_type_names::kYoureventname
+  ],
+}
