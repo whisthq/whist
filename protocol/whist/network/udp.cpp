@@ -1743,7 +1743,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     int udp_packet_size = get_udp_packet_size(udp_packet);
     bool throttle = false;
     if (udp_packet->type == UDP_WHIST_SEGMENT) {
-        //udp_packet->udp_whist_segment_data.departure_time = current_time_us();  //this time is assigned before pacing, it's wrong!!
+        udp_packet->udp_whist_segment_data.departure_time = current_time_us();  //this time is assigned before pacing, it's wrong!!
         // Throttle only video packet. Audio packets are very small and run on reserved bandwidth
         // and ping/pong packets use negligible bandwidth.
         if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
@@ -1756,6 +1756,10 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     if (throttle) {
         udp_packet->group_id = network_throttler_wait_byte_allocation(
             context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
+    }
+
+    if (udp_packet->type == UDP_WHIST_SEGMENT) {
+        udp_packet->udp_whist_segment_data.departure_time = current_time_us();
     }
 
     UDPNetworkPacket udp_network_packet;
@@ -1773,10 +1777,6 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 
     // The size of the udp packet that actually needs to be sent over the network
     int udp_network_packet_size = UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size;
-
-    if (udp_packet->type == UDP_WHIST_SEGMENT) {
-        udp_packet->udp_whist_segment_data.departure_time = current_time_us();
-    }
 
     // If sending fails because of no buffer space available on the system, retry a few times.
     for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
