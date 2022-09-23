@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <string.h>
+#include <memory>
+
 
 extern "C"
 {

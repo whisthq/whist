@@ -9,7 +9,7 @@ else() # GCC and Clang base flags
   add_compile_options(
     "-Wall"
     "-Wextra"
-    "-Werror"
+    #"-Werror"
     # "-Wunreachable-code"
     "-Wno-missing-braces"
     "-Wno-unused-value"
