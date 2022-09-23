@@ -66,7 +66,7 @@ if [[ "$mode" == "dev" ]]; then
 elif [[ "$mode" == "metrics" ]]; then
   cmake_build_type=Metrics
   mode=dev
-  python_args+=(--quiet) # Don't print the output of Docker build, to keep logs more readable
+  python_args+=("--quiet") # Don't print the output of Docker build, to keep logs more readable
 else
   cmake_build_type=Release
 fi
