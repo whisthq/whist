@@ -9,12 +9,12 @@ import (
 // JSONTransportRequest defines the (unauthenticated) `json_transport`
 // endpoint.
 type JSONTransportRequest struct {
-	IP                    string                               `json:"ip"`                             // The public IPv4 address of the instance running the mandelbox
-	AppName               mandelboxtypes.AppName               `json:"app_name,omitempty"`             // The app name to spin up (used when running in localdev, but in deployment the app name is set to `utils.MandelboxApp`).
-	JwtAccessToken        string                               `json:"jwt_access_token"`               // User's JWT access token
-	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id"`                   // MandelboxID, used for the json transport request map
-	JSONData              mandelboxtypes.JSONData              `json:"json_data"`                      // Arbitrary stringified JSON data to pass to mandelbox
-	ResultChan            chan RequestResult                   `json:"-"`                              // Channel to pass the request result between goroutines
+	IP             string                     `json:"ip"`                 // The public IPv4 address of the instance running the mandelbox
+	AppName        mandelboxtypes.AppName     `json:"app_name,omitempty"` // The app name to spin up (used when running in localdev, but in deployment the app name is set to `utils.MandelboxApp`).
+	JwtAccessToken string                     `json:"jwt_access_token"`   // User's JWT access token
+	MandelboxID    mandelboxtypes.MandelboxID `json:"mandelbox_id"`       // MandelboxID, used for the json transport request map
+	JSONData       mandelboxtypes.JSONData    `json:"json_data"`          // Arbitrary stringified JSON data to pass to mandelbox
+	ResultChan     chan RequestResult         `json:"-"`                  // Channel to pass the request result between goroutines
 }
 
 // JSONTransportRequestResult defines the data returned by the

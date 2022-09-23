@@ -259,8 +259,8 @@ type mandelboxData struct {
 	tty       ttys.TTY
 	gpuIndex  gpus.Index
 
-	clientAppAccessToken  types.ClientAppAccessToken
-	privateKey            types.PrivateKey
+	clientAppAccessToken types.ClientAppAccessToken
+	privateKey           types.PrivateKey
 
 	uinputDevices        *uinputdevices.UinputDevices
 	uinputDeviceMappings []dockercontainer.DeviceMapping
