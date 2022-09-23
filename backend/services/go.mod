@@ -35,14 +35,8 @@ require (
 	golang.org/x/exp v0.0.0-20220915105810-2d61f44442a3
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
-)
-
-require (
 	github.com/aws/smithy-go v1.12.1 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
-)
-
-require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.14 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.12 // indirect
