@@ -21,6 +21,7 @@ require (
 	github.com/graph-gophers/graphql-go v1.3.0
 	github.com/graph-gophers/graphql-transport-ws v0.0.2
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hashicorp/go-version v1.6.0
 	github.com/hasura/go-graphql-client v0.7.1
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgtype v1.12.0
@@ -29,14 +30,17 @@ require (
 	github.com/logzio/logzio-go v1.0.6
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/pierrec/lz4/v4 v4.1.15
+	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil/v3 v3.22.7
+	github.com/stripe/stripe-go/v72 v72.122.0
 	go.uber.org/zap v1.22.0
 	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
 	golang.org/x/exp v0.0.0-20220915105810-2d61f44442a3
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
-	github.com/aws/smithy-go v1.12.1 // indirect
-	github.com/opentracing/opentracing-go v1.1.0 // indirect
+)
+
+require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.14 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.12 // indirect
@@ -46,6 +50,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.12 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.13 // indirect
+	github.com/aws/smithy-go v1.12.1 // indirect
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
 	github.com/containerd/containerd v1.6.6 // indirect
@@ -56,7 +61,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-version v1.6.0
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -71,12 +75,11 @@ require (
 	github.com/onsi/ginkgo v1.16.4 // indirect
 	github.com/onsi/gomega v1.17.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
-	github.com/pkg/errors v0.9.1
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/stripe/stripe-go/v72 v72.122.0
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
