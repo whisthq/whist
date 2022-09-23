@@ -33,8 +33,11 @@
 namespace webrtc {
 namespace {
 constexpr TimeDelta kStreamTimeOut = TimeDelta::Seconds(2);
+#if ENABLE_WHIST_CHANGE
+constexpr TimeDelta kSendTimeGroupLength = TimeDelta::Millis(4);
+# else
 constexpr TimeDelta kSendTimeGroupLength = TimeDelta::Millis(5);
-
+#endif
 // This ssrc is used to fulfill the current API but will be removed
 // after the API has been changed.
 constexpr uint32_t kFixedSsrc = 0;
