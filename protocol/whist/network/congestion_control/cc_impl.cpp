@@ -119,14 +119,6 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       RTC_CHECK(input.packet_loss.has_value());
       send_side_bwd->UpdatePacketsLostDirect(input.packet_loss.value(), current_time);
 
-      optional<webrtc::DataRate> incoming_optional;
-
-      if(input.incoming_bitrate.has_value())
-      {
-        send_side_bwd->SetAcknowledgedRate(webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value()),current_time);
-        incoming_optional = webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value());
-      }
-
 
       webrtc::TransportPacketsFeedback report;
       optional<webrtc::DataRate> dummy_probe;
@@ -137,10 +129,29 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       report.packet_feedbacks.emplace_back();
       report.packet_feedbacks[0].receive_time= webrtc::Timestamp::Millis(input.packets[0].arrival_time_ms);
       report.packet_feedbacks[0].sent_packet.send_time= webrtc::Timestamp::Millis(input.packets[0].depature_time_ms);
-      report.packet_feedbacks[0].sent_packet.size = webrtc::DataSize::Bytes(1000);
+      report.packet_feedbacks[0].sent_packet.size = webrtc::DataSize::Bytes(input.packets[0].packet_size);
+
+
+      acknowledged_bitrate_estimator_->IncomingPacketFeedbackVector(report.SortedByReceiveTime());
+
+       auto acknowledged_bitrate = acknowledged_bitrate_estimator_->bitrate();
+       /*
+      optional<webrtc::DataRate> incoming_optional;
+      if(input.incoming_bitrate.has_value())
+      {
+        send_side_bwd->SetAcknowledgedRate(webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value()),current_time);
+        incoming_optional = webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value());
+      }*/
+
+      if(acknowledged_bitrate.has_value())
+      {
+        send_side_bwd->SetAcknowledgedRate(webrtc::DataRate::BitsPerSec(acknowledged_bitrate->bps()),current_time);
+        whist_plotter_insert_sample("ack_bitrate", get_timestamp_sec(), acknowledged_bitrate->bps()/1000.0/100.0);
+        //incoming_optional = webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value());
+      }
 
       webrtc::DelayBasedBwe::Result result= delay_based_bwe->IncomingPacketFeedbackVector(
-      report, incoming_optional, dummy_probe, dummy_est,
+      report, acknowledged_bitrate, dummy_probe, dummy_est,
       false);
 
       if (result.updated) {

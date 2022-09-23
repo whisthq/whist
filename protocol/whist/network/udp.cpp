@@ -538,7 +538,7 @@ static void send_desired_network_settings(UDPContext* context) {
 }
 
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
-                                   timestamp_us arrival_time, int group_id) {
+                                   timestamp_us arrival_time, int group_id,int packet_size) {
     whist_lock_mutex(context->congestion_control_mutex);
 
     static timestamp_us d_first=0;
@@ -602,6 +602,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             input.packets.emplace_back();
             input.packets[0].arrival_time_ms= (a_relative/1000.0);
             input.packets[0].depature_time_ms= (d_relative/1000.0);
+            input.packets[0].packet_size = packet_size;
+            FATAL_ASSERT(packet_size>0);
 
             //input.packets[0].arrival_time_ms= (long long)input.packets[0].arrival_time_ms;
             //input.packets[0].depature_time_ms= (long long)input.packets[0].depature_time_ms;
@@ -779,15 +781,31 @@ static bool udp_update(void* raw_context) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
             if (packet_type == PACKET_VIDEO) {
                 add_incoming_bits(context, arrival_time, network_payload_size * BITS_IN_BYTE);
-                if (!udp_packet.udp_whist_segment_data.is_a_nack &&
-                    !udp_packet.udp_whist_segment_data.is_a_duplicate) {
-                    update_max_unordered_packets(&context->unordered_packet_info,
-                                                 udp_packet.udp_whist_segment_data.id,
-                                                 udp_packet.udp_whist_segment_data.index);
+                if(!wcc_v2)
+                {
+                    if (!udp_packet.udp_whist_segment_data.is_a_nack &&
+                        !udp_packet.udp_whist_segment_data.is_a_duplicate) {
+                        update_max_unordered_packets(&context->unordered_packet_info,
+                                                    udp_packet.udp_whist_segment_data.id,
+                                                    udp_packet.udp_whist_segment_data.index);
+                        if (udp_packet.group_id >= context->curr_group_id) {
+                            udp_congestion_control(context,
+                                                udp_packet.udp_whist_segment_data.departure_time,
+                                                arrival_time, udp_packet.group_id, network_payload_size);
+                        }
+                    }
+                }
+                else {
+                    if (!udp_packet.udp_whist_segment_data.is_a_nack &&
+                        !udp_packet.udp_whist_segment_data.is_a_duplicate) {
+                        update_max_unordered_packets(&context->unordered_packet_info,
+                                                    udp_packet.udp_whist_segment_data.id,
+                                                    udp_packet.udp_whist_segment_data.index);
+                        }
                     if (udp_packet.group_id >= context->curr_group_id) {
                         udp_congestion_control(context,
-                                               udp_packet.udp_whist_segment_data.departure_time,
-                                               arrival_time, udp_packet.group_id);
+                                            udp_packet.udp_whist_segment_data.departure_time,
+                                            arrival_time, udp_packet.group_id, network_payload_size);
                     }
                 }
             }

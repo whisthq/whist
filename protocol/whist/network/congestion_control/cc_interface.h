@@ -13,6 +13,7 @@ struct PacketInfo
 {
     double depature_time_ms;
     double arrival_time_ms;
+    int packet_size;
 };
 struct CCInput
 {
