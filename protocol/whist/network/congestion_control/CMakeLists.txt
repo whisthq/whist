@@ -23,6 +23,10 @@ set(COMMON_FILES
         rtc_base/experiments/field_trial_parser.cc
         system_wrappers/source/field_trial.cc
         rtc_base/checks.cc
+        modules/congestion_controller/goog_cc/acknowledged_bitrate_estimator.cc
+        modules/congestion_controller/goog_cc/acknowledged_bitrate_estimator_interface.cc
+        modules/congestion_controller/goog_cc/bitrate_estimator.cc
+        modules/congestion_controller/goog_cc/robust_throughput_estimator.cc
         )
 
 #add_executable(a.out main.cpp ${COMMON_FILES})

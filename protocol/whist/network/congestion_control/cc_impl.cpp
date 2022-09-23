@@ -32,11 +32,13 @@ using namespace std;
 #include "system_wrappers/include/field_trial.h"
 #include "api/field_trials.h"
 
+#include "modules/congestion_controller/goog_cc/acknowledged_bitrate_estimator_interface.h"
+
 class CongestionCongrollerImpl:CongestionCongrollerInterface
 {
     std::unique_ptr<webrtc::DelayBasedBwe> delay_based_bwe;
     std::unique_ptr<webrtc::SendSideBandwidthEstimation> send_side_bwd;
-
+    std::unique_ptr<webrtc::AcknowledgedBitrateEstimatorInterface> acknowledged_bitrate_estimator_;
 
     public:
     CongestionCongrollerImpl()
@@ -55,6 +57,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         delay_based_bwe= std::make_unique<webrtc::DelayBasedBwe> (ft,nullptr,nullptr);
         send_side_bwd= std::make_unique<webrtc::SendSideBandwidthEstimation> (ft,nullptr);
         delay_based_bwe->SetMinBitrate(webrtc::congestion_controller::GetMinBitrate());
+        acknowledged_bitrate_estimator_=webrtc::AcknowledgedBitrateEstimatorInterface::Create(ft);
         /*
         int a;
 
