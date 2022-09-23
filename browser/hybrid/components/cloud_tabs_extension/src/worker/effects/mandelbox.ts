@@ -61,7 +61,6 @@ merge(mandelboxError, hostError, socketReconnectFailed).subscribe(() => {
 })
 
 merge(webuiMandelboxNeeded, socketReconnectFailed)
-  .pipe(withLatestFrom(authSuccess))
   .subscribe(() => {
     whistState.activeCloudTabs = []
     whistState.waitingCloudTabs = []
