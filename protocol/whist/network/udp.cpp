@@ -624,7 +624,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             //printf("<<%f>>\n",input.packet_loss.value());
             //input.packet_loss=0;
 
-            if(context->short_term_latency>0){
+            if(context->raw_ping>0){
                 input.rtt_ms=context->raw_ping;
             }
 
@@ -1303,6 +1303,7 @@ bool create_udp_socket_context(SocketContext* network_context, const char* desti
         if (ret == 0) {
             context->fec_controller = create_fec_controller(get_timestamp_sec());
             context->congestion_controller = create_congestion_controller();
+            context->raw_ping=100;
         }
     }
 
