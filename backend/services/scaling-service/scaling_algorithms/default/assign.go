@@ -94,12 +94,8 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// The user requested access to only unavailable regions. This means the user is far from
 	// any of the available regions, and the frontend should handle that accordingly.
 	if len(unavailableRegions) == len(requestedRegions) {
-		logger.Errorf("user %s requested access to only unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
-	}
-
-	if len(availableRegions) == 0 {
 		serviceUnavailable = false
-		err := utils.MakeError("")
+		err := utils.MakeError("user %s requested access to only unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions, truncateTo))
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: REGION_NOT_ENABLED,
 		}, err)
