@@ -39,12 +39,12 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
     std::unique_ptr<webrtc::DelayBasedBwe> delay_based_bwe;
     std::unique_ptr<webrtc::SendSideBandwidthEstimation> send_side_bwd;
     std::unique_ptr<webrtc::AcknowledgedBitrateEstimatorInterface> acknowledged_bitrate_estimator_;
-
+    webrtc::FieldTrials * ft;
     public:
     CongestionCongrollerImpl()
     {
         webrtc::field_trial::InitFieldTrialsFromString("");
-        webrtc::FieldTrials * ft= new webrtc::FieldTrials("");
+        ft= new webrtc::FieldTrials("");
         /*
         webrtc::FieldTrials ft("WebRTC-Bwe-EstimateBoundedIncrease/"
         "ratio:0.85,ignore_acked:true,immediate_incr:false/"
@@ -84,6 +84,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
 
    ~CongestionCongrollerImpl() override
    {
+      delete ft;
    }
 
   virtual CCOutput feed_info(CCInput input) override
@@ -197,4 +198,5 @@ void *create_congestion_controller()
 void destory_congestion_controller(void *p)
 {
   CongestionCongrollerImpl * object= (CongestionCongrollerImpl*)p;
+  delete object;
 }

@@ -14,6 +14,8 @@ extern "C"
 #include "whist/utils/clock.h"
 }
 
+
+#define ENABLE_WHIST_CHANGE true
 namespace webrtc
 {
     /*struct FieldTrialsView{

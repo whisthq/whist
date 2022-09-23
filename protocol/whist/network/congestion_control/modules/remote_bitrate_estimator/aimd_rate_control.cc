@@ -415,6 +415,11 @@ DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
   double time_period_seconds = (at_time - last_time).seconds<double>();
   double data_rate_increase_bps =
       GetNearMaxIncreaseRateBpsPerSecond() * time_period_seconds;
+  if(ENABLE_WHIST_CHANGE){
+    if(data_rate_increase_bps < 0.01*current_bitrate_.bps() * time_period_seconds){
+      data_rate_increase_bps = 0.01*current_bitrate_.bps() * time_period_seconds;
+    }
+  }
   return DataRate::BitsPerSec(data_rate_increase_bps);
 }
 
