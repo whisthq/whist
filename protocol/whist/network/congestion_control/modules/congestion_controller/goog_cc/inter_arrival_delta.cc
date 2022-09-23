@@ -53,6 +53,8 @@ bool InterArrivalDelta::ComputeDeltas(Timestamp send_time,
           current_timestamp_group_.send_time - prev_timestamp_group_.send_time;
       *arrival_time_delta = current_timestamp_group_.complete_time -
                             prev_timestamp_group_.complete_time;
+      whist_plotter_insert_sample("new group a", current_timestamp_group_.complete_time.us()/1e6, -10);
+      whist_plotter_insert_sample("new group d", current_timestamp_group_.send_time.us()/1e6, -11);
       //fprintf(stderr,"[[%f,%f;%f,%f]]\n",current_timestamp_group_.send_time.us()/1000.0,prev_timestamp_group_.send_time.us()/1000.0,current_timestamp_group_.complete_time.us()/1000.0,prev_timestamp_group_.complete_time.us()/1000.0);
       TimeDelta system_time_delta = current_timestamp_group_.last_system_time -
                                     prev_timestamp_group_.last_system_time;
