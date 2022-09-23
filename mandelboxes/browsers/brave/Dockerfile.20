@@ -72,7 +72,8 @@ RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser \
     && touch /home/whist/.config/BraveSoftware/Brave-Browser/'First Run' \
     && chown whist:whist /home/whist/.config/BraveSoftware/Brave-Browser{,/'First Run'}
 
-ENV WHIST_DEST_BROWSER="brave"
+RUN echo "brave" > /home/whist/.browser_application \
+    && chown whist:whist /home/whist/.browser_application
 
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/brave-browser /usr/bin/whist-open-new-tab

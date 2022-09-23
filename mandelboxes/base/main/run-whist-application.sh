@@ -54,15 +54,10 @@ else
 fi
 cp -f $FONT_CONFIG_CUSTOM_FILE $FONTCONFIG_LOCAL_FOLDER/fonts.conf
 
-if [[ -z ${WHIST_DEST_BROWSER+1} ]]; then
-  echo "WHIST_DEST_BROWSER is not set! Defaulting to Chrome"
-  WHIST_DEST_BROWSER="chrome"
-fi
-
 # To avoid interfering with Filebeat, the logs files should not contain hyphens in the name before the {-out, -err}.log suffix
 APPLICATION_OUT_FILENAME=/home/whist/whist_application-out.log
 APPLICATION_ERR_FILENAME=/home/whist/whist_application-err.log
 
 # Start the application that this mandelbox runs
-exec whist-application $WHIST_DEST_BROWSER > $APPLICATION_OUT_FILENAME 2>$APPLICATION_ERR_FILENAME
+exec whist-application > $APPLICATION_OUT_FILENAME 2>$APPLICATION_ERR_FILENAME
 

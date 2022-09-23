@@ -38,12 +38,6 @@ fi
 # leak in any way (probably redundant, but still good practice)
 unset WHIST_AES_KEY
 
-# If WHIST_DEST_BROWSER is set, then create file
-if [ -n "${WHIST_DEST_BROWSER+1}" ]
-then
-  echo "$WHIST_DEST_BROWSER" > $WHIST_PRIVATE_DIR/user_dest_browser
-fi
-
 # Remove a vestigal file that we do not use.
 # This is how LXC used to read environment variables: see that deprecated code in
 # https://github.com/moby/moby/blob/v1.9.1/daemon/execdriver/lxc/init.go#L107-L134

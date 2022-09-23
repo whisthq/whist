@@ -18,16 +18,17 @@ set -Eeuo pipefail
 # Start socketio server in the background
 /opt/teleport/socketio-server &
 
-BROWSER_APPLICATION="${1:-chrome}"
+BROWSER_APPLICATION=$(cat /home/whist/.browser_application)
+BROWSER_APPLICATION=${BROWSER_APPLICATION:-chrome}
 if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
-  USER_DATA_DIR="${2:-$HOME/.config/BraveSoftware/Brave-Browser}"
+  USER_DATA_DIR="${1:-$HOME/.config/BraveSoftware/Brave-Browser}"
 elif [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
-  USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
+  USER_DATA_DIR="${1:-$HOME/.config/google-chrome}"
 elif [[ "$BROWSER_APPLICATION" == "chromium" ]]; then
-  USER_DATA_DIR="${2:-$HOME/.config/chromium}"
+  USER_DATA_DIR="${1:-$HOME/.config/chromium}"
 else
   echo "Browser name not set or invalid. Using the default option, Chrome."
-  USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
+  USER_DATA_DIR="${1:-$HOME/.config/google-chrome}"
 fi
 
 # Under certain (bad) circumstances, SingletonLock might be saved into the user's config. This is an issue,
