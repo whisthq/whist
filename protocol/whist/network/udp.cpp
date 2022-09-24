@@ -250,6 +250,7 @@ typedef struct {
 
     void* fec_controller;
     void* congestion_controller;
+    bool first_time;
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -546,11 +547,12 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     static timestamp_us a_first=0;
     static double t_first=0;
 
-    if(!t_first)
+    if(context->first_time)
     {
         t_first= get_timestamp_sec();
         d_first= departure_time;
         a_first= arrival_time;
+        context->first_time=false;
     }
 
     timestamp_us d_relative= departure_time - d_first +t_first*1e6;
@@ -559,8 +561,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     //whist_plotter_insert_sample("departure_time", get_timestamp_sec(), d_relative/1000.0);
     //whist_plotter_insert_sample("arrival_time", get_timestamp_sec(), a_relative/1000.0);
 
-    whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0);
-    whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0-25);
+    whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0  -10);
+    whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0- 20);
 
     // Initialize desired_network_settings if it is not done yet. Also send that starting bitrate
     // setting to server.
@@ -592,10 +594,15 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
 
             double start_rate,min_rate,max_rate;
             get_bitrates(&start_rate, &min_rate, &max_rate);
-            static int first_time=1;
-            if(first_time){
+
+
+            bool global_first_time=true;
+            if(global_first_time==0){
                 input.start_bitrate=start_rate;
-                first_time=0;
+                global_first_time=false;
+            }
+            else {
+                input.start_bitrate=min_rate;
             }
             input.max_bitrate=max_rate;
             input.min_bitrate=min_rate;
@@ -1304,6 +1311,7 @@ bool create_udp_socket_context(SocketContext* network_context, const char* desti
             context->fec_controller = create_fec_controller(get_timestamp_sec());
             context->congestion_controller = create_congestion_controller();
             context->raw_ping=100;
+            context->first_time=true;
         }
     }
 

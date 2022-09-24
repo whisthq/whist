@@ -289,6 +289,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
             return WHIST_ERROR_UNKNOWN;
         }
 
+        LOG_INFO("[resolution] detected: %d %d",display_info.w,display_info.h);
         if(force_resolution){
             int w=-1,h=-1;
             sscanf(force_resolution,"%dx%d",&w,&h);

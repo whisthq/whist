@@ -40,6 +40,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
     std::unique_ptr<webrtc::SendSideBandwidthEstimation> send_side_bwd;
     std::unique_ptr<webrtc::AcknowledgedBitrateEstimatorInterface> acknowledged_bitrate_estimator_;
     webrtc::FieldTrials * ft;
+    bool first_time=true;
     public:
     CongestionCongrollerImpl()
     {
@@ -101,15 +102,15 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       }
 
 
-      RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value());
+      RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value() && input.start_bitrate.has_value());
 
       std::optional<webrtc::DataRate> start_rate;
-      if(input.start_bitrate.has_value())
+      if(first_time)
       {
          start_rate=webrtc::DataRate::BitsPerSec(input.start_bitrate.value());
          delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
          delay_based_bwe->SetStartBitrate(start_rate.value());
-
+         first_time=false;
       }
 
       send_side_bwd->SetBitrates(start_rate, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),

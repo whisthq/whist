@@ -34,7 +34,7 @@ namespace webrtc {
 namespace {
 constexpr TimeDelta kStreamTimeOut = TimeDelta::Seconds(2);
 #if ENABLE_WHIST_CHANGE
-constexpr TimeDelta kSendTimeGroupLength = TimeDelta::Millis(4);
+constexpr TimeDelta kSendTimeGroupLength = TimeDelta::Micros(4800);
 # else
 constexpr TimeDelta kSendTimeGroupLength = TimeDelta::Millis(5);
 #endif

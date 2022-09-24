@@ -18,7 +18,7 @@
 
 namespace webrtc {
 #if ENABLE_WHIST_CHANGE
-static constexpr TimeDelta kBurstDeltaThreshold = TimeDelta::Millis(4);
+static constexpr TimeDelta kBurstDeltaThreshold = TimeDelta::Micros(4800);
 #else
 static constexpr TimeDelta kBurstDeltaThreshold = TimeDelta::Millis(5);
 #endif
@@ -56,8 +56,13 @@ bool InterArrivalDelta::ComputeDeltas(Timestamp send_time,
           current_timestamp_group_.send_time - prev_timestamp_group_.send_time;
       *arrival_time_delta = current_timestamp_group_.complete_time -
                             prev_timestamp_group_.complete_time;
-      whist_plotter_insert_sample("new group a", current_timestamp_group_.complete_time.us()/1e6, -10);
+
       whist_plotter_insert_sample("new group d", current_timestamp_group_.send_time.us()/1e6, -11);
+      //whist_plotter_insert_sample("new group d with delta", current_timestamp_group_.send_time.us()/1e6, -10 + (arrival_time_delta->us() -send_time_delta->us())/1e3);
+
+      whist_plotter_insert_sample("new group a", current_timestamp_group_.complete_time.us()/1e6, -19);
+      //whist_plotter_insert_sample("new group a with delta", current_timestamp_group_.complete_time.us()/1e6, -15 + (arrival_time_delta->us() -send_time_delta->us())/1e3);
+
       //fprintf(stderr,"[[%f,%f;%f,%f]]\n",current_timestamp_group_.send_time.us()/1000.0,prev_timestamp_group_.send_time.us()/1000.0,current_timestamp_group_.complete_time.us()/1000.0,prev_timestamp_group_.complete_time.us()/1000.0);
       TimeDelta system_time_delta = current_timestamp_group_.last_system_time -
                                     prev_timestamp_group_.last_system_time;
@@ -133,7 +138,7 @@ bool InterArrivalDelta::BelongsToBurst(Timestamp arrival_time,
   /*
   if (ENABLE_WHIST_CHANGE)
   {
-    if(send_time_delta.us()<30)
+    if(send_time_delta.us()<50)
       return true;
   }*/
   TimeDelta propagation_delta = arrival_time_delta - send_time_delta;
