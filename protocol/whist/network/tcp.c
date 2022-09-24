@@ -530,6 +530,7 @@ static void tcp_destroy_socket_context(void* raw_context) {
     whist_post_semaphore(context->send_semaphore);
     whist_wait_thread(context->send_thread, NULL);
     fifo_queue_destroy(context->send_queue);
+    whist_destroy_semaphore(context->send_semaphore);
 
     closesocket(context->socket);
     closesocket(context->listen_socket);
