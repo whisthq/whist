@@ -2553,8 +2553,8 @@ TEST_F(ProtocolTest, TCPSocketPairTest) {
     WhistThread server_thread = whist_create_thread(
         [](void* s) {
             const char* k = "9d3ff73c663e13bce0780d1b95c89582";
-            return (int)create_tcp_socket_context((SocketContext*)s, NULL, BASE_TCP_PORT, 1,
-                                                  1000, false, k);
+            return (int)create_tcp_socket_context((SocketContext*)s, NULL, BASE_TCP_PORT, 1, 1000,
+                                                  false, k);
         },
         "tcp_server_thread", &server);
     EXPECT_TRUE(
