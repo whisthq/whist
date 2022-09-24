@@ -118,7 +118,9 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
 
       RTC_CHECK(input.packet_loss.has_value());
-      send_side_bwd->UpdatePacketsLostDirect(input.packet_loss.value(), current_time);
+      RTC_CHECK(input.packet_loss.value()>=0 && input.packet_loss.value()<=1);
+      send_side_bwd->UpdatePacketsLost(1e6*input.packet_loss.value(), 1e6,current_time);
+      //send_side_bwd->UpdatePacketsLostDirect(input.packet_loss.value(), current_time);
 
 
       webrtc::TransportPacketsFeedback report;
