@@ -133,7 +133,10 @@ DelayBasedBwe::Result DelayBasedBwe::IncomingPacketFeedbackVector(
     prev_detector_state = active_delay_detector_->State();
   }
 
-  whist_plotter_insert_sample("signal", get_timestamp_sec(), int(active_delay_detector_->State())*50+50);
+  whist_plotter_insert_sample("signal", get_timestamp_sec(), 100 +
+          (active_delay_detector_->State()==webrtc::BandwidthUsage::kBwOverusing)*50 +
+          (active_delay_detector_->State()==webrtc::BandwidthUsage::kBwUnderusing)*(-50)
+          );
 
   if (delayed_feedback) {
     // TODO(bugs.webrtc.org/10125): Design a better mechanism to safe-guard
