@@ -96,9 +96,9 @@ Public Functions
  * @return                          The UDP network context on success, NULL
  *                                  on failure
  */
-bool create_udp_socket_context(SocketContext* context, char* destination, int port,
+bool create_udp_socket_context(SocketContext* context, const char* destination, int port,
                                int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key);
+                               const char* binary_aes_private_key);
 
 /**
  * @brief                          Registers a nack buffer, so that future nacks can be handled.

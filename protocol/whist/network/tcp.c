@@ -160,7 +160,7 @@ int create_tcp_server_context(TCPContext* context, int port, int connection_time
  * @note                           This may overwrite the timeout on context->socket,
  *                                 Use set_timeout to restore it
  */
-int create_tcp_client_context(TCPContext* context, char* destination, int port,
+int create_tcp_client_context(TCPContext* context, const char* destination, int port,
                               int connection_timeout_ms);
 
 /**
@@ -530,6 +530,7 @@ static void tcp_destroy_socket_context(void* raw_context) {
     whist_post_semaphore(context->send_semaphore);
     whist_wait_thread(context->send_thread, NULL);
     fifo_queue_destroy(context->send_queue);
+    whist_destroy_semaphore(context->send_semaphore);
 
     closesocket(context->socket);
     closesocket(context->listen_socket);
@@ -544,9 +545,9 @@ Public Function Implementations
 ============================
 */
 
-bool create_tcp_socket_context(SocketContext* network_context, char* destination, int port,
+bool create_tcp_socket_context(SocketContext* network_context, const char* destination, int port,
                                int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key) {
+                               const char* binary_aes_private_key) {
     /*
         Create a TCP socket context
 
@@ -557,7 +558,7 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
             recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
             connection_timeout_ms (int): timeout, in milliseconds, for socket connection
             using_stun (bool): Whether or not to use STUN
-            binary_aes_private_key (char*): The 16byte AES key to use
+            binary_aes_private_key (const char*): The 16byte AES key to use
 
         Returns:
             (int): -1 on failure, 0 on success
@@ -748,7 +749,7 @@ int create_tcp_server_context(TCPContext* context, int port, int connection_time
     return 0;
 }
 
-int create_tcp_client_context(TCPContext* context, char* destination, int port,
+int create_tcp_client_context(TCPContext* context, const char* destination, int port,
                               int connection_timeout_ms) {
     FATAL_ASSERT(context != NULL);
     FATAL_ASSERT(destination != NULL);
