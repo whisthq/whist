@@ -120,7 +120,12 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
 
       RTC_CHECK(input.packet_loss.has_value());
       RTC_CHECK(input.packet_loss.value()>=0 && input.packet_loss.value()<=1);
-      send_side_bwd->UpdatePacketsLost(1e6*input.packet_loss.value(), 1e6,current_time);
+
+      double packet_loss= input.packet_loss.value();
+      //packet_loss-=0.05; // might have problem, maybe better to change inside loss based controller
+      packet_loss = max<double>(0,packet_loss);
+
+      send_side_bwd->UpdatePacketsLost(1e6*packet_loss, 1e6,current_time);
       //send_side_bwd->UpdatePacketsLostDirect(input.packet_loss.value(), current_time);
 
 
