@@ -6,6 +6,7 @@
 #ifndef WHIST_CORE_WHIST_MEMORY_H
 #define WHIST_CORE_WHIST_MEMORY_H
 
+#include <whist/core/whist.h>
 #include <stdbool.h>
 #include <stddef.h>
 
