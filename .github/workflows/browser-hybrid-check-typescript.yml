@@ -3,8 +3,8 @@ name: "Hybrid Browser: Check Typescript"
 on:
   pull_request:
     paths:
-      - "browsers/hybrid/components/cloud_tabs_extension/**"
-      - "browsers/hybrid/components/cloud_tabs_ui/**"
+      - "browser/hybrid/components/cloud_tabs_extension/**"
+      - "browser/hybrid/components/cloud_tabs_ui/**"
       - ".github/workflows/browser-hybrid-check-typescript.yml"
   workflow_dispatch:
 
