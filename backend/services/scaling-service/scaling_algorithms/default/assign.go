@@ -190,7 +190,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		logger.Errorw(utils.Sprintf("failed to assign user to closest region: assigned to %s instead of %s (region %d of %d)",
 			assignedInstance.Region, availableRegions[0], instanceProximityIndex+1, len(availableRegions)), contextFields)
 	} else {
-		logger.Infow(utils.Sprintf("Successfully assigned user to closest requested region."), contextFields)
+		logger.Infow(utils.Sprintf("Successfully assigned user to closest requested region %s", assignedInstance.Region), contextFields)
 	}
 
 	var (
