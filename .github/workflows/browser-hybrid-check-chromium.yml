@@ -1,0 +1,37 @@
+name: "Hybrid Browser: Check Chromium"
+
+on:
+  pull_request:
+    paths:
+      - "browser/hybrid/**/**.c"
+      - "browser/hybrid/**/**.cc"
+      - "browser/hybrid/**/**.cpp"
+      - "browser/hybrid/**/**.m"
+      - "browser/hybrid/**/**.mm"
+      - "browser/hybrid/**/**.h"
+      - "browser/hybrid/**/**.hpp"
+      - ".github/workflows/browser-hybrid-check-chromium.yml"
+  workflow_dispatch:
+
+# This guarantees that if you push many commits to the same PR, only the latest
+# commit will get run (others get cancelled)
+concurrency:
+  group: browser-hybrid-check-chromium-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  browser-chromium-linting-check-pr-linting:
+    name: Chromium Linting
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      # See here for the Chromium script we import and use to lint:
+      # https://chromium.googlesource.com/chromium/tools/depot_tools/+/refs/heads/main/cpplint.py
+      - name: Check Chromium Linting
+        working-directory: browser/hybrid
+        run: |
+          files_to_lint=$(find . -type f \( -name "*.c" -o -name "*.cc" -o -name "*.cpp" -o -name "*.cu" -o -name "*.m" -o -name "*.mm" -o -name "*.h" -o -name "*.hpp" -o -name "*.cuh" \))
+          ../../.github/workflows/helpers/chromium/cpplint.py --verbose=5 --counting=detailed --extensions=c,cc,cpp,cu,m,mm,h,hpp,cuh --root=../../.. $files_to_lint

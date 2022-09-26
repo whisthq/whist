@@ -4,8 +4,8 @@
 //
 // Copyright 2022 Whist Technologies, Inc. All rights reserved.
 
-#ifndef THIRD_PARTY_BLINK_PUBLIC_WEB_MODULES_MEDIASTREAM_WHIST_SOURCE_H_
-#define THIRD_PARTY_BLINK_PUBLIC_WEB_MODULES_MEDIASTREAM_WHIST_SOURCE_H_
+#ifndef WHIST_BROWSER_HYBRID_THIRD_PARTY_BLINK_PUBLIC_WEB_MODULES_MEDIASTREAM_WHIST_SOURCE_H_
+#define WHIST_BROWSER_HYBRID_THIRD_PARTY_BLINK_PUBLIC_WEB_MODULES_MEDIASTREAM_WHIST_SOURCE_H_
 
 namespace blink {
 
@@ -32,7 +32,7 @@ namespace blink {
 class WhistSource {
   public:
     WhistSource() : is_whist_(false) {}
-    WhistSource(int window_id) : is_whist_(true), window_id_(window_id) {}
+    explicit WhistSource(int window_id) : is_whist_(true), window_id_(window_id) {}
     bool IsWhist() const { return is_whist_; }
     int GetWindowId() const { return window_id_; }
   private:
@@ -42,4 +42,4 @@ class WhistSource {
 
 }  // namespace blink
 
-#endif  // THIRD_PARTY_BLINK_PUBLIC_WEB_MODULES_MEDIASTREAM_WHIST_SOURCE_H_
+#endif  // WHIST_BROWSER_HYBRID_THIRD_PARTY_BLINK_PUBLIC_WEB_MODULES_MEDIASTREAM_WHIST_SOURCE_H_

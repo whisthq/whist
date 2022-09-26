@@ -1,7 +1,7 @@
 // Copyright 2022 Whist Technologies, Inc. All rights reserved.
 
-#ifndef CHROME_BROWSER_UI_WEBUI_WHIST_CLOUD_WHIST_CLOUD_UI_H_
-#define CHROME_BROWSER_UI_WEBUI_WHIST_CLOUD_WHIST_CLOUD_UI_H_
+#ifndef WHIST_BROWSER_HYBRID_BROWSER_UI_WEBUI_CLOUD_TABS_UI_CLOUD_TABS_UI_H_
+#define WHIST_BROWSER_HYBRID_BROWSER_UI_WEBUI_CLOUD_TABS_UI_CLOUD_TABS_UI_H_
 
 #include "content/public/browser/web_ui_controller.h"
 
@@ -16,4 +16,4 @@ class WhistCloudUI : public content::WebUIController {
   ~WhistCloudUI() override;
 };
 
-#endif  // CHROME_BROWSER_UI_WEBUI_WHIST_CLOUD_WHIST_CLOUD_UI_H_
+#endif  // WHIST_BROWSER_HYBRID_BROWSER_UI_WEBUI_CLOUD_TABS_UI_CLOUD_TABS_UI_H_

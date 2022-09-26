@@ -1,3 +1,4 @@
+// Copyright 2022 Whist Technologies, Inc. All rights reserved.
 #include "whist_string_event.h"
 
 #include "third_party/blink/renderer/bindings/core/v8/v8_whist_string_event_init.h"

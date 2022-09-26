@@ -110,7 +110,7 @@ class HTMLWhistElement::HTMLWhistElementResizeObserverDelegate final
 
 class HTMLWhistElement::WheelEventListener : public NativeEventListener {
  public:
-  WheelEventListener(HTMLWhistElement* element) : element_(element) {
+  explicit WheelEventListener(HTMLWhistElement* element) : element_(element) {
     DCHECK(element);
   }
   WheelEventListener(const WheelEventListener&) = delete;
@@ -516,7 +516,7 @@ void HTMLWhistElement::OpenFileChooser() {
 // As a result, we may need to rewrite GetChosenFile() for Windows.
 const char* HTMLWhistElement::GetChosenFile() {
   base::TimeDelta timeout = base::Milliseconds(50);
-  while(!waitable_event_.TimedWait(timeout)) {
+  while (!waitable_event_.TimedWait(timeout)) {
     FileChooser *file_chooser = FileChooserOrNull();
     // Handle the case where user could have closed the file chooser popup
     // without selecting any file

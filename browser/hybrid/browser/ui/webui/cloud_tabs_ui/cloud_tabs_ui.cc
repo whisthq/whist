@@ -44,7 +44,7 @@ class CloudUIHandler : public WebUIMessageHandler {
 
 // Added by Whist
 void CloudUIHandler::RegisterMessages() {}
-}
+}  // namespace
 
 std::string RandomString() {
   std::string random_string;
