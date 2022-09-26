@@ -4,7 +4,6 @@ import {
   switchMap,
   filter,
   share,
-  startWith,
   count,
   take,
   withLatestFrom,
@@ -31,7 +30,8 @@ const socketConnected = socket.pipe(
   switchMap((s: Socket) =>
     fromEvent(s, "connected").pipe(
       filter((clientsConnected: number) => clientsConnected === 2),
-      withLatestFrom(of(s))
+      withLatestFrom(of(s)),
+      take(1)
     )
   ),
   map(([, s]: [any, Socket]) => s)
@@ -53,15 +53,4 @@ const socketReconnectFailed = merge(socket, socketConnected).pipe(
   )
 )
 
-const socketStatus = merge(
-  socketConnected.pipe(map(() => true)),
-  socketDisconnected.pipe(map(() => false))
-).pipe(startWith(false))
-
-export {
-  socket,
-  socketConnected,
-  socketDisconnected,
-  socketStatus,
-  socketReconnectFailed,
-}
+export { socket, socketConnected, socketDisconnected, socketReconnectFailed }

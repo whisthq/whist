@@ -6,20 +6,20 @@ import {
   clientCookieRemoved,
   serverCookieAdded,
 } from "@app/worker/events/cookies"
-import { socketConnected } from "@app/worker/events/socketio"
+import { socket, socketConnected } from "@app/worker/events/socketio"
 
 import { whistState } from "@app/worker/utils/state"
 
 // If a cookie is added in a local tab, add it to a cloud tab
 clientCookieAdded
-  .pipe(withLatestFrom(socketConnected))
+  .pipe(withLatestFrom(socket))
   .subscribe(([cookie, socket]: [chrome.cookies.Cookie, Socket]) => {
     socket.emit("server-add-cookie", cookie)
   })
 
 // If a cookie is removed from a local tab, remove it from the cloud tab
 clientCookieRemoved
-  .pipe(withLatestFrom(socketConnected))
+  .pipe(withLatestFrom(socket))
   .subscribe(([cookie, socket]: [chrome.cookies.Cookie, Socket]) => {
     socket.emit("server-remove-cookie", cookie)
   })

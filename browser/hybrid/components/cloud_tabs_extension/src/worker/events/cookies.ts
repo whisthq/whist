@@ -4,7 +4,7 @@ import { Socket } from "socket.io-client"
 import find from "lodash.find"
 import isEqual from "lodash.isequal"
 
-import { socketConnected } from "@app/worker/events/socketio"
+import { socket } from "@app/worker/events/socketio"
 import { whistState } from "@app/worker/utils/state"
 import { NodeEventHandler } from "rxjs/internal/observable/fromEvent"
 
@@ -38,11 +38,11 @@ const clientCookieRemoved = fromEventPattern<chrome.cookies.CookieChangeInfo>(
   map(({ cookie }) => cookie)
 )
 
-const serverCookieAdded = socketConnected.pipe(
+const serverCookieAdded = socket.pipe(
   switchMap((s: Socket) => fromEvent(s, "client-add-cookie"))
 )
 
-const serverCookiesSynced = socketConnected.pipe(
+const serverCookiesSynced = socket.pipe(
   switchMap((s: Socket) => fromEvent(s, "cookie-sync-complete"))
 )
 
