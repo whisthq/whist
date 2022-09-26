@@ -21,6 +21,10 @@ import {
   platform,
   keyboardRepeatRate,
   keyboardRepeatInitialDelay,
+  userLocale,
+  browserLanguages,
+  systemLanguages,
+  location,
 } from "@app/worker/utils/jsonTransport"
 import { mandelboxSuccess } from "@app/worker/events/mandelbox"
 
@@ -31,11 +35,15 @@ const jsonTransport = async () => {
   const t = timeZone()
   const u = userAgent()
 
-  const [d, p, r, i] = await Promise.all([
+  const [d, p, r, i, locationVar, browserLangs, systemLangs, locale] = await Promise.all([
     darkMode(),
     platform(),
     keyboardRepeatRate(),
     keyboardRepeatInitialDelay(),
+    location(),
+    browserLanguages(),
+    systemLanguages(),
+    userLocale(),
   ])
 
   return {
@@ -46,6 +54,11 @@ const jsonTransport = async () => {
     client_dpi: window.devicePixelRatio * 96,
     key_repeat: r,
     initial_key_repeat: i,
+    user_locale: locale,
+    browser_languages: browserLangs,
+    system_languages: systemLangs,
+    latitude: locationVar.latitude,
+    longitude: locationVar.longitude,
   }
 }
 
