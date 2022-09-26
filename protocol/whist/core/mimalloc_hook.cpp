@@ -28,7 +28,7 @@ static void* (*system_memalign)(malloc_zone_t* zone, size_t alignment, size_t si
 static void (*system_free_definite_size)(malloc_zone_t* zone, void* ptr, size_t size);
 static size_t (*system_pressure_relief)(malloc_zone_t* zone, size_t goal);
 
-// Our malloc_zone members
+// Our malloc_zone members; these are copied from mimalloc's override file
 
 static size_t whist_size(malloc_zone_t* zone, const void* p) {
     UNUSED(zone);
@@ -107,7 +107,6 @@ static boolean_t whist_claimed_address(malloc_zone_t* zone, void* p) {
 static kern_return_t intro_enumerator(task_t task, void* p, unsigned type_mask,
                                       vm_address_t zone_address, memory_reader_t reader,
                                       vm_range_recorder_t recorder) {
-    // todo: enumerate all memory
     UNUSED(task);
     UNUSED(p);
     UNUSED(type_mask);
@@ -139,19 +138,12 @@ static void intro_log(malloc_zone_t* zone, void* p) {
     // todo?
 }
 
-static void intro_force_lock(malloc_zone_t* zone) {
-    UNUSED(zone);
-    // todo?
-}
+static void intro_force_lock(malloc_zone_t* zone) { UNUSED(zone); }
 
-static void intro_force_unlock(malloc_zone_t* zone) {
-    UNUSED(zone);
-    // todo?
-}
+static void intro_force_unlock(malloc_zone_t* zone) { UNUSED(zone); }
 
 static void intro_statistics(malloc_zone_t* zone, malloc_statistics_t* stats) {
     UNUSED(zone);
-    // todo...
     stats->blocks_in_use = 0;
     stats->size_in_use = 0;
     stats->max_size_in_use = 0;
@@ -264,7 +256,8 @@ void init_whist_malloc_hook() {
     LOG_INFO("mlocking statics");
     mlock_statics();
     LOG_INFO("Initializing custom malloc");
-    // mlock_context.lock = whist_create_mutex();
+    // This zone replacement is copied from mimalloc; I've preserved the comments in case we want to
+    // try to resolve them in the future
     page_size = sysconf(_SC_PAGESIZE);
     malloc_zone_t* purgeable_zone = NULL;
 

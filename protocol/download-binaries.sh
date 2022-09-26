@@ -157,25 +157,21 @@ fi
 # Download mimalloc libraries
 ###############################
 
+if [[ "$OS" == "Darwin" ]]; then
 # Select mimalloc lib dir and mimalloc lib targz name based on OS and hardware architecture (macOS)
-MIMALLOC_LIB_DIR="$DEST_DIR/lib/64/mimalloc/$OS"
-if [[ "$OS" =~ "Windows" ]]; then
-  MIMALLOC_LIB="whist-windows-mimalloc-shared-lib.tar.gz"
-elif [[ "$OS" == "Darwin" ]]; then
+  MIMALLOC_LIB_DIR="$DEST_DIR/lib/64/mimalloc/$OS"
   if [[ "$MACOS_ARCH" == "arm64" ]]; then
-    MIMALLOC_LIB="whist-macos-arm64-mimalloc-shared-lib.tar.gz"
+    MIMALLOC_LIB="whist-macos-arm64-mimalloc-static-lib.tar.gz"
   else
-    MIMALLOC_LIB="whist-macos-x64-mimalloc-shared-lib.tar.gz"
+    MIMALLOC_LIB="whist-macos-x64-mimalloc-static-lib.tar.gz"
   fi
-elif [[ "$OS" == "Linux" ]]; then
-  MIMALLOC_LIB="whist-linux-mimalloc-shared-lib.tar.gz"
-fi
 
-# Check if MIMALLOC_LIB has updated, and if so, create the dir and copy the libs into the source dir
-if has_updated "$MIMALLOC_LIB"; then
-  rm -rf "$MIMALLOC_LIB_DIR"
-  mkdir -p "$MIMALLOC_LIB_DIR"
-  aws s3 cp --only-show-errors "s3://whist-protocol-dependencies/$MIMALLOC_LIB" - | tar -xz -C "$MIMALLOC_LIB_DIR"
+  # Check if MIMALLOC_LIB has updated, and if so, create the dir and copy the libs into the source dir
+  if has_updated "$MIMALLOC_LIB"; then
+    rm -rf "$MIMALLOC_LIB_DIR"
+    mkdir -p "$MIMALLOC_LIB_DIR"
+    aws s3 cp --only-show-errors "s3://whist-protocol-dependencies/$MIMALLOC_LIB" - | tar -xz -C "$MIMALLOC_LIB_DIR"
+  fi
 fi
 ###############################
 # Download OpenSSL headers

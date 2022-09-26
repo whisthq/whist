@@ -276,8 +276,9 @@ else()
     find_package(OpenSSL REQUIRED)
 endif()
 
-# serina mimalloc
-message(STATUS "Looking for mimalloc lib: libmimalloc.2.0.dylib")
+# We manually compile a malloc hook so we can mlock all memory allocations in the protocol, improving latency when memory pressure is high
+# see github.com/whisthq/mimalloc
+message(STATUS "Looking for mimalloc lib: libmimalloc.a")
 set(MIMALLOC_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/mimalloc/${CMAKE_SYSTEM_NAME}")
 message(STATUS "MIMALLOC_DIR_PATH: ${MIMALLOC_DIR_PATH}")
 find_library(LIB_MIMALLOC
@@ -291,7 +292,6 @@ find_library(LIB_MIMALLOC
         NO_CMAKE_FIND_ROOT_PATH)
     message(STATUS "Found mimalloc lib: ${LIB_MIMALLOC}")
 list(APPEND SHARED_LIBS_PATHS ${MIMALLOC_DIR_PATH})
-# set(ENV{DYLD_INSERT_LIBRARIES} "${MIMALLOC_DIR_PATH}/libmimalloc.2.0.dylib")
 
 set(SENTRY_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
 find_library(LIB_SENTRY NAMES sentry PATHS "${SENTRY_DIR_PATH}"
