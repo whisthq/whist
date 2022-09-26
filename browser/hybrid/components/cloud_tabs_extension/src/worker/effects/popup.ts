@@ -33,7 +33,7 @@ import {
   popupInviteCode,
 } from "@app/worker/events/popup"
 import { Storage } from "@app/constants/storage"
-import { inviteCode } from "@app/constants/app"
+import { inviteCode, inviteCodes } from "@app/constants/app"
 import { AWSRegion, regions } from "@app/constants/location"
 
 // If the popup is opened, send the necessary display information
@@ -174,7 +174,9 @@ popupOpenIntercom.subscribe(() => {
 })
 
 popupInviteCode.subscribe((event: any) => {
-  const success = event?.request?.value?.code === inviteCode
+  const success = inviteCodes.some(
+    (c) => c.toLowerCase() == event?.request?.value?.code.toLowerCase()
+  )
   event.sendResponse({ success })
 
   if (success) void setStorage(Storage.WAITLISTED, false)
