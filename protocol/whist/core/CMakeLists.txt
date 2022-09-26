@@ -17,8 +17,12 @@ add_library(whistCore STATIC
         features.c
         error_codes.c
         whist_string.c
-        mimalloc_hook.cpp
         )
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_sources(whistCore PRIVATE
+        mimalloc_hook.cpp
+    )
+endif()
 
 # Ensure that whist.v is updated prior to compiling whistCore
 add_dependencies(whistCore git_revision)
