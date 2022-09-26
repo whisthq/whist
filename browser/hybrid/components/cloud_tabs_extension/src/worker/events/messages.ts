@@ -1,10 +1,10 @@
 import { fromEventPattern } from "rxjs"
 import { filter, share } from "rxjs/operators"
 
-import { PopupMessageType } from "@app/@types/messaging"
+import { HelpScreenMessageType, PopupMessageType } from "@app/@types/messaging"
 import { NodeEventHandler } from "rxjs/internal/observable/fromEvent"
 
-const popupMessage = fromEventPattern(
+const runtimeMessage = fromEventPattern(
   (handler: NodeEventHandler) => {
     const wrapper = (request: any, sender: any, sendResponse: any) => {
       const event = { request, sender, sendResponse }
@@ -18,7 +18,7 @@ const popupMessage = fromEventPattern(
     chrome.runtime.onMessage.removeListener(wrapper)
 ).pipe(share())
 
-const popupToggled = popupMessage.pipe(
+const popupToggled = runtimeMessage.pipe(
   filter((event: any) => event.request.type === PopupMessageType.STREAM_TAB)
 )
 
@@ -28,7 +28,7 @@ const popupClicked = fromEventPattern(
   (details: any) => details
 )
 
-const popupOpened = popupMessage.pipe(
+const popupOpened = runtimeMessage.pipe(
   filter(
     (event: any) => event.request.type === PopupMessageType.FETCH_POPUP_DATA
   )
@@ -43,29 +43,36 @@ const popupDeactivateCloudTab = popupToggled.pipe(
   filter((event: any) => !event.request.value.enabled)
 )
 
-const popupUrlSaved = popupMessage.pipe(
+const popupUrlSaved = runtimeMessage.pipe(
   filter((event: any) => event.request.type === PopupMessageType.SAVE_URL),
   filter((event: any) => event.request.value.saved)
 )
 
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
-const popupUrlUnsaved = popupMessage.pipe(
+const popupUrlUnsaved = runtimeMessage.pipe(
   filter((event: any) => event.request.type === PopupMessageType.SAVE_URL),
   filter((event: any) => !event.request.value.saved)
 )
 
-const popupOpenLogin = popupMessage.pipe(
+const popupOpenLogin = runtimeMessage.pipe(
   filter(
     (event: any) => event.request.type === PopupMessageType.OPEN_LOGIN_PAGE
   )
 )
 
-const popupOpenIntercom = popupMessage.pipe(
+const popupOpenIntercom = runtimeMessage.pipe(
   filter((event: any) => event.request.type === PopupMessageType.OPEN_INTERCOM)
 )
 
-const popupInviteCode = popupMessage.pipe(
+const popupInviteCode = runtimeMessage.pipe(
   filter((event: any) => event.request.type === PopupMessageType.INVITE_CODE)
+)
+
+const helpScreenOpened = runtimeMessage.pipe(
+  filter(
+    (event: any) =>
+      event.request.type === HelpScreenMessageType.HELP_SCREEN_OPENED
+  )
 )
 
 export {
@@ -78,4 +85,5 @@ export {
   popupOpenLogin,
   popupOpenIntercom,
   popupInviteCode,
+  helpScreenOpened,
 }

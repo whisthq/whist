@@ -1,7 +1,6 @@
 import { merge } from "rxjs"
 import { withLatestFrom } from "rxjs/operators"
 
-import { authSuccess } from "@app/worker/utils/auth"
 import {
   mandelboxError,
   mandelboxNeeded,
@@ -60,16 +59,15 @@ merge(mandelboxError, hostError, socketReconnectFailed).subscribe(() => {
   whistState.mandelboxInfo = undefined
 })
 
-merge(webuiMandelboxNeeded, socketReconnectFailed)
-  .subscribe(() => {
-    whistState.activeCloudTabs = []
-    whistState.waitingCloudTabs = []
+merge(webuiMandelboxNeeded, socketReconnectFailed).subscribe(() => {
+  whistState.activeCloudTabs = []
+  whistState.waitingCloudTabs = []
 
-    chrome.tabs.query({}, (tabs: chrome.tabs.Tab[]) => {
-      const cloudTabs = tabs.filter((tab) => tab.url?.startsWith("cloud:"))
+  chrome.tabs.query({}, (tabs: chrome.tabs.Tab[]) => {
+    const cloudTabs = tabs.filter((tab) => tab.url?.startsWith("cloud:"))
 
-      cloudTabs.forEach((tab) => {
-        addTabToQueue(tab)
-      })
+    cloudTabs.forEach((tab) => {
+      addTabToQueue(tab)
     })
   })
+})

@@ -28,6 +28,9 @@ import {
 import { toBase64 } from "@app/worker/utils/encode"
 import { cannotStreamError } from "@app/worker/utils/errors"
 import { serializeProtocolArgs } from "@app/worker/utils/protocol"
+import { createOrFocusHelpPopup } from "@app/worker/utils/help"
+import { helpScreenOpened } from "@app/worker/events/messages"
+import { HelpScreenMessageType } from "@app/@types/messaging"
 
 // On launch, add all previously opened cloud tabs to the cloud tab queue
 authSuccess.subscribe(() => {
@@ -159,27 +162,12 @@ cloudTabCreated.subscribe((tabs: chrome.tabs.Tab[]) => {
     void chrome.tabs.create({ url: tab.url, active: tab.active })
 })
 
-webuiOpenSupport.subscribe(() => {
-  const popupWidth = 426
-  const popupHeight = 626
+webuiOpenSupport.subscribe(createOrFocusHelpPopup)
 
-  chrome.tabs.query({ url: chrome.runtime.getURL("intercom.html") }, (tabs) => {
-    if (tabs?.[0] !== undefined) {
-      void chrome.windows.update(tabs?.[0].windowId, {
-        drawAttention: true,
-        focused: true,
-      })
-    } else {
-      void chrome.windows.create({
-        focused: true,
-        url: chrome.runtime.getURL("intercom.html"),
-        type: "popup",
-        width: Math.min(popupWidth, screen.width),
-        height: Math.min(popupHeight, screen.height),
-        left: Math.max(screen.width / 2 - popupWidth / 2, 10),
-        top: Math.max(screen.height / 2 - popupHeight / 2, 10),
-      })
-    }
+helpScreenOpened.pipe(withLatestFrom(authSuccess)).subscribe(([_, auth]) => {
+  void chrome.runtime.sendMessage({
+    type: HelpScreenMessageType.HELP_SCREEN_USER_EMAIL,
+    value: auth.userEmail,
   })
 })
 
