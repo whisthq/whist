@@ -33,7 +33,7 @@ import {
   popupInviteCode,
 } from "@app/worker/events/messages"
 import { Storage } from "@app/constants/storage"
-import { inviteCode } from "@app/constants/app"
+import { inviteCodes } from "@app/constants/app"
 import { AWSRegion, regions } from "@app/constants/location"
 import { createOrFocusHelpPopup } from "@app/worker/utils/help"
 
@@ -173,7 +173,9 @@ popupOpenLogin.subscribe(() => {
 popupOpenIntercom.subscribe(createOrFocusHelpPopup)
 
 popupInviteCode.subscribe((event: any) => {
-  const success = event?.request?.value?.code === inviteCode
+  const success = inviteCodes.some(
+    (c) => c.toLowerCase() === event?.request?.value?.code.toLowerCase()
+  )
   event.sendResponse({ success })
 
   if (success) void setStorage(Storage.WAITLISTED, false)
