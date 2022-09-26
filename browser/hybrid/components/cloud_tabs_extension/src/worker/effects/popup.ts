@@ -31,10 +31,11 @@ import {
   popupOpenLogin,
   popupOpenIntercom,
   popupInviteCode,
-} from "@app/worker/events/popup"
+} from "@app/worker/events/messages"
 import { Storage } from "@app/constants/storage"
 import { inviteCode } from "@app/constants/app"
 import { AWSRegion, regions } from "@app/constants/location"
+import { createOrFocusHelpPopup } from "@app/worker/utils/help"
 
 // If the popup is opened, send the necessary display information
 popupOpened.pipe(withLatestFrom(authSuccess)).subscribe(async ([event]) => {
@@ -169,9 +170,7 @@ popupOpenLogin.subscribe(() => {
 })
 
 // If the user clicks the popup help button
-popupOpenIntercom.subscribe(() => {
-  void chrome.tabs.create({ url: chrome.runtime.getURL("intercom.html") })
-})
+popupOpenIntercom.subscribe(createOrFocusHelpPopup)
 
 popupInviteCode.subscribe((event: any) => {
   const success = event?.request?.value?.code === inviteCode
