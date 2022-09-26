@@ -158,7 +158,7 @@ fi
 ###############################
 
 if [[ "$OS" == "Darwin" ]]; then
-# Select mimalloc lib dir and mimalloc lib targz name based on OS and hardware architecture (macOS)
+  # Select mimalloc lib dir and mimalloc lib targz name based on OS and hardware architecture (macOS)
   MIMALLOC_LIB_DIR="$DEST_DIR/lib/64/mimalloc/$OS"
   if [[ "$MACOS_ARCH" == "arm64" ]]; then
     MIMALLOC_LIB="whist-macos-arm64-mimalloc-static-lib.tar.gz"
