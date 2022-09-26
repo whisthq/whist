@@ -35,7 +35,7 @@ void CloudDownloaderHost::DownloadStart(const std::string& file_path,
   download_create_info->total_bytes = file_size;
 #ifdef _WIN32
   std::wstring w_file_path;
-  for(char c : file_path) {
+  for (char c : file_path) {
     w_file_path.push_back(std::btowc(c));
   }
   download_create_info->save_info->file_path = base::FilePath(w_file_path);

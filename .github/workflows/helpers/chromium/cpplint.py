@@ -5965,7 +5965,10 @@ def FlagCxx11Features(filename, clean_lines, linenum, error):
         "fenv.h",
         "future",
         "mutex",
-        "thread",
+        # Whist: We should eventually migrate off of #include <thread> and use Chromimum's
+        #        threading setup in our code.
+        #
+        # "thread",
         "chrono",
         "ratio",
         "regex",

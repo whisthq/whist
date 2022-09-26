@@ -1,3 +1,4 @@
+// Copyright 2022 Whist Technologies, Inc. All rights reserved.
 #include "whist_web_ui_controller_factory.h"
 #include "whist/browser/hybrid/browser/ui/webui/cloud_tabs_ui/cloud_tabs_ui.h"
 #include "chrome/common/url_constants.h"
@@ -12,7 +13,7 @@ namespace {
                                                    const GURL& url);
 
   WebUIController* NewWebUI(WebUI* web_ui, const GURL& url) {
-    if(url.SchemeIs(content::kCloudScheme)) {
+    if (url.SchemeIs(content::kCloudScheme)) {
       return new WhistCloudUI(web_ui, url);
     }
 

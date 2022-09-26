@@ -1,5 +1,6 @@
-#ifndef THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_WHIST_STRING_EVENT_H_
-#define THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_WHIST_STRING_EVENT_H_
+// Copyright 2022 Whist Technologies, Inc. All rights reserved.
+#ifndef WHIST_BROWSER_HYBRID_THIRD_PARTY_BLINK_RENDERER_CORE_EVENTS_WHIST_STRING_EVENT_H_
+#define WHIST_BROWSER_HYBRID_THIRD_PARTY_BLINK_RENDERER_CORE_EVENTS_WHIST_STRING_EVENT_H_
 
 #include "third_party/blink/renderer/core/dom/events/event.h"
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
@@ -43,4 +44,4 @@ class WhistStringEvent final : public Event {
 
 }  // namespace blink
 
-#endif  // THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_WHIST_STRING_EVENT_H_
+#endif  // WHIST_BROWSER_HYBRID_THIRD_PARTY_BLINK_RENDERER_CORE_EVENTS_WHIST_STRING_EVENT_H_

@@ -1,3 +1,4 @@
+// Copyright 2022 Whist Technologies, Inc. All rights reserved.
 #include "whist_component_loader.h"
 
 namespace extensions {

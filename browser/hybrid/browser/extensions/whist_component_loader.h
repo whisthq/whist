@@ -1,5 +1,6 @@
-#ifndef WHIST_BROWSER_EXTENSIONS_WHIST_COMPONENT_LOADER_H
-#define WHIST_BROWSER_EXTENSIONS_WHIST_COMPONENT_LOADER_H
+// Copyright 2022 Whist Technologies, Inc. All rights reserved.
+#ifndef WHIST_BROWSER_HYBRID_BROWSER_EXTENSIONS_WHIST_COMPONENT_LOADER_H_
+#define WHIST_BROWSER_HYBRID_BROWSER_EXTENSIONS_WHIST_COMPONENT_LOADER_H_
 
 #include "src/brave/browser/extensions/brave_component_loader.h"
 #include "brave/components/whist_extension/grit/whist_extension.h"
@@ -19,4 +20,4 @@ namespace extensions {
   };
 }  // namespace extensions
 
-#endif  // WHIST_BROWSER_EXTENSIONS_WHIST_COMPONENT_LOADER_H
+#endif  // WHIST_BROWSER_HYBRID_BROWSER_EXTENSIONS_WHIST_COMPONENT_LOADER_H_

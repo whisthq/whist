@@ -1,5 +1,6 @@
-#ifndef WHIST_BROWSER_UI_WEBUI_WHIST_WEB_UI_CONTROLLER_FACTORY_H
-#define WHIST_BROWSER_UI_WEBUI_WHIST_WEB_UI_CONTROLLER_FACTORY_H
+// Copyright 2022 Whist Technologies, Inc. All rights reserved.
+#ifndef WHIST_BROWSER_HYBRID_BROWSER_UI_WEBUI_WHIST_WEB_UI_CONTROLLER_FACTORY_H_
+#define WHIST_BROWSER_HYBRID_BROWSER_UI_WEBUI_WHIST_WEB_UI_CONTROLLER_FACTORY_H_
 
 #include "base/memory/ptr_util.h"
 #include "brave/browser/ui/webui/brave_web_ui_controller_factory.h"
@@ -25,4 +26,4 @@ class WhistWebUIControllerFactory : public BraveWebUIControllerFactory {
   ~WhistWebUIControllerFactory() override;
 };
 
-#endif  // WHIST_BROWSER_UI_WEBUI_WHIST_WEB_UI_CONTROLLER_FACTORY_H
+#endif  // WHIST_BROWSER_HYBRID_BROWSER_UI_WEBUI_WHIST_WEB_UI_CONTROLLER_FACTORY_H_

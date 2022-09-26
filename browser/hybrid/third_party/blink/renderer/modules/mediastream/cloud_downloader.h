@@ -4,8 +4,8 @@
 //
 // Copyright 2022 Whist Technologies, Inc. All rights reserved.
 
-#ifndef THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_CLOUD_DOWNLOADER_H_
-#define THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_CLOUD_DOWNLOADER_H_
+#ifndef WHIST_BROWSER_HYBRID_THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_CLOUD_DOWNLOADER_H_
+#define WHIST_BROWSER_HYBRID_THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_CLOUD_DOWNLOADER_H_
 
 #include "base/synchronization/waitable_event.h"
 #include "whist/browser/hybrid/third_party/blink/public/mojom/cloud_tab/download.mojom.h"
@@ -26,13 +26,13 @@ class CloudDownloader {
   void* GetOpaqueContext();
   void DownloadStartCallback(int64_t opaque);
  private:
-  CloudDownloader(BrowserInterfaceBrokerProxy* broker);
+  explicit CloudDownloader(BrowserInterfaceBrokerProxy* broker);
   mojo::Remote<blink::mojom::CloudDownloaderHost> cloud_downloader_host_;
   base::WaitableEvent waitable_event_;
   int64_t opaque_;
   base::WeakPtrFactory<CloudDownloader> weak_ptr_factory_{this};
 };
 
-}
+}  // namespace blink
 
-#endif  // THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_CLOUD_DOWNLOADER_H_
+#endif  // WHIST_BROWSER_HYBRID_THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_CLOUD_DOWNLOADER_H_
