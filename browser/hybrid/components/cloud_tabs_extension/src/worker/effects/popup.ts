@@ -2,11 +2,7 @@ import uniq from "lodash.uniq"
 import { merge, of } from "rxjs"
 import { withLatestFrom, takeUntil } from "rxjs/operators"
 
-import {
-  authSuccess,
-  authFailure,
-  authNetworkError,
-} from "@app/worker/events/auth"
+import { authSuccess, authNetworkError } from "@app/worker/events/auth"
 import { tabActivated, tabFocused, tabUpdated } from "@app/worker/events/tabs"
 
 import { stateDidChange, whistState } from "@app/worker/utils/state"
@@ -38,7 +34,7 @@ import { AWSRegion, regions } from "@app/constants/location"
 import { createOrFocusHelpPopup } from "@app/worker/utils/help"
 
 // If the popup is opened, send the necessary display information
-popupOpened.pipe(withLatestFrom(authSuccess)).subscribe(async ([event]) => {
+popupOpened.subscribe(async (event) => {
   void Promise.all([
     getNumberOfCloudTabs(),
     getActiveTab(),
@@ -70,23 +66,17 @@ popupOpened.pipe(withLatestFrom(authSuccess)).subscribe(async ([event]) => {
         error: cannotStreamError(activeTab),
         numberCloudTabs,
         host,
-        isLoggedIn: true,
+        isLoggedIn: whistState.isLoggedIn,
         waitlisted: waitlisted ?? true,
         networkInfo: {
-          ...sortedRegions[0],
-          region: regions.find((r) => r.name === sortedRegions[0]?.region)
+          ...sortedRegions?.[0],
+          region: regions.find((r) => r.name === sortedRegions?.[0]?.region)
             ?.location,
         },
       })
     }
   )
 })
-
-popupOpened
-  .pipe(withLatestFrom(authFailure), takeUntil(authSuccess))
-  .subscribe(([event]) => {
-    event.sendResponse({ isLoggedIn: false })
-  })
 
 popupOpened
   .pipe(withLatestFrom(authNetworkError), takeUntil(authSuccess))

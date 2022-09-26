@@ -3,7 +3,7 @@ import { switchMap, share, filter } from "rxjs/operators"
 import { Socket } from "socket.io-client"
 
 import { getTab, getActiveTab } from "@app/worker/utils/tabs"
-import { socketConnected } from "@app/worker/events/socketio"
+import { socket } from "@app/worker/events/socketio"
 
 // All tab observables should emit a chrome.tabs.Tab
 const tabCreated = fromEventPattern(
@@ -49,15 +49,15 @@ const tabZoomed = fromEventPattern(
   (zoomChangeInfo: object) => zoomChangeInfo
 ).pipe(share())
 
-const cloudTabCreated = socketConnected
+const cloudTabCreated = socket
   .pipe(switchMap((s: Socket) => fromEvent(s, "tab-created")))
   .pipe(share())
 
-const cloudTabUpdated = socketConnected
+const cloudTabUpdated = socket
   .pipe(switchMap((s: Socket) => fromEvent(s, "tab-updated")))
   .pipe(share())
 
-const cloudTabActivated = socketConnected
+const cloudTabActivated = socket
   .pipe(switchMap((s: Socket) => fromEvent(s, "tab-activated")))
   .pipe(share())
 

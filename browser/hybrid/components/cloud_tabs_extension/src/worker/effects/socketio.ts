@@ -4,7 +4,7 @@ import { withLatestFrom, filter } from "rxjs/operators"
 import find from "lodash.find"
 
 import {
-  socketStatus,
+  socket,
   socketConnected,
   socketDisconnected,
 } from "@app/worker/events/socketio"
@@ -33,13 +33,14 @@ import { PopupMessage, PopupMessageType } from "@app/@types/messaging"
 merge(
   serverCookiesSynced,
   stateDidChange("waitingCloudTabs").pipe(
-    withLatestFrom(socketStatus),
+    withLatestFrom(socket),
     filter(
-      ([change, connected]) => change?.applyData?.name === "push" && connected
+      ([change, socket]) =>
+        change?.applyData?.name === "push" && socket.connected
     )
   )
 )
-  .pipe(withLatestFrom(socketConnected))
+  .pipe(withLatestFrom(socket))
   .subscribe(([, socket]: [any, Socket]) => {
     while (whistState.waitingCloudTabs.length > 0) {
       const tab = whistState.waitingCloudTabs.pop()
@@ -50,7 +51,7 @@ merge(
       }
 
       void getActiveTab().then((activeTab) => {
-        if (activeTab.id === tab?.id) {
+        if (activeTab?.id === tab?.id) {
           void chrome.runtime.sendMessage(<PopupMessage>{
             type: PopupMessageType.SEND_POPUP_DATA,
             value: {
@@ -64,7 +65,7 @@ merge(
 
 // If a tab is activated, active it on the server
 merge(tabActivated, tabFocused)
-  .pipe(withLatestFrom(serverCookiesSynced, socketConnected))
+  .pipe(withLatestFrom(serverCookiesSynced, socket))
   .subscribe(([tab, _synced, socket]: [chrome.tabs.Tab, any, Socket]) => {
     if (isCloudTab(tab)) {
       socket.emit("activate-tab", tab, false)
@@ -73,7 +74,7 @@ merge(tabActivated, tabFocused)
 
 // If a tab is removed, remove it on the server
 tabRemoved
-  .pipe(withLatestFrom(socketConnected))
+  .pipe(withLatestFrom(socket))
   .subscribe(([tabId, socket]: [number, Socket]) => {
     const tab = find(whistState.activeCloudTabs, (t) => t.id === tabId)
     if (tab !== undefined) {
@@ -84,7 +85,7 @@ tabRemoved
 
 // If a user navigates away from a cloud tab, remove it on the server
 tabUpdated
-  .pipe(withLatestFrom(socketConnected))
+  .pipe(withLatestFrom(socket))
   .subscribe(async ([tab, socket]: [chrome.tabs.Tab, Socket]) => {
     const savedCloudUrls = await getStorage<string[]>(Storage.SAVED_CLOUD_URLS)
     const url = new URL(tab?.url?.replace("cloud:", "") ?? "")
@@ -98,20 +99,20 @@ tabUpdated
   })
 
 tabZoomed
-  .pipe(withLatestFrom(socketConnected))
+  .pipe(withLatestFrom(socket))
   .subscribe(([zoomChangeInfo, socket]: [object, Socket]) => {
     socket.emit("zoom-tab", zoomChangeInfo)
   })
 
 webuiNavigate
-  .pipe(withLatestFrom(socketConnected))
+  .pipe(withLatestFrom(socket))
   .subscribe(async ([message, socket]: [any, Socket]) => {
     const tab = await getTab(message.id)
     socket.emit("activate-tab", { ...tab, url: message.url }, true)
   })
 
 webuiRefresh
-  .pipe(withLatestFrom(socketConnected))
+  .pipe(withLatestFrom(socket))
   .subscribe(([message, socket]: [any, Socket]) => {
     socket.emit("refresh-tab", message)
   })
@@ -124,7 +125,7 @@ socketDisconnected.subscribe((socket: Socket) => {
   )
 })
 
-socketConnected.subscribe((socket: Socket) => {
+socketConnected.subscribe(() => {
   ;(chrome as any).whist.broadcastWhistMessage(
     JSON.stringify({
       type: "SOCKET_CONNECTED",
