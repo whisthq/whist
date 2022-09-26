@@ -440,7 +440,8 @@ int whist_client_main(int argc, const char* argv[]) {
             send_server_quit_messages(3);
         } else {
             // We exited due to a disconnect
-            LOG_INFO("Reconnecting to server...");
+            LOG_WARNING("Connection lost: Reconnecting to server...");
+            whist_frontend_send_error_notification(frontend, WHIST_DISCONNECT_ERROR);
         }
 
         post_connection_cleanup(renderer);

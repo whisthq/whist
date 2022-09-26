@@ -29,6 +29,7 @@ extern OnFileDownloadUpdate on_file_download_update;
 extern OnFileDownloadComplete on_file_download_complete;
 extern OnNotificationCallback on_notification_callback_ptr;
 extern GetModifierKeyState get_modifier_key_state;
+extern OnWhistError on_whist_error;
 
 static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
@@ -378,6 +379,15 @@ void virtual_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBC
 void virtual_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {
     if (on_notification_callback_ptr != NULL) {
         on_notification_callback_ptr(notif);
+    }
+}
+
+void virtual_send_error_notification(WhistFrontend* frontend, WhistError error) {
+    if (on_whist_error == NULL) {
+        // TODO: Promote to ERROR once chromium registers a callback
+        LOG_WARNING("Whist Error was not shown to user: %d", (int)error);
+    } else {
+        on_whist_error(error);
     }
 }
 

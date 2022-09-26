@@ -21,6 +21,7 @@ typedef void (*OnFileDownloadComplete)(void* opaque);
 typedef void (*OnNotificationCallback)(const WhistNotification* notif);
 typedef void (*VideoFrameCallback)(int window_id, void* frame_ref);
 typedef int (*GetModifierKeyState)(void);
+typedef void (*OnWhistError)(WhistError error);
 
 typedef struct VirtualInterface {
     struct {
@@ -51,6 +52,7 @@ typedef struct VirtualInterface {
     struct {
         void (*send)(const WhistFrontendEvent* event);
         void (*set_get_modifier_key_state)(GetModifierKeyState cb);
+        void (*set_on_whist_error_callback)(OnWhistError cb);
     } events;
     struct {
         void (*set_on_file_upload_callback)(int window_id, OnFileUploadCallback cb);

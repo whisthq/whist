@@ -377,3 +377,10 @@ void sdl_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state, 
         *mod_state = SDL_GetModState();
     }
 }
+
+void sdl_send_error_notification(WhistFrontend* frontend, WhistError error) {
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+
+    // TODO: Show a notification on the SDL window
+    LOG_ERROR("Whist Error Received by SDL: %d", (int)error);
+}
