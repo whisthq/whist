@@ -44,6 +44,7 @@ endif()
 
 option(SANITIZE "Enable sanitizer during build (address, thread, undefined)." OFF)
 option(CLIENT_SHARED_LIB "Build the client as a shared library" OFF)
+option(USE_CCACHE "Use ccache to speed up builds" OFF)
 
 option(NOGPU "Disable GPU acceleration" OFF)
 if(NOGPU)
