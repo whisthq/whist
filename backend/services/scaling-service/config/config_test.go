@@ -40,18 +40,10 @@ func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ ma
 		return err
 	}
 
-	limit, err := json.Marshal(t.mandelboxLimit)
-	if err != nil {
-		return err
-	}
-
-	regionConfig := []struct {
+	regionConfig := struct {
 		Key   graphql.String `graphql:"key"`
 		Value graphql.String `graphql:"value"`
-	}{
-		{Key: "ENABLED_REGIONS", Value: graphql.String(regions)},
-		{Key: "MANDELBOX_LIMIT_PER_USER", Value: graphql.String(limit)},
-	}
+	}{Key: "ENABLED_REGIONS", Value: graphql.String(regions)}
 
 	config := reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistConfigs")
 	config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(regionConfig),
