@@ -75,8 +75,8 @@ merge(tabActivated, tabUpdated, tabFocused)
     if (!isCloudTab(tab)) unmarkActiveCloudTab(tab)
   })
 
-merge(tabActivated, tabUpdated, webUiMouseEntered)
-  .subscribe((tab: chrome.tabs.Tab) => {
+merge(tabActivated, tabUpdated, webUiMouseEntered).subscribe(
+  (tab: chrome.tabs.Tab) => {
     if (isCloudTab(tab)) {
       ;(chrome as any).whist.broadcastWhistMessage(
         JSON.stringify({
@@ -87,7 +87,8 @@ merge(tabActivated, tabUpdated, webUiMouseEntered)
         })
       )
     }
-  })
+  }
+)
 
 // If a tab is removed, remove it from the cloud tab queue
 tabRemoved.subscribe((tabId: number) => {
@@ -191,7 +192,7 @@ cloudTabActivated.subscribe(([tabId, spotlightId]: [number, number]) => {
       type: "ACTIVATE_TAB",
       value: {
         id: tabId,
-        spotlightId: spotlightId
+        spotlightId,
       },
     })
   )

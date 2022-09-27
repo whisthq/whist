@@ -5,7 +5,6 @@
  */
 
 import jwtDecode from "jwt-decode"
-import { Buffer } from "buffer"
 
 import { post } from "@app/@core-ts/api"
 
