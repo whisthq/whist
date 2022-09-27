@@ -497,6 +497,7 @@ COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup
 # Mount cgroup from host (Is this needed?)
 VOLUME [ "/sys/fs/cgroup" ]
 
+# Unified apt installation steps
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     && apt-get update \
     && apt-get autoremove -y \
@@ -650,10 +651,13 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     && /usr/share/whist/setup-linux-build-environment.sh \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/* /deb \
+    && rm -rf /tmp/* /var/tmp/* /deb
+
+# Unified post-apt installation steps
+RUN \
     ### Systemd Configuration
     # Remove sysinit targets except for systemd-tmpfiles-setup
-    && find /lib/systemd/system/sysinit.target.wants -type l ! -name systemd-tmpfiles-setup.service \
+    find /lib/systemd/system/sysinit.target.wants -type l ! -name systemd-tmpfiles-setup.service \
     # Remove unneeded multi-user services
     && rm -f /lib/systemd/system/multi-user.target.wants/* \
         /etc/systemd/system/*.wants/* \
