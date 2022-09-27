@@ -339,7 +339,7 @@ RUN \
     && echo whist:"${password}" | chpasswd \
     # Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
     && echo "Set disable_coredump false" >> $HYDRAULIC_ROOT/etc/sudo.conf \
-    # Set appropriate user permissions and create /whist/ Directory and Subdirectories in /usr/share
+    # Set appropriate user permissions
     && chown -vR whist:whist $HYDRAULIC_ROOT/home/whist \
     && chown root:root $HYDRAULIC_ROOT/run/user \
     # Set /usr/share/whist to root-only
@@ -393,6 +393,9 @@ COPY --chown=whist display/theme/mac-fonts.conf $HYDRAULIC_ROOT/home/whist/.conf
 COPY --chown=whist display/theme/windows-fonts.conf $HYDRAULIC_ROOT/home/whist/.config/fontconfig/windows-fonts.conf
 COPY --chown=whist display/theme/linux-fonts.conf $HYDRAULIC_ROOT/home/whist/.config/fontconfig/linux-fonts.conf
 
+# Copy over our fonts
+COPY --from=build-assets fonts $HYDRAULIC_ROOT/usr/local/share/fonts
+
 # Set up window manager running on X server, with GTK/QT theming
 COPY display/theme/gtk-3-settings.ini $HYDRAULIC_ROOT/etc/gtk-3.0/settings.ini
 COPY display/theme/gtkrc-2.0 /root/.gtkrc-2.0
@@ -401,6 +404,10 @@ COPY display/theme/qt4-settings.conf $HYDRAULIC_ROOT/root/.config/Trolltech.conf
 COPY --chown=whist display/theme/qt4-settings.conf $HYDRAULIC_ROOT/home/whist/.config/Trolltech.conf
 COPY display/theme/awesome-rc.lua $HYDRAULIC_ROOT/home/whist/.config/awesome/rc.lua
 COPY --from=whist-spicy-cursors-theme /WhistSpicyCursors $HYDRAULIC_ROOT/usr/share/icons/WhistSpicyCursors
+
+# Configure Keyboard Shortcuts
+COPY display/theme/gtk-keys.css $HYDRAULIC_ROOT/usr/share/themes/KeyboardShortcutsMac/gtk-3.0/
+COPY --chown=whist display/theme/gtk-keys.css $HYDRAULIC_ROOT/home/whist/.themes/KeyboardShortcutsMac/gtk-3.0/
 
 #########################
 # Audio
@@ -477,146 +484,63 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 ENV RUN_LEVEL=1
 
-# Update apt source list
-RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
-    && apt-get update \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-#########################
-# Sentry
-#########################
-
-# Install wget, cURL & ca-certificates to fetch sentry-cli (cURL is needed by the script itself)
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    wget \
-    ca-certificates \
-    libcurl4 \
-    curl \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# We install the Sentry CLI and set the DSN so that we can report Bash errors to Sentry
-RUN curl -SL "https://downloads.sentry-cdn.com/sentry-cli/1.74.3/sentry-cli-Linux-x86_64" \
-    > /usr/local/bin/sentry-cli \
-    && chmod 0755 /usr/local/bin/sentry-cli
-
-ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io/6073955
-
-#########################
-# Systemd
-#########################
-
-# Install systemd
-# Locales is needed to solve `pam_env(sudo:session): Unable to open env file: /etc/default/locale: No such file or directory`
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    systemd \
-    systemd-sysv \
-    locales \
-    locales-all \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# hadolint ignore=SC2010
-RUN ls -d /lib/systemd/system/sysinit.target.wants/* | grep -v systemd-tmpfiles-setup | xargs rm -f
-
-# Remove some more systemd services to minimize what's running on our images
-RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
-    /etc/systemd/system/*.wants/* \
-    /lib/systemd/system/local-fs.target.wants/* \
-    /lib/systemd/system/sockets.target.wants/*udev* \
-    /lib/systemd/system/sockets.target.wants/*initctl* \
-    /lib/systemd/system/basic.target.wants/* \
-    /lib/systemd/system/anaconda.target.wants/* \
-    /lib/systemd/system/plymouth* \
-    /lib/systemd/system/systemd-update-utmp*
-
-# Disable some extra systemd services
-# Note: sshd does not exist by default, so we don't need to explicirlt disable it
-# hadolint ignore=DL3059
-RUN systemctl mask plymouth \
-                   systemd-hostnamed \
-                   acpid \
-                   NetworkManager-wait-online
-
-# Remove ProtectHostname=yes lines from logind and timedate systemd services
-# hadolint ignore=DL3059
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-{login,time{sync,date}}d.service
-
-# Enable proper usage of resolvconf in containers. Based on:
-# https://github.com/moby/moby/issues/1297
-RUN echo "resolvconf resolvconf/linkify-resolvconf boolean false" | debconf-set-selections
-
 ENV init /sbin/init
-
-#########################
-# Input
-#########################
-
-# Install libinput driver for XServer input
-# This must happen very early to preempt conflicts with
-# upstream packages such as libinput10 and libinput-bin
+ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io/6073955
 
 # Copy libinput and xf86-input-libinput
 COPY --from=libinput-build /libinput-whist.deb /deb/libinput-whist.deb
 COPY --from=xf86-input-libinput-build /xf86-input-libinput-whist.deb /deb/xf86-input-libinput-whist.deb
 
-# Install libinput and xf86-input-libinput
-RUN apt-get update && apt-get install --no-install-recommends -y \
+# Copy protocol dependencies installer
+COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh
+
+# Mount cgroup from host (Is this needed?)
+VOLUME [ "/sys/fs/cgroup" ]
+
+# Install general utility packages
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+    && apt-get update \
+    && apt-get autoremove -y \
+    # Avoid interactive installation (for tzdata, e.g.)
+    && LOCAL="yes" \
+    apt-get install --allow-downgrades --no-install-recommends -y \
+    ### Systemd
+    systemd \
+    systemd-sysv \
+    # Locales is needed to fix some systemd warnings
+    locales \
+    locales-all \
+    ### Input Events
+    # Core libraries (remember to delete /deb below this step)
     ./deb/libinput-whist.deb \
     ./deb/xf86-input-libinput-whist.deb \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/* /deb
-
-# Install dependencies/utils
-RUN apt-get update && apt-get install --no-install-recommends -y \
     keyboard-configuration \
+    # Developer utils and dependencies
     libxtst-dev \
     xinput \
     evtest \
     xdotool \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-#########################
-# General Utilities
-#########################
-
-# Install dbus + event requirements
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    ### DBus Functionality
     dbus-x11 \
     libdbus-1-dev \
     libevent-dev \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install gnome keyring + chrome authentication utilities
-RUN apt-get update && apt-get install -y --no-install-recommends \
+    ### Keyring and Authentication Utilities (for Chromium, e.g.)
     gir1.2-secret-1 \
     gnome-keyring \
     libsecret-1-0 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install general utility packages
-RUN apt-get update \
-    # Avoid interactive installation for tzdata (defaults to UTC)
-    && LOCAL="yes" \
-    apt-get install --allow-downgrades --no-install-recommends -y \
+    ### Fetching Utilities (for downloading Sentry, e.g.)
+    wget \
+    ca-certificates \
+    libcurl4 \
+    curl \
+    ### General Utilities
     xvfb \
     wmctrl \
     gnupg2 \
     libfido2-1 \
-    # for `killall` in display/update-whist-dpi.sh
+    # Provides `killall` for some mandelbox functionality
     psmisc \
-    # to silence "The name org.freedesktop.UPower was not provided by any .service file" in browsers
+    # Including this silences some warnings from systemd services
     upower \
     libgbm1 \
     lsb-release \
@@ -626,63 +550,20 @@ RUN apt-get update \
     sudo \
     jq \
     inotify-tools \
-    # general utility tool needed by other packages (gets installed by
-    # update-alternatives if not explicitly specified)
+    # This is installed by update-alternatives if not manually specified
     liblzma5 \
-    # utilities for debugging/testing
+    ### Debugging and Development Utilities
     less \
     vim \
     nano \
     tzdata \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-#########################
-# Permissions
-#########################
-
-# Mount cgroup from host (Is this needed?)
-VOLUME [ "/sys/fs/cgroup" ]
-
-RUN \
-    # Create whist user with dynamic, random password and do NOT add to sudo group
-    useradd --create-home whist \
-    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
-    && echo whist:"${password}" | chpasswd \
-    # Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
-    && echo "Set disable_coredump false" >> /etc/sudo.conf \
-    # Set appropriate user permissions and create /whist/ Directory and Subdirectories in /usr/share
-    && chown -vR whist:whist /home/whist \
-    && chown root:root /run/user \
-    && mkdir -p /usr/share/whist/private \
-    # Set /usr/share/whist to root-only
-    && chgrp root -R /usr/share/whist \
-    && chown root:root /usr/share/whist \
-    && chmod 600 -R /usr/share/whist
-
-#########################
-# Hardware Acceleration
-#########################
-
-# Install the Nvidia GRID Driver and libraries for (limited) hardware acceleration
-RUN apt-get update && apt-get install --no-install-recommends -y \
+    ### Hardware Acceleration (dependencies for GRID driver)
     libglvnd0 \
     vainfo \
     vdpauinfo \
     mesa-vdpau-drivers \
     libvdpau-va-gl1 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-COPY --from=nvidia-grid-driver /dist /
-
-#########################
-# Display
-#########################
-
-# Install dependencies
-RUN apt-get update && apt-get install --no-install-recommends -y \
+    ### Display
     libxdamage-dev \
     xclip \
     x11-xserver-utils \
@@ -694,35 +575,17 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libgstreamer1.0-0 \
     screen-resolution-extra \
     xinit \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install playerctl for media keys support. We install playerctl straight from
-# Github releases because as usual the Ubuntu package is horribly out of date
-# (and in particular don't support daemon mode).
-RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/playerctl-2.3.1_amd64.deb \
-    && dpkg -i ./playerctl-2.3.1_amd64.deb \
-    && rm ./playerctl-2.3.1_amd64.deb
-
-# I-Bus support (for handling input)
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    ibus ibus-pinyin ibus-anthy ibus-hangul ibus-unikey \
-    ibus-gtk ibus-gtk3 \
+    ### I-Bus (for input method support)
+    ibus \
+    ibus-pinyin \
+    ibus-anthy \
+    ibus-hangul \
+    ibus-unikey \
+    ibus-gtk \
+    ibus-gtk3 \
     at-spi2-core \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Set display environment variable
-ENV DISPLAY :10
-
-#########################
-# Theme
-#########################
-
-# Install dependencies
-RUN apt-get update && apt-get install --no-install-recommends -y \
+    ### Theme
+    # Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
     unzip \
     xz-utils \
     awesome \
@@ -734,22 +597,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libglib2.0-dev-bin \
     libglib2.0-dev \
     libxml2-utils \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-# Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
-
-# Install fonts
-RUN wget -qO font-sans.zip https://fonts.google.com/download?family=Inter \
-    && wget -qO font-serif.zip https://fonts.google.com/download?family=Merriweather \
-    && wget -qO font-mono.zip https://github.com/be5invis/Iosevka/releases/download/v10.1.1/super-ttc-iosevka-10.1.1.zip \
-    && unzip -nd /usr/local/share/fonts font-sans.zip \
-    && unzip -nd /usr/local/share/fonts font-serif.zip \
-    && unzip -nd /usr/local/share/fonts font-mono.zip \
-    && rm font-*.zip
-
-# Install fonts for full Unicode support (or as close as we can get)
-RUN apt-get update && apt-get install --no-install-recommends -y \
+    ### Unicode Fonts
     fonts-noto \
     fonts-noto-core \
     fonts-noto-cjk \
@@ -759,43 +607,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     fonts-noto-ui-core \
     fonts-noto-ui-extra \
     fonts-noto-unhinted \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install the fonts used in Whist, including the Apple Color Emoji
-COPY --from=build-assets fonts/* /usr/local/share/fonts/
-
-# Install WhiteSur GTK theme, for macOS-like theming
-RUN mkdir -p /home/whist/.themes \
-    && wget -q https://github.com/vinceliuice/WhiteSur-gtk-theme/archive/refs/tags/2022-02-21.tar.gz \
-    && tar -xzf 2022-02-21.tar.gz \
-    && cd WhiteSur-gtk-theme-2022-02-21/release \
-    # We untar both light and dark themes. There are also "solid" themes, if we ever want to use them.
-    && tar -xf WhiteSur-light-40-0.tar.xz \
-    && tar -xf WhiteSur-dark-40-0.tar.xz \
-    # We copy the themes to both usr/share/themes (root-path) and /home/whist/.themes (user-path)
-    # since we're not sure which one will be used.
-    && cp -r WhiteSur-light WhiteSur-dark /usr/share/themes \
-    && cp -r WhiteSur-light WhiteSur-dark /home/whist/.themes \
-    && cd ../.. && rm -rf WhiteSur-gtk-theme-2022-02-21 2022-02-21.tar.gz
-
-RUN mkdir -p /usr/share/themes/KeyboardShortcutsMac/gtk-3.0/ \
-    mkdir -p /home/whist/.themes/KeyboardShortcutsMac/gtk-3.0/
-COPY display/theme/gtk-keys.css /usr/share/themes/KeyboardShortcutsMac/gtk-3.0/
-COPY display/theme/gtk-keys.css /home/whist/.themes/KeyboardShortcutsMac/gtk-3.0/
-
-# Install WhiteSur cursor and icons, for macOS-like theming. These get installed to the root path,
-# which is /usr/share/icons
-RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme \
-    && /bin/bash install.sh --bold && rm -rf /WhiteSur-icon-theme
-
-#########################
-# Audio
-#########################
-
-# Install PulseAudio and its dependencies
-RUN apt-get update && apt-get install --no-install-recommends -y \
+    ### Audio
     # PulseAudio dependencies
     libunwind8 \
     liborc-0.4-0 \
@@ -814,23 +626,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libtdb1 \
     # PulseAudio
     pulseaudio \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-#########################
-# Startup
-#########################
-
-# Set up the entrypoint for the mandelbox (which starts systemd)
-CMD ["/usr/share/whist/entrypoint.sh"]
-
-#########################
-# Main
-#########################
-
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    # Set up the default (harmless/useless) Whist application (xeyes) and dependencies
+    ### X11 Dependencies
     libc6 \
     libfontconfig1 \
     libfreetype6 \
@@ -847,32 +643,91 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libxt6 \
     xbitmaps \
     x11-utils \
-    x11-apps \
-    # FUSE dependency for drag-drop
+    ### FUSE (for drag-drop, e.g.)
     fuse3 \
-    # XDG dependency for URI handler
-    xdg-utils \
+    # Install xeyes, which is a harmless default application to use
+    x11-apps \
+    ### Whist Protocol Dependencies
+    /usr/share/whist/setup-linux-build-environment.sh
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
+    && rm -rf /tmp/* /var/tmp/* /deb \
+    ### Systemd Configuration
+    # Remove systemd tmpfiles setup service
+    && ls -d /lib/systemd/system/sysinit.target.wants/* | grep -v systemd-tmpfiles-setup | xargs rm -f \
+    # Remove unneeded services
+    && rm -f /lib/systemd/system/multi-user.target.wants/* \
+        /etc/systemd/system/*.wants/* \
+        /lib/systemd/system/local-fs.target.wants/* \
+        /lib/systemd/system/sockets.target.wants/*udev* \
+        /lib/systemd/system/sockets.target.wants/*initctl* \
+        /lib/systemd/system/basic.target.wants/* \
+        /lib/systemd/system/anaconda.target.wants/* \
+        /lib/systemd/system/plymouth* \
+        /lib/systemd/system/systemd-update-utmp* \
+    # Disable more unneeded services (note: sshd is disabled by default so we don't need to disable it)
+    && systemctl mask plymouth \
+                      systemd-hostnamed \
+                      acpid \
+                      NetworkManager-wait-online \
+    # Remove ProtectHostname=yes from logind and timedate services
+    && sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-{login,time{sync,date}}d.service \
+    # Enable proper usage of resolvconf in containers (see https://github.com/moby/moby/issues/1297)
+    && echo "resolvconf resolvconf/linkify-resolvconf boolean false" | debconf-set-selections \
+    ### Sentry CLI Installation
+    # Install the Sentry CLI and set the DSN so that we can report Bash errors to Sentry
+    && curl -SL "https://downloads.sentry-cdn.com/sentry-cli/1.74.3/sentry-cli-Linux-x86_64" \
+    > /usr/local/bin/sentry-cli \
+    && chmod 0755 /usr/local/bin/sentry-cli \
+    ### User Permissions Configuration
+    # Create whist user with dynamic, random password and do NOT add to sudo group
+    && useradd --create-home whist \
+    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
+    && echo whist:"${password}" | chpasswd \
+    # Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
+    && echo "Set disable_coredump false" >> /etc/sudo.conf \
+    # Set appropriate user permissions and create /whist/ Directory and Subdirectories in /usr/share
+    && chown -vR whist:whist /home/whist \
+    && chown root:root /run/user \
+    && mkdir -p /usr/share/whist/private \
+    # Set /usr/share/whist to root-only
+    && chgrp root -R /usr/share/whist \
+    && chown root:root /usr/share/whist \
+    && chmod 600 -R /usr/share/whist \
+    # Install playerctl for media keys support. We install playerctl straight from
+    # Github releases because as usual the Ubuntu package is horribly out of date
+    # (and in particular don't support daemon mode).
+    && wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/playerctl-2.3.1_amd64.deb \
+    && dpkg -i ./playerctl-2.3.1_amd64.deb \
+    && rm ./playerctl-2.3.1_amd64.deb \
+    ### WhiteSur GTK Theme, for macOS-like theming
+    && mkdir -p /home/whist/.themes \
+    && wget -q https://github.com/vinceliuice/WhiteSur-gtk-theme/archive/refs/tags/2022-02-21.tar.gz \
+    && tar -xzf 2022-02-21.tar.gz \
+    && cd WhiteSur-gtk-theme-2022-02-21/release \
+    # We untar both light and dark themes. There are also "solid" themes, if we ever want to use them.
+    && tar -xf WhiteSur-light-40-0.tar.xz \
+    && tar -xf WhiteSur-dark-40-0.tar.xz \
+    # We copy the themes to both usr/share/themes (root-path) and /home/whist/.themes (user-path)
+    # since we're not sure which one will be used.
+    && cp -r WhiteSur-light WhiteSur-dark /usr/share/themes \
+    && cp -r WhiteSur-light WhiteSur-dark /home/whist/.themes \
+    && cd ../.. && rm -rf WhiteSur-gtk-theme-2022-02-21 2022-02-21.tar.gz \
+    ### Configure Default Application
+    && ln -sf "$(which xeyes)" /usr/bin/whist-application
 
-# Symlink relevant applications
-# Set default whist-application to xeyes
-RUN ln -sf "$(which xeyes)" /usr/bin/whist-application
+#########################
+# Startup
+#########################
 
-# Install protocol dependencies
-COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh
-RUN /usr/share/whist/setup-linux-build-environment.sh \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/* \
-    && rm /usr/share/whist/setup-linux-build-environment.sh
+# Set up the entrypoint for the mandelbox (which starts systemd)
+CMD ["/usr/share/whist/entrypoint.sh"]
 
 #########################
 # Hydaulic Press Layer
 #########################
 
-# Copy over the big squashed layer from hydraulic-press stage direclty
+# Copy over the big squashed layer from hydraulic-press stage directly
 # into our filesystem
 COPY --from=hydraulic-press /hydraulic-squash /
 
