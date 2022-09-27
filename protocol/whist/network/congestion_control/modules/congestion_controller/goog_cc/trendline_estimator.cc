@@ -284,7 +284,7 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
   prev_modified_trend_ = modified_trend;
   BWE_TEST_LOGGING_PLOT(1, "T", now_ms, modified_trend);
   BWE_TEST_LOGGING_PLOT(1, "threshold", now_ms, threshold_);
-  whist_plotter_insert("modified_trend", now_ms/1000.0, modified_trend);
+  whist_plotter_insert_sample("modified_trend", now_ms/1000.0, modified_trend +100);
   if (modified_trend > threshold_) {
     if (time_over_using_ == -1) {
       // Initialize the timer. Assume that we've been
@@ -338,8 +338,8 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   int64_t time_delta_ms = std::min(now_ms - last_update_ms_, kMaxTimeDeltaMs);
   threshold_ += k * (fabs(modified_trend) - threshold_) * time_delta_ms;
   threshold_ = rtc::SafeClamp(threshold_, 6.f, 600.f);
-  whist_plotter_insert("threshold", now_ms/1000.0, threshold_);
-  whist_plotter_insert("-threshold", now_ms/1000.0, -threshold_);
+  whist_plotter_insert_sample("threshold", now_ms/1000.0, threshold_ +100);
+  whist_plotter_insert_sample("-threshold", now_ms/1000.0, -threshold_ +100);
   last_update_ms_ = now_ms;
 }
 
