@@ -208,10 +208,12 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	// Try scale up in given region
 	instanceNum := int32(instancesToScale)
 
-	// Slice that will hold the instances and pass them to the dbclient
 	var (
+		// Slice that will hold the instances and pass them to the dbclient
 		instancesForDb []subscriptions.Instance
-		err            error
+		// Slice that will hold fake mandelboxes and pass them to the dbclient
+		fakeMandelboxesForDb []subscriptions.Mandelbox
+		err                  error
 	)
 
 	// If we are running on a local or testing environment, spinup "fake" instances to avoid
@@ -219,7 +221,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	// them on the cloud provider for us.
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infow("Running on localdev so scaling up fake instances.", contextFields)
-		instancesForDb = helpers.SpinUpFakeInstances(instancesToScale, image.ImageID, event.Region)
+		instancesForDb, fakeMandelboxesForDb = helpers.SpinUpFakeInstances(instancesToScale, image.ImageID, event.Region)
 	} else {
 		// Call the host handler to handle the instance spinup in the cloud provider
 		instancesForDb, err = s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, image)
@@ -247,6 +249,16 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	}
 
 	logger.Infow(utils.Sprintf("Inserted %d rows to database.", affectedRows), contextFields)
+
+	// This is to acommodate localdev testing flows in which we need to register fake mandelboxes
+	// on the database.
+	if len(fakeMandelboxesForDb) > 0 {
+		affectedRows, err = s.DBClient.InsertMandelboxes(scalingCtx, s.GraphQLClient, fakeMandelboxesForDb)
+		if err != nil {
+			return utils.MakeError("failed to insert fake mandelboxes to database: %s", err)
+		}
+		logger.Infow(utils.Sprintf("Inserted %d rows to database.", affectedRows), contextFields)
+	}
 
 	return nil
 }

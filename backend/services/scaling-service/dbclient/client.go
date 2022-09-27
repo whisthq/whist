@@ -35,6 +35,7 @@ type WhistDBClient interface {
 
 	QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Mandelbox, error)
 	QueryUserMandelboxes(context.Context, subscriptions.WhistGraphQLClient, string) ([]subscriptions.Mandelbox, error)
+	InsertMandelboxes(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Mandelbox) (int, error)
 	UpdateMandelbox(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Mandelbox) (int, error)
 }
 

@@ -33,6 +33,35 @@ func (client *DBClient) QueryUserMandelboxes(scalingCtx context.Context, graphQL
 }
 
 // InsertMandelboxes adds the received mandelboxes to the database.
+func (client *DBClient) InsertMandelboxes(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Mandelbox) (int, error) {
+	insertMutation := subscriptions.InsertMandelboxes
+
+	var mandelboxesForDb []whist_mandelboxes_insert_input
+
+	for _, mandelbox := range insertParams {
+
+		// Due to some quirks with the Hasura client, we have to convert the
+		// mandelbox to `whist_mandelboxes_insert_input`.
+		mandelboxesForDb = append(mandelboxesForDb, whist_mandelboxes_insert_input{
+			ID:         graphql.String(mandelbox.ID.String()),
+			App:        graphql.String(mandelbox.App),
+			InstanceID: graphql.String(mandelbox.InstanceID),
+			UserID:     graphql.String(mandelbox.UserID),
+			SessionID:  graphql.String(mandelbox.SessionID),
+			Status:     graphql.String(mandelbox.Status),
+			CreatedAt:  mandelbox.CreatedAt,
+			UpdatedAt:  mandelbox.UpdatedAt,
+		})
+	}
+
+	mutationParams := map[string]interface{}{
+		"objects": mandelboxesForDb,
+	}
+	err := graphQLClient.Mutate(scalingCtx, &insertMutation, mutationParams)
+	return int(insertMutation.MutationResponse.AffectedRows), err
+}
+
+// UpdateMandelbox updates the received mandelboxes in the database.
 func (client *DBClient) UpdateMandelbox(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams subscriptions.Mandelbox) (int, error) {
 	updateMutation := subscriptions.UpdateMandelbox
 

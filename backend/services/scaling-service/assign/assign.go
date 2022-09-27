@@ -7,6 +7,7 @@ import (
 	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 func CheckForExistingMandelbox(ctx context.Context, db dbclient.WhistDBClient, graphQLClient subscriptions.WhistGraphQLClient, userID string) (bool, error) {
@@ -14,6 +15,8 @@ func CheckForExistingMandelbox(ctx context.Context, db dbclient.WhistDBClient, g
 	if err != nil {
 		return false, err
 	}
+
+	logger.Infof("User %s has %d mandelboxes active", userID, len(mandelboxResult))
 
 	if len(mandelboxResult) == 0 {
 		return true, nil
@@ -28,7 +31,7 @@ func CheckForExistingMandelbox(ctx context.Context, db dbclient.WhistDBClient, g
 		}
 	}
 
-	if activeOrConnectingMandelboxes > config.GetMandelboxLimitPerUser() {
+	if activeOrConnectingMandelboxes >= config.GetMandelboxLimitPerUser() {
 		return false, nil
 	}
 
