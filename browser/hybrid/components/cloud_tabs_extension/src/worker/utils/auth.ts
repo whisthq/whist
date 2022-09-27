@@ -1,10 +1,7 @@
 import has from "lodash.has"
 
-import {
-  parseAuthInfo,
-  requestAuthInfoRefresh,
-} from "@app/@core-ts/auth"
-import { getStorage, setStorage } from "@app/worker/utils/storage"
+import { parseAuthInfo, requestAuthInfoRefresh } from "@app/@core-ts/auth"
+import { getStorage } from "@app/worker/utils/storage"
 
 import { Storage } from "@app/constants/storage"
 import { AuthInfo } from "@app/@types/payload"
@@ -48,9 +45,4 @@ const authFailure = (payload: AuthInfo) => {
   )
 }
 
-export {
-  initWhistAuth,
-  authSuccess,
-  authNetworkError,
-  authFailure,
-}
+export { initWhistAuth, authSuccess, authNetworkError, authFailure }
