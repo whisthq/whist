@@ -653,7 +653,7 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     && rm -rf /tmp/* /var/tmp/* /deb \
     ### Systemd Configuration
     # Remove sysinit targets except for systemd-tmpfiles-setup
-    && find /lib/systemd/system/sysinit.target.wants -type l ! -name systemd-tmpfiles-setup -delete
+    && find /lib/systemd/system/sysinit.target.wants -type l ! -name systemd-tmpfiles-setup -delete \
     # Remove unneeded multi-user services
     && rm -f /lib/systemd/system/multi-user.target.wants/* \
         /etc/systemd/system/*.wants/* \
