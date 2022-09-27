@@ -63,10 +63,6 @@ const keyboardRepeatInitialDelay = async () => {
   }
 }
 
-// const locale = () => {
-//   return chrome.i18n.getUILanguage().replace(/-/g, "_")
-// }
-
 const userLocale = async () => {
   return await new Promise((resolve) =>
     (chrome as any).whist.getUserLocale((userLocaleJson: any) => {
