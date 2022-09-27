@@ -62,7 +62,7 @@ const initializeWhistFreezeAllHandler = () => {
           type: "WEB_UIS_FROZEN",
           value: {
             newActiveTabId: getTabId(),
-            spotlightId: spotlightId
+            spotlightId: spotlightId,
           },
         })
       )
@@ -85,7 +85,7 @@ const initializeWhistSpotlightHandler = () => {
         whistTag.whistConnect(whistParameters)
       }
 
-      var spotlightId = parsed.value.spotlightId;
+      var spotlightId = parsed.value.spotlightId
 
       if (spotlightId != undefined) {
         // We delay by 100ms because this is the amount of time we expect the protocol to lag behind

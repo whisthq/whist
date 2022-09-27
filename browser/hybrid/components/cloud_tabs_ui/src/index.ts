@@ -12,7 +12,7 @@ import {
   initializeWhistTagHandler,
   initializeWhistFreezeAllHandler,
   initializeWhistSpotlightHandler,
-  initializeRequestMandelbox
+  initializeRequestMandelbox,
 } from "./controls/whist"
 import { initializePageRefreshHandler } from "./controls/refresh"
 import { initializeMouseEnterHandler } from "./controls/mouse"
