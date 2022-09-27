@@ -26,7 +26,7 @@ The services `startup/whist-startup.service`, `display/whist-display.service`, `
 
 4. `audio/whist-audio.service`, meanwhile, can start as soon as `display/whist-display.service` _begins_ running (which is important because the lifecycle of whist-display is the lifecycle of our mandelboxized applications). It starts a virtual Pulse Audio soundcard in the mandelbox, enabling sound.
 
-5. `main/whist-main.service` can start as soon as `display/whist-display.service` and `audio/whist-audio.service` are both running, running the Whist protocol and configuring some environment variables to work correctly with the X Server. Note that we block until `.configReady` is written, since the application and protocol will depend on user configs.
+5. `main/whist-main.service` can start as soon as `display/whist-display.service` and `audio/whist-audio.service` are both running, running the Whist protocol and configuring some environment variables to work correctly with the X Server.
 
 ### Useful Debugging Practices
 

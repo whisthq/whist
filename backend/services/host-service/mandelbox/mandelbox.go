@@ -84,9 +84,6 @@ type Mandelbox interface {
 	GetDockerID() types.DockerID
 	GetAppName() types.AppName
 
-	SetConfigEncryptionToken(types.ConfigEncryptionToken)
-	GetConfigEncryptionToken() types.ConfigEncryptionToken
-
 	GetClientAppAccessToken() types.ClientAppAccessToken
 	SetClientAppAccessToken(types.ClientAppAccessToken)
 
@@ -116,8 +113,7 @@ type Mandelbox interface {
 	// this mandelbox.
 	WriteProtocolTimeout(protocolTimeout int) error
 
-	// MarkParamsReady indicates that processes that do not depend on user configs
-	// are ready to be initialized.
+	// MarkParamsReady indicates that processes are ready to be initialized.
 	MarkParamsReady() error
 
 	// WriteSessionID writes the session ID received from the client to a file
@@ -127,21 +123,6 @@ type Mandelbox interface {
 	// WriteJSONData writes arbitrary data from JSON Transport endpoint for
 	// mandelbox internals.
 	WriteJSONData(types.JSONData) error
-
-	// WriteUserInitialBrowserData adds data from the user's local browser to
-	// their already-downloaded config in the mandelbox.
-	WriteUserInitialBrowserData(types.BrowserData) error
-
-	// MarkConfigReady tells the protocol inside the mandelbox that it is ready to
-	// start and accept connections.
-	MarkConfigReady() error
-
-	// StartLoadingUserConfigs starts the process of loading user configs without
-	// blocking.
-	StartLoadingUserConfigs(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (chan<- ConfigEncryptionInfo, <-chan error)
-
-	// Backup the user configs to S3
-	BackupUserConfigs() error
 
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
@@ -237,21 +218,6 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		mandelbox.cleanResourceMappingDir()
 		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.GetID())
 
-		// Only try to backup user configs if the mandelbox was successfully connected to
-		if mandelbox.GetStatus() == dbdriver.MandelboxStatusRunning ||
-			mandelbox.GetStatus() == dbdriver.MandelboxStatusDying {
-			// Backup and clean user config directory.
-			err := mandelbox.BackupUserConfigs()
-			if err != nil {
-				mandelboxCloseErr = multierror.Append(mandelboxCloseErr, utils.MakeError("error backing up user configs for MandelboxID %s: %s", mandelbox.GetID(), err))
-			} else {
-				logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.GetID())
-			}
-			mandelbox.cleanUserConfigDir()
-		} else {
-			logger.Infof("No users connected to the mandelbox, so not trying to backup configs.")
-		}
-
 		if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
 			mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
 		}
@@ -293,9 +259,8 @@ type mandelboxData struct {
 	tty       ttys.TTY
 	gpuIndex  gpus.Index
 
-	configEncryptionToken types.ConfigEncryptionToken
-	clientAppAccessToken  types.ClientAppAccessToken
-	privateKey            types.PrivateKey
+	clientAppAccessToken types.ClientAppAccessToken
+	privateKey           types.PrivateKey
 
 	uinputDevices        *uinputdevices.UinputDevices
 	uinputDeviceMappings []dockercontainer.DeviceMapping
@@ -362,20 +327,6 @@ func (mandelbox *mandelboxData) GetLastUpdatedTime() time.Time {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.updatedAt
-}
-
-// GetConfigEncryptionToken returns the config encryption token.
-func (mandelbox *mandelboxData) GetConfigEncryptionToken() types.ConfigEncryptionToken {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
-	return mandelbox.configEncryptionToken
-}
-
-// SetConfigEncryptionToken sets the config encryption token.
-func (mandelbox *mandelboxData) SetConfigEncryptionToken(token types.ConfigEncryptionToken) {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-	mandelbox.configEncryptionToken = token
 }
 
 // GetPrivateKey returns the private key.
@@ -579,6 +530,6 @@ func (mandelbox *mandelboxData) GetContext() context.Context {
 // and clean up all its resources.
 func (mandelbox *mandelboxData) Close() {
 	// Cancel context, triggering the freeing up of all resources, including
-	// tracked by goroutines (like cloud storage directories)
+	// tracked by goroutines
 	mandelbox.cancel()
 }

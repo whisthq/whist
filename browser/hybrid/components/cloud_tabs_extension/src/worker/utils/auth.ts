@@ -3,12 +3,11 @@ import has from "lodash.has"
 import {
   parseAuthInfo,
   requestAuthInfoRefresh,
-  generateRandomConfigToken,
 } from "@app/@core-ts/auth"
 import { getStorage, setStorage } from "@app/worker/utils/storage"
 
 import { Storage } from "@app/constants/storage"
-import { AuthInfo, ConfigTokenInfo } from "@app/@types/payload"
+import { AuthInfo } from "@app/@types/payload"
 
 const initWhistAuth = async () => {
   /*
@@ -27,24 +26,6 @@ const initWhistAuth = async () => {
   }
 
   return refreshedAuthInfo
-}
-
-const initConfigTokenHandler = async () => {
-  const configTokenInfo = await getStorage<ConfigTokenInfo>(
-    Storage.CONFIG_TOKEN_INFO
-  )
-
-  if (configTokenInfo?.token === undefined) {
-    void setStorage(Storage.CONFIG_TOKEN_INFO, {
-      token: generateRandomConfigToken(),
-      isNew: true,
-    })
-  } else {
-    void setStorage(Storage.CONFIG_TOKEN_INFO, {
-      ...configTokenInfo,
-      isNew: false,
-    })
-  }
 }
 
 const authSuccess = (payload: AuthInfo) => {
@@ -69,7 +50,6 @@ const authFailure = (payload: AuthInfo) => {
 
 export {
   initWhistAuth,
-  initConfigTokenHandler,
   authSuccess,
   authNetworkError,
   authFailure,

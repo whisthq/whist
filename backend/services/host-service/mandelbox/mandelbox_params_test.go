@@ -51,11 +51,6 @@ func TestWriteMandelboxParams(t *testing.T) {
 		t.Fatalf("Error writing .paramsReady: %v", err)
 	}
 
-	err = mandelbox.MarkConfigReady()
-	if err != nil {
-		t.Fatalf("Error writing .configReady: %v", err)
-	}
-
 	var paramsTests = []string{
 		"hostPort_for_my_32262_tcp",
 		"tty",
@@ -63,7 +58,6 @@ func TestWriteMandelboxParams(t *testing.T) {
 		"session_id",
 		"timeout",
 		".paramsReady",
-		".configReady",
 	}
 
 	for _, tt := range paramsTests {
@@ -121,7 +115,6 @@ func TestWriteMandelboxParamsErrors(t *testing.T) {
 		"session_id",
 		"timeout",
 		".paramsReady",
-		".configReady",
 	}
 
 	resourceDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "/mandelboxResourceMappings/")
@@ -145,11 +138,6 @@ func TestWriteMandelboxParamsErrors(t *testing.T) {
 	err = mandelbox.MarkParamsReady()
 	if err == nil {
 		t.Fatalf("Did not get an error when  writing .paramsReady to file with name identical to a folder: %v", err)
-	}
-
-	err = mandelbox.MarkConfigReady()
-	if err == nil {
-		t.Fatalf("Did not get an error when  writing .configReady to file with name identical to a folder: %v", err)
 	}
 }
 

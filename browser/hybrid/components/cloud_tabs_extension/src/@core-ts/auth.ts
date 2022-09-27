@@ -97,18 +97,6 @@ export const parseAuthInfo = (res: {
   }
 }
 
-export const generateRandomConfigToken = () => {
-  /*
-  Description:
-    Generates a config token for app config security
-  Returns:
-    string: Config token
-  */
-
-  const buffer = Buffer.from(crypto.getRandomValues(new Uint32Array(48)))
-  return buffer.toString("base64")
-}
-
 export const isTokenExpired = (accessToken: string) => {
   // Extract the expiry in seconds since epoch
   try {

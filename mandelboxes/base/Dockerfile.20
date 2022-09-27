@@ -417,12 +417,6 @@ COPY --chown=root:root --chmod=600 audio/whist-audio.service $HYDRAULIC_ROOT/etc
 # Startup
 #########################
 
-# Set up user config map for mandelbox startup
-COPY startup/app-config-map.json $HYDRAULIC_ROOT/usr/share/whist/app-config-map.json
-
-# Set up custom config scripts
-COPY utils/browser-data/import_user_browser_data.py $HYDRAULIC_ROOT/usr/share/whist/import_user_browser_data.py
-
 # Add inotify file watching blockers
 COPY --chmod=555 utils/block-until-file-exists.sh $HYDRAULIC_ROOT/usr/local/bin/block-until-file-exists.sh
 COPY --chmod=555 utils/block-while-file-exists.sh $HYDRAULIC_ROOT/usr/local/bin/block-while-file-exists.sh
@@ -827,16 +821,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 #########################
 # Startup
 #########################
-
-# Install Dependencies for Cookie Import
-COPY utils/browser-data/requirements.txt /requirements.txt
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3-pip \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir -r /requirements.txt \
-    && rm /requirements.txt \
-    && rm -rf /tmp/* /var/tmp/*
 
 # Set up the entrypoint for the mandelbox (which starts systemd)
 CMD ["/usr/share/whist/entrypoint.sh"]

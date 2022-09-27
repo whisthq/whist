@@ -85,13 +85,16 @@ RUN mkdir -p /home/whist/.config/google-chrome \
     && touch /home/whist/.config/google-chrome/'First Run' \
     && chown whist:whist /home/whist/.config/google-chrome{,/'First Run'}
 
-ENV WHIST_DEST_BROWSER="chrome"
+RUN echo "chrome" > /home/whist/.browser_application \
+    && chown whist:whist /home/whist/.browser_application
 
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/google-chrome /usr/bin/whist-open-new-tab
 
 # Create the Chrome preferences config file if it doesn't exist
+# Also, default profile should be modifiable by whist user
 RUN mkdir -p /home/whist/.config/google-chrome/Default \
+    && chown whist:whist /home/whist/.config/google-chrome/Default \
     && touch /home/whist/.config/google-chrome/Default/Preferences \
     && chown whist:whist /home/whist/.config/google-chrome/Default/Preferences
 

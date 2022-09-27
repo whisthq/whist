@@ -62,16 +62,9 @@ func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
 	return mandelbox.writeResourceMappingToFile("config.json", jsonDataPlainText)
 }
 
-// MarkParamsReady indicates that the mandelbox's services that do NOT depend
-// on s3 userConfigs (e.g. audio and video services) can be started
+// MarkParamsReady indicates that the mandelbox's services can be started
 func (mandelbox *mandelboxData) MarkParamsReady() error {
 	return mandelbox.writeResourceMappingToFile(".paramsReady", ".paramsReady")
-}
-
-// MarkConfigReady indicates that all configs (including user configs) are in
-// place, and the mandelbox is ready to start the protocol + application.
-func (mandelbox *mandelboxData) MarkConfigReady() error {
-	return mandelbox.writeResourceMappingToFile(".configReady", ".configReady")
 }
 
 func (mandelbox *mandelboxData) getResourceMappingDir() string {

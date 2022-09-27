@@ -125,6 +125,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 // cancelled, it also aborts (therefore letting us not leak goroutines if a
 // mandelbox dies or fails during creation after this function is called).
 func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.WaitGroup, devices *UinputDevices, socketPath string) error {
+	logger.Infof("Starting SendDeviceFDsOverSocket")
 	// Create our own context so we can safely cancel it.
 	ctx, cancel := context.WithCancel(baseCtx)
 	defer cancel()
@@ -144,8 +145,8 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 	}
 	// Instead of running `defer listener.Close()` we ran `defer cancel()` above,
 	// which will cause the following goroutine to always close `listener`.
-	// Normally, listener.Accept() blocks until the protocol connects. If the
-	// context is closed, though, we want to unblock.
+	// Normally, listener.Accept() blocks until the protocol connects to the
+	// Unix socket. If the context is closed, though, we want to unblock.
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()

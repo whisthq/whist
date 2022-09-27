@@ -190,12 +190,11 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		AppName:               types.AppName(utils.MandelboxApp),
-		ConfigEncryptionToken: "testToken1234",
-		JwtAccessToken:        "test_jwt_token",
-		MandelboxID:           testMandelbox.GetID(),
-		JSONData:              types.JSONData(deflatedJSONData),
-		ResultChan:            make(chan httputils.RequestResult),
+		AppName:        types.AppName(utils.MandelboxApp),
+		JwtAccessToken: "test_jwt_token",
+		MandelboxID:    testMandelbox.GetID(),
+		JSONData:       types.JSONData(deflatedJSONData),
+		ResultChan:     make(chan httputils.RequestResult),
 	}
 
 	testmux := &sync.Mutex{}
@@ -231,15 +230,6 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	}
 	if string(paramsReadyFileContents) != ".paramsReady" {
 		t.Errorf("Params ready file contains invalid contents: %s", string(paramsReadyFileContents))
-	}
-
-	configReadyFile := path.Join(resourceMappingDir, ".configReady")
-	configReadyFileContents, err := os.ReadFile(configReadyFile)
-	if err != nil {
-		t.Fatalf("Failed to read resource file %s: %v", configReadyFile, err)
-	}
-	if string(configReadyFileContents) != ".configReady" {
-		t.Errorf("Config ready file contains invalid contents: %s", string(configReadyFileContents))
 	}
 
 	var jsonData map[string]interface{}

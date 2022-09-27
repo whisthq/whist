@@ -1,7 +1,6 @@
 import { merge } from "rxjs"
 import { filter, take } from "rxjs/operators"
 
-import { initConfigTokenHandler } from "@app/worker/utils/auth"
 import { authSuccess, authFailure } from "@app/worker/events/auth"
 import { hostError } from "@app/worker/events/host"
 import { mandelboxError } from "@app/worker/events/mandelbox"
@@ -18,8 +17,6 @@ import { Storage } from "@app/constants/storage"
 import { welcomePageOpened } from "@app/worker/events/webui"
 
 import { config } from "@app/constants/app"
-
-void initConfigTokenHandler()
 
 // Tell the browser that auth succeeded and redirect to chrome://welcome
 authSuccess.subscribe(async (auth: AuthInfo) => {

@@ -55,15 +55,6 @@ jobs:
           GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
         run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
 
-      # Set up AWS credentials to allow upload and download from S3
-      # for user config integration test
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
       # Check go project (clean, build, vet, format, lint, test, docs)
       - name: Check Go Project
         working-directory: backend/services

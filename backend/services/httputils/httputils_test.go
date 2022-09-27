@@ -67,20 +67,15 @@ func TestParseRequest(t *testing.T) {
 		{"Valid JSON transport request", &JSONTransportRequest{}, `{
 			"ip": "0.0.0.0",
 			"app_name": "chrome",
-			"config_encryption_token": "test_config_encryption",
 			"mandelbox_id": "e0aa0e21-3350-49b6-95a6-152dd2a13e3c",
-			"is_new_config_encryption_token": false,
 			"json_data": "test_json_data",
 			"browser_data": "test_browser_data"
 
 		}`, &JSONTransportRequest{
-			IP:                    "0.0.0.0",
-			AppName:               "CHROME",
-			ConfigEncryptionToken: "test_config_encryption",
-			MandelboxID:           types.MandelboxID(uuid.MustParse("e0aa0e21-3350-49b6-95a6-152dd2a13e3c")),
-			IsNewConfigToken:      false,
-			JSONData:              types.JSONData(`"location":"Americas/NewYork"`),
-			BrowserData:           types.BrowserData(`"cookies": "test_cookies"`),
+			IP:          "0.0.0.0",
+			AppName:     "CHROME",
+			MandelboxID: types.MandelboxID(uuid.MustParse("e0aa0e21-3350-49b6-95a6-152dd2a13e3c")),
+			JSONData:    types.JSONData(`"location":"Americas/NewYork"`),
 		}},
 		{"Empty JSON transport request", &JSONTransportRequest{}, `{}`, &JSONTransportRequest{}},
 	}

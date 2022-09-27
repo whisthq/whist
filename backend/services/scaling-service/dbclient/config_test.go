@@ -58,8 +58,8 @@ func TestGetDevConfigs(t *testing.T) {
 		expected map[string]string
 	}{
 		{"Existing configs", "", map[string]string{
-			"test-user-config-key-1": "test-user-config-value-1",
-			"test-user-config-key-2": "test-user-config-value-2",
+			"test-config-key-1": "test-config-value-1",
+			"test-config-key-2": "test-config-value-2",
 		}},
 		{"Empty configs", "could not find dev configs on database", nil},
 	}
@@ -99,8 +99,8 @@ func TestGetStagingConfigs(t *testing.T) {
 		expected map[string]string
 	}{
 		{"Existing configs", "", map[string]string{
-			"test-user-config-key-1": "test-user-config-value-1",
-			"test-user-config-key-2": "test-user-config-value-2",
+			"test-config-key-1": "test-config-value-1",
+			"test-config-key-2": "test-config-value-2",
 		}},
 		{"Empty configs", "could not find staging configs on database", nil},
 	}
@@ -139,8 +139,8 @@ func TestGetProdConfigs(t *testing.T) {
 		expected map[string]string
 	}{
 		{"Existing configs", "", map[string]string{
-			"test-user-config-key-1": "test-user-config-value-1",
-			"test-user-config-key-2": "test-user-config-value-2",
+			"test-config-key-1": "test-config-value-1",
+			"test-config-key-2": "test-config-value-2",
 		}},
 		{"Empty configs", "could not find prod configs on database", nil},
 	}

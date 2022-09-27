@@ -269,7 +269,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		UpdatedAt:  time.Now(),
 	}
 
-	// Allocate mandelbox on database so the host service can start downloading user configs
+	// Allocate mandelbox on database
 	affectedRows, err := s.DBClient.UpdateMandelbox(scalingCtx, s.GraphQLClient, mandelboxForDb)
 	if err != nil {
 		return utils.MakeError("error while inserting mandelbox to database: %s", err)

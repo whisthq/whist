@@ -153,15 +153,6 @@ do
   xset -r "$keycode"
 done
 
-WHIST_PRIVATE_DIR=/usr/share/whist/private
-USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
-if [ -f "$USER_DEST_BROWSER_FILENAME" ]; then
-  WHIST_DEST_BROWSER=$(cat $USER_DEST_BROWSER_FILENAME)
-else
-  echo "Browser name not specified, using Chrome"
-  WHIST_DEST_BROWSER="chrome"
-fi
-
 # Set all JSON transport-related settings
 # We set the TZ environment variable (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
 # in order to automatically adjust the timezone at the lower layers
@@ -179,9 +170,8 @@ export USER_LOCALE=$USER_LOCALE
 export SYSTEM_LANGUAGES=$SYSTEM_LANGUAGES
 export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
 export CLIENT_OS=$CLIENT_OS
-export WHIST_DEST_BROWSER=$WHIST_DEST_BROWSER
 
-exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,LOAD_EXTENSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,SYSTEM_LANGUAGES,BROWSER_LANGUAGES,CLIENT_OS,WHIST_DEST_BROWSER -c \
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,LOAD_EXTENSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,SYSTEM_LANGUAGES,BROWSER_LANGUAGES,CLIENT_OS -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \

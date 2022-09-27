@@ -24,9 +24,8 @@ import {
 } from "@app/worker/utils/jsonTransport"
 import { mandelboxSuccess } from "@app/worker/events/mandelbox"
 
-import { AuthInfo, ConfigTokenInfo, MandelboxInfo } from "@app/@types/payload"
+import { AuthInfo, MandelboxInfo } from "@app/@types/payload"
 import { Storage } from "@app/constants/storage"
-import { generateRandomConfigToken } from "@app/@core-ts/auth"
 
 const jsonTransport = async () => {
   const t = timeZone()
@@ -55,19 +54,16 @@ const hostInfo = mandelboxSuccess.pipe(
     from(
       Promise.all([
         getStorage<AuthInfo>(Storage.AUTH_INFO),
-        getStorage<ConfigTokenInfo>(Storage.CONFIG_TOKEN_INFO),
         // TODO: This is silly and probably not needed.
         new Promise<MandelboxInfo>((resolve) => resolve(mandelbox)),
         jsonTransport(),
       ])
     )
   ),
-  switchMap(([auth, _, mandelbox, jsonData]) =>
+  switchMap(([auth, mandelbox, jsonData]) =>
     from(
       hostSpinUp({
         ip: mandelbox.mandelboxIP ?? "",
-        config_encryption_token: generateRandomConfigToken(),
-        is_new_config_encryption_token: true,
         jwt_access_token: auth.accessToken ?? "",
         mandelbox_id: mandelbox.mandelboxID,
         json_data: JSON.stringify({
@@ -76,7 +72,6 @@ const hostInfo = mandelboxSuccess.pipe(
           load_extension: true,
           ...jsonData,
         }),
-        importedData: undefined,
       })
     ).pipe(
       timeout(10000), // If nothing is emitted for 10s, we assume a timeout so that an error can be shown

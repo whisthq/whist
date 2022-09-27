@@ -144,26 +144,6 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
   }
 }
 
-# This policy allows is assumed by S3 to replicate objects on our behalf.
-data "aws_iam_policy_document" "BucketReplicationRolePolicy" {
-  statement {
-    actions = [
-      "s3:GetReplicationConfiguration",
-      "s3:ListBucket",
-      "s3:GetObjectVersionForReplication",
-      "s3:GetObjectVersionAcl",
-      "s3:GetObjectVersionTagging",
-      "s3:ReplicateObject",
-      "s3:ReplicateDelete",
-      "s3:ReplicateTags"
-    ]
-    effect = "Allow"
-    resources = [
-      "*"
-    ]
-  }
-}
-
 # This policy gives Packer the minimum amount of permissions to create AMIs. It 
 # is based on Packer's documentation, although it is slightly modified to include
 # Spot instance access. See: https://www.packer.io/plugins/builders/amazon#iam-task-or-instance-role

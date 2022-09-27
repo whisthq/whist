@@ -30,8 +30,3 @@ export interface HostInfo {
     port_32273: number
   }
 }
-
-export interface ConfigTokenInfo {
-  token?: string
-  isNew: boolean
-}
