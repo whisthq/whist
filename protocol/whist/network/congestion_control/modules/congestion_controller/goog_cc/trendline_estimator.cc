@@ -297,7 +297,8 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
     }
     overuse_counter_++;
 #ifdef ENABLE_WHIST_CHANGE
-    if (time_over_using_ > 80 && overuse_counter_ > 1 || time_over_using_ >10 && overuse_counter_>= 6 ) {
+    //if (time_over_using_ > 80 && overuse_counter_ > 1 || time_over_using_ >10 && overuse_counter_>= 6 ) {
+    if (time_over_using_ > 16 && overuse_counter_ > 1) {
 #else
     if (time_over_using_ > overusing_time_threshold_ && overuse_counter_ > 1) {
 #endif

@@ -20,6 +20,7 @@
 //#include "absl/strings/match.h"
 #include "api/transport/network_types.h"
 #include "api/units/data_rate.h"
+#include "common_fixes.h"
 #include "modules/remote_bitrate_estimator/include/bwe_defines.h"
 //#include "modules/remote_bitrate_estimator/overuse_detector.h"
 #include "rtc_base/checks.h"
@@ -33,7 +34,11 @@ namespace webrtc {
 namespace {
 
 constexpr TimeDelta kDefaultRtt = TimeDelta::Millis(200);
+#if ENABLE_WHIST_CHANGE
+constexpr double kDefaultBackoffFactor = 0.94;
+#else
 constexpr double kDefaultBackoffFactor = 0.85;
+#endif
 
 constexpr char kBweBackOffFactorExperiment[] = "WebRTC-BweBackOffFactor";
 
