@@ -69,8 +69,8 @@ const keyboardRepeatInitialDelay = async () => {
 
 const userLocale = async () => {
   return await new Promise((resolve) =>
-      (chrome as any).whist.getUserLocale((userLocaleJson: string) => {
-        resolve(JSON.parse(userLocaleJson))
+      (chrome as any).whist.getUserLocale((userLocaleJson: any) => {
+        resolve(userLocaleJson)
       })
     )
 }
