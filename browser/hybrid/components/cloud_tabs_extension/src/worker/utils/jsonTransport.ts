@@ -69,10 +69,10 @@ const keyboardRepeatInitialDelay = async () => {
 
 const userLocale = async () => {
   return await new Promise((resolve) =>
-      (chrome as any).whist.getUserLocale((userLocaleJson: any) => {
-        resolve(userLocaleJson)
-      })
-    )
+    (chrome as any).whist.getUserLocale((userLocaleJson: any) => {
+      resolve(userLocaleJson)
+    })
+  )
 }
 
 const browserLanguages = async () => {
@@ -87,15 +87,15 @@ const browserLanguages = async () => {
 
 const systemLanguages = async () => {
   return await new Promise((resolve) =>
-      (chrome as any).whist.getSystemLanguage((systemLanguage: string) => {
-        resolve(systemLanguage.replace(/-/g, "_"))
-      })
-    )
+    (chrome as any).whist.getSystemLanguage((systemLanguage: string) => {
+      resolve(systemLanguage.replace(/-/g, "_"))
+    })
+  )
 }
 
 const location = async () => {
   const IPSTACK_API_KEY = "f3e4e15355710b759775d121e243e39b"
-  
+
   const response = await fetch(
     `http://api.ipstack.com/check?access_key=${IPSTACK_API_KEY}&format=1`
   )

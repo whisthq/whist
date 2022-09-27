@@ -35,16 +35,17 @@ const jsonTransport = async () => {
   const t = timeZone()
   const u = userAgent()
 
-  const [d, p, r, i, locationVar, browserLangs, systemLangs, locale] = await Promise.all([
-    darkMode(),
-    platform(),
-    keyboardRepeatRate(),
-    keyboardRepeatInitialDelay(),
-    location(),
-    browserLanguages(),
-    systemLanguages(),
-    userLocale(),
-  ])
+  const [d, p, r, i, locationVar, browserLangs, systemLangs, locale] =
+    await Promise.all([
+      darkMode(),
+      platform(),
+      keyboardRepeatRate(),
+      keyboardRepeatInitialDelay(),
+      location(),
+      browserLanguages(),
+      systemLanguages(),
+      userLocale(),
+    ])
 
   return {
     dark_mode: d,
