@@ -41,6 +41,10 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
     std::unique_ptr<webrtc::AcknowledgedBitrateEstimatorInterface> acknowledged_bitrate_estimator_;
     webrtc::FieldTrials * ft;
     bool first_time=true;
+    long long last_group_id=-1;
+
+    PacketInfo last_group_packet;
+
     public:
     CongestionCongrollerImpl()
     {
@@ -159,9 +163,32 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         //incoming_optional = webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value());
       }
 
-      webrtc::DelayBasedBwe::Result result= delay_based_bwe->IncomingPacketFeedbackVector(
-      report, acknowledged_bitrate, dummy_probe, dummy_est,
-      false);
+      webrtc::DelayBasedBwe::Result result;
+
+      webrtc::TransportPacketsFeedback grouped_report;
+
+      long long current_group_id= input.packets[0].group_id;
+
+      if(current_group_id > last_group_id)
+      {
+        if(last_group_id!=-1)
+        {
+          grouped_report.feedback_time=current_time;
+          grouped_report.packet_feedbacks.emplace_back();
+          grouped_report.packet_feedbacks[0].receive_time= webrtc::Timestamp::Millis(last_group_packet.arrival_time_ms);
+          grouped_report.packet_feedbacks[0].sent_packet.send_time= webrtc::Timestamp::Millis(last_group_packet.depature_time_ms);
+          grouped_report.packet_feedbacks[0].sent_packet.size = webrtc::DataSize::Bytes(last_group_packet.packet_size);
+
+          result=delay_based_bwe->IncomingPacketFeedbackVector(
+              grouped_report, acknowledged_bitrate, dummy_probe, dummy_est,
+              false);
+        }
+
+        last_group_packet= input.packets[0];
+        last_group_id = current_group_id;
+      }
+
+
 
       if (result.updated) {
             send_side_bwd->UpdateDelayBasedEstimate(report.feedback_time,

@@ -611,6 +611,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             input.packets[0].arrival_time_ms= (a_relative/1000.0);
             input.packets[0].depature_time_ms= (d_relative/1000.0);
             input.packets[0].packet_size = packet_size;
+            input.packets[0].group_id= (long long)group_id;
+            FATAL_ASSERT(group_id>=0);
             FATAL_ASSERT(packet_size>0);
 
             //input.packets[0].arrival_time_ms= (long long)input.packets[0].arrival_time_ms;
