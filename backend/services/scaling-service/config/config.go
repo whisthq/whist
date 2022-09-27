@@ -22,6 +22,10 @@ type serviceConfig struct {
 	// enabledRegions is the list of regions in which users are allowed to request
 	// Mandelboxes.
 	enabledRegions []string
+
+	// mandelboxLimitPerUser is the maximum number of active mandelboxes a
+	// user can have.
+	mandelboxLimitPerUser int32
 }
 
 // config is a singleton that stores service-global configuration values.
@@ -49,4 +53,13 @@ func GetEnabledRegions() []string {
 	defer rw.RUnlock()
 
 	return config.enabledRegions
+}
+
+// GetMandelboxLimitPerUser returns the limit of mandelboxes a user can request.
+// This includes mandelboxes that are running or in the process of getting ready.
+func GetMandelboxLimitPerUser() int32 {
+	rw.RLock()
+	defer rw.RUnlock()
+
+	return config.mandelboxLimitPerUser
 }

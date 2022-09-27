@@ -24,5 +24,12 @@ func TestGetEnabledRegionsLocal(t *testing.T) {
 		if !reflect.DeepEqual(regions, expected) {
 			t.Errorf("Expected %v, got %v", expected, regions)
 		}
+
+		expectedLimit := int32(3)
+		mandelboxLimit := GetMandelboxLimitPerUser()
+
+		if !reflect.DeepEqual(mandelboxLimit, expectedLimit) {
+			t.Errorf("Expected %v, got %v", expectedLimit, mandelboxLimit)
+		}
 	})(t)
 }

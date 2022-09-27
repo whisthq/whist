@@ -156,7 +156,12 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 
 	return len(testMandelboxes), nil
 }
+
 func (db *mockDBClient) QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Mandelbox, error) {
+	return testMandelboxes, nil
+}
+
+func (db *mockDBClient) QueryUserMandelboxes(context.Context, subscriptions.WhistGraphQLClient, string) ([]subscriptions.Mandelbox, error) {
 	return testMandelboxes, nil
 }
 

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	hashicorp "github.com/hashicorp/go-version"
-	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/assign"
 	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -59,10 +59,11 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return err
 	}
 	logger.Infof("Frontend reported email %s, this value might not be accurate and is untrusted.", unsafeEmail)
+
 	// Append user email to logging context for better debugging.
 	contextFields = append(contextFields, zap.String("user", unsafeEmail))
 
-	shouldAllocateMandelbox, err := s.CheckForExistingMandelbox(scalingCtx, string(mandelboxRequest.UserID))
+	shouldAllocateMandelbox, err := assign.CheckForExistingMandelbox(scalingCtx, s.DBClient, s.GraphQLClient, string(mandelboxRequest.UserID))
 	if err != nil {
 		return utils.MakeError("failed to get mandelboxes from database: %s", err)
 	}
@@ -332,32 +333,4 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	}, nil)
 
 	return nil
-}
-
-func (s *DefaultScalingAlgorithm) CheckForExistingMandelbox(scalingCtx context.Context, userID string) (bool, err) {
-	mandelboxResult, err := s.DBClient.QueryMandelbox(scalingCtx, s.GraphQLClient, userID)
-	if err != nil {
-		// TODO: Do we want to not assign for a failure here ?
-		return false, err
-	}
-
-	if len(mandelboxResult) == 0 {
-		return true, false
-	}
-
-	const MandelboxLimitPerUser int32 = 3
-
-	var activeOrConnectingMandelboxes int32
-
-	for _, mandelbox := range mandelboxResult {
-		if !(mandelbox.Status == string(dbdriver.MandelboxStatusDying)) {
-			activeOrConnectingMandelboxes++
-		}
-	}
-
-	if activeOrConnectingMandelboxes > MandelboxLimitPerUser {
-		return false, nil
-	}
-
-	return true, nil
 }
