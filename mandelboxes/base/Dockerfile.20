@@ -652,9 +652,9 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/* /deb \
     ### Systemd Configuration
-    # Remove systemd tmpfiles setup service
-    && ls -d /lib/systemd/system/sysinit.target.wants/* | grep -v systemd-tmpfiles-setup | xargs rm -f \
-    # Remove unneeded services
+    # Remove sysinit targets except for systemd-tmpfiles-setup
+    && find /lib/systemd/system/sysinit.target.wants -type l ! -name systemd-tmpfiles-setup -delete
+    # Remove unneeded multi-user services
     && rm -f /lib/systemd/system/multi-user.target.wants/* \
         /etc/systemd/system/*.wants/* \
         /lib/systemd/system/local-fs.target.wants/* \
@@ -714,6 +714,9 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     && cd ../.. && rm -rf WhiteSur-gtk-theme-2022-02-21 2022-02-21.tar.gz \
     ### Configure Default Application
     && ln -sf "$(which xeyes)" /usr/bin/whist-application
+
+# Install NVIDIA GRID driver
+COPY --from=nvidia-grid-driver /dist /
 
 #########################
 # Startup
