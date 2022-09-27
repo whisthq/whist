@@ -107,11 +107,8 @@ absl::optional<double> ComputeSlopeCap(
 }
 
 constexpr double kMaxAdaptOffsetMs = 15.0;
-#if ENABLE_WHIST_CHANGE
-constexpr double kOverUsingTimeThreshold = 80;
-#else
 constexpr double kOverUsingTimeThreshold = 10;
-#endif
+
 constexpr int kMinNumDeltas = 60;
 constexpr int kDeltaCounterMax = 1000;
 
@@ -299,7 +296,11 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
       time_over_using_ += ts_delta;
     }
     overuse_counter_++;
+#ifdef ENABLE_WHIST_CHANGE
+    if (time_over_using_ > 80 && overuse_counter_ > 1 || time_over_using_ >10 && overuse_counter_>= 6 ) {
+#else
     if (time_over_using_ > overusing_time_threshold_ && overuse_counter_ > 1) {
+#endif
       if (trend >= prev_trend_) {
         time_over_using_ = 0;
         overuse_counter_ = 0;
