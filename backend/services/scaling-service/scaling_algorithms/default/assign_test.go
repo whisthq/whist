@@ -145,6 +145,7 @@ func TestMandelboxAssign(t *testing.T) {
 					Regions:    tt.regions,
 					CommitHash: tt.clientSHA,
 					UserEmail:  "user@whist.com",
+					UserID:     types.UserID(uuid.NewString()),
 					Version:    "2.13.2",
 				}
 				testAssignRequest.CreateResultChan()
