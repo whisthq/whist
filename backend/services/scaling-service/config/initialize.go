@@ -33,13 +33,13 @@ func getConfigFromDB(ctx context.Context, client subscriptions.WhistGraphQLClien
 // getEnabledRegions extracts the list of regions in which users may request
 // Mandelboxes from the data returned by the configuration database and stores
 // the result in the string slice pointer provided. This function assumes that
-// it is the only one with access the memory containing the slice. Make sure to
+// it is the only one with access to the memory containing the slice. Make sure to
 // lock that data before calling this function.
 func getEnabledRegions(db map[string]string, regions *[]string) error {
 	data, ok := db["ENABLED_REGIONS"]
 
 	if !ok {
-		*regions = nil
+		*regions = []string{"us-east-1"}
 		logger.Warningf("Configuration key ENABLED_REGIONS not found. Falling "+
 			"back to %v", *regions)
 
@@ -55,6 +55,34 @@ func getEnabledRegions(db map[string]string, regions *[]string) error {
 	*regions = temp
 
 	logger.Infof("Enabled regions: %v", *regions)
+
+	return nil
+}
+
+// getMandelboxLimit extracts the mandelbox limit from the data returned by
+// the configuration database and stores the result in the int pointer provided.
+// This function assumes that it is the only one with access to the memory containing
+// the slice. Make sure to lock that data before calling this function.
+func getMandelboxLimit(db map[string]string, mandelboxLimit *int32) error {
+	data, ok := db["MANDELBOX_LIMIT_PER_USER"]
+
+	if !ok {
+		*mandelboxLimit = 3
+		logger.Warningf("Configuration key MANDELBOX_LIMIT_PER_USER not found. Falling "+
+			"back to %v", *mandelboxLimit)
+
+		return nil
+	}
+
+	var temp int32
+
+	if err := json.Unmarshal([]byte(data), &temp); err != nil {
+		return err
+	}
+
+	*mandelboxLimit = temp
+
+	logger.Infof("Allowed mandelboxes per user: %v", *mandelboxLimit)
 
 	return nil
 }
@@ -79,6 +107,10 @@ func initialize(ctx context.Context, client subscriptions.WhistGraphQLClient) er
 		return err
 	}
 
+	if err := getMandelboxLimit(db, &newConfig.mandelboxLimitPerUser); err != nil {
+		return err
+	}
+
 	config = newConfig
 
 	return nil
@@ -88,6 +120,7 @@ func initialize(ctx context.Context, client subscriptions.WhistGraphQLClient) er
 // data.
 func initializeLocal(_ context.Context, _ subscriptions.WhistGraphQLClient) error {
 	config.enabledRegions = []string{"us-east-1"}
+	config.mandelboxLimitPerUser = 3
 
 	logger.Warningf("Scaling service local build not fetching configuration " +
 		"values from the config database. Using static configuration instead.")

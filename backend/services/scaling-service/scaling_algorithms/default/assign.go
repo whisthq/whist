@@ -8,6 +8,7 @@ import (
 	hashicorp "github.com/hashicorp/go-version"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/assign"
 	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -58,8 +59,25 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return err
 	}
 	logger.Infof("Frontend reported email %s, this value might not be accurate and is untrusted.", unsafeEmail)
+
 	// Append user email to logging context for better debugging.
 	contextFields = append(contextFields, zap.String("user", unsafeEmail))
+
+	shouldAllocateMandelbox, err := assign.CheckForExistingMandelbox(scalingCtx, s.DBClient, s.GraphQLClient, string(mandelboxRequest.UserID))
+	if err != nil {
+		return utils.MakeError("failed to get mandelboxes from database: %s", err)
+	}
+
+	// Before proceeding with the assign process, find out if the user already has other mandelboxes
+	// allocated.
+	if !shouldAllocateMandelbox {
+		serviceUnavailable = false
+		err := utils.MakeError("user %s already has mandelboxes allocated or running, so not assigning more mandelboxes", unsafeEmail)
+		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+			Error: USER_ALREADY_ACTIVE,
+		}, err)
+		return err
+	}
 
 	var (
 		requestedRegions   = mandelboxRequest.Regions // This is a list of the regions requested by the frontend, in order of proximity.
@@ -225,7 +243,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// version from the request is less than the one we have locally, it
 	// means the request comes from an outdated frontend application.
 	if parsedFrontendVersion != nil && parsedRequestVersion != nil {
-		logger.Infow(utils.Sprintf("Local version is %s, version received from request is %s.", parsedFrontendVersion.String(), parsedRequestVersion.String()), contextFields)
+		logger.Infow(utils.Sprintf("Local version is %s, version received from request is %s", parsedFrontendVersion.String(), parsedRequestVersion.String()), contextFields)
 		isOutdatedFrontend = parsedRequestVersion.LessThan(parsedFrontendVersion)
 	}
 

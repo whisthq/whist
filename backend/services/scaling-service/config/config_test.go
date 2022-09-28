@@ -17,7 +17,8 @@ import (
 // testClient implements the subscriptions.WhistGraphQLClient interface. We use
 // it to mock subscriptions.GraphQLClient.
 type testClient struct {
-	regions []string
+	regions        []string
+	mandelboxLimit int32
 }
 
 // Initialize is part of the subscriptions.WhistGraphQLClient interface.
@@ -93,6 +94,35 @@ func TestGetEnabledRegions(t *testing.T) {
 
 			if !reflect.DeepEqual(regions, test.regions) {
 				t.Errorf("Expected %v, got %v", test.regions, regions)
+			}
+		}))
+	}
+}
+
+// TestGetMandelboxLimit ensures that GetEnabledRegions returns the list of
+// enabled regions retrieved from the configuration database.
+func TestGetMandelboxLimit(t *testing.T) {
+	var tests = []struct {
+		env   metadata.AppEnvironment
+		limit int32
+	}{
+		{metadata.EnvDev, 3},
+		{metadata.EnvStaging, 3},
+		{metadata.EnvProd, 3},
+	}
+
+	for _, test := range tests {
+		t.Run(string(test.env), patchAppEnv(test.env, func(t *testing.T) {
+			client := testClient{mandelboxLimit: test.limit}
+
+			if err := Initialize(context.Background(), &client); err != nil {
+				t.Fatal("Initialize:", err)
+			}
+
+			limit := GetMandelboxLimitPerUser()
+
+			if !reflect.DeepEqual(limit, test.limit) {
+				t.Errorf("Expected %v, got %v", test.limit, limit)
 			}
 		}))
 	}

@@ -56,15 +56,19 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	logger.Infow(utils.Sprintf("Creating new instance buffer for image %s", newImage.ImageID), contextFields)
 
-	// Slice that will hold the instances and pass them to the dbclient
-	var instancesForDb []subscriptions.Instance
+	var (
+		// Slice that will hold the instances and pass them to the dbclient
+		instancesForDb []subscriptions.Instance
+		// Slice that will hold fake mandelboxes and pass them to the dbclient
+		fakeMandelboxesForDb []subscriptions.Mandelbox
+	)
 
 	// If we are running on a local or testing environment, spinup "fake" instances to avoid
 	// creating them on a cloud provider. In any other case we call the host handler to create
 	// them on the cloud provider for us.
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infow("Running on localdev so scaling up fake instances.", contextFields)
-		instancesForDb = helpers.SpinUpFakeInstances(defaultInstanceBuffer, newImage.ImageID, event.Region)
+		instancesForDb, fakeMandelboxesForDb = helpers.SpinUpFakeInstances(defaultInstanceBuffer, newImage.ImageID, event.Region)
 	} else {
 		instancesForDb, err = s.Host.SpinUpInstances(scalingCtx, int32(defaultInstanceBuffer), maxWaitTimeReady, newImage)
 		if err != nil {
@@ -110,8 +114,18 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 		_, err = s.DBClient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
 		if err != nil {
-			return utils.MakeError("failed to insert image into database: %s", err)
+			return utils.MakeError("failed to insert image to database: %s", err)
 		}
+	}
+
+	// This is to acommodate localdev testing flows in which we need to register fake mandelboxes
+	// on the database.
+	if len(fakeMandelboxesForDb) > 0 {
+		affectedRows, err = s.DBClient.InsertMandelboxes(scalingCtx, s.GraphQLClient, fakeMandelboxesForDb)
+		if err != nil {
+			return utils.MakeError("failed to insert fake mandelboxes to database: %s", err)
+		}
+		logger.Infow(utils.Sprintf("Inserted %d rows to database.", affectedRows), contextFields)
 	}
 
 	// Notify through the synchan that the image upgrade is done
