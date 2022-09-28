@@ -298,7 +298,7 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
     overuse_counter_++;
 #ifdef ENABLE_WHIST_CHANGE
     //if (time_over_using_ > 80 && overuse_counter_ > 1 || time_over_using_ >10 && overuse_counter_>= 6 ) {
-    if (time_over_using_ > 16 && overuse_counter_ > 1) {
+    if (time_over_using_ > 20 && overuse_counter_ > 3) {
 #else
     if (time_over_using_ > overusing_time_threshold_ && overuse_counter_ > 1) {
 #endif
@@ -337,7 +337,11 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   const int64_t kMaxTimeDeltaMs = 100;
   int64_t time_delta_ms = std::min(now_ms - last_update_ms_, kMaxTimeDeltaMs);
   threshold_ += k * (fabs(modified_trend) - threshold_) * time_delta_ms;
+#ifdef ENABLE_WHIST_CHANGE
+  threshold_ = rtc::SafeClamp(threshold_, 5.f, 600.f);
+#else
   threshold_ = rtc::SafeClamp(threshold_, 6.f, 600.f);
+#endif
   whist_plotter_insert_sample("threshold", now_ms/1000.0, threshold_ +100);
   whist_plotter_insert_sample("-threshold", now_ms/1000.0, -threshold_ +100);
   last_update_ms_ = now_ms;

@@ -35,7 +35,7 @@ namespace {
 
 constexpr TimeDelta kDefaultRtt = TimeDelta::Millis(200);
 #if ENABLE_WHIST_CHANGE
-constexpr double kDefaultBackoffFactor = 0.94;
+constexpr double kDefaultBackoffFactor = 0.92;
 #else
 constexpr double kDefaultBackoffFactor = 0.85;
 #endif
