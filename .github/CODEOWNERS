@@ -11,8 +11,8 @@
 /.github/                                                      @owenniles @mauaraujo @rpadaki @philippemnoel
 /backend/auth0/                                                @owenniles @mauaraujo @rpadaki @philippemnoel
 /backend/database/                                             @owenniles @mauaraujo @rpadaki
-/backend/infrastructure/                                       @mauaraujo @rpadaki @philippemnoel
-/backend/services/                                             @mauaraujo @rpadaki @philippemnoel
+/backend/infrastructure/                                       @owenniles @mauaraujo @rpadaki @philippemnoel
+/backend/services/                                             @owenniles @mauaraujo @rpadaki @philippemnoel
 /browser/hybrid/                                               @rpadaki @sardination @jkarthic @mingy98
 /host-setup/                                                   @rpadaki @mauaraujo @philippemnoel
 /mandelboxes/                                                  @rpadaki @mauaraujo @philippemnoel
