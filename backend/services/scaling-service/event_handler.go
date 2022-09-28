@@ -190,8 +190,8 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 	s := gocron.NewScheduler(time.UTC)
 
 	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
-	t := time.Now().Add(start)
-	s.Every(interval).Minutes().StartAt(t).Do(func() {
+	// t := time.Now().Add(start)
+	s.Every(interval).Minutes().Do(func() {
 		// Send into scheduling channel
 		scheduledEvents <- algos.ScalingEvent{
 			// Create a UUID so we can identify and search this event on our logs

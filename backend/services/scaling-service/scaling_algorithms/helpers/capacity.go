@@ -9,7 +9,10 @@ some functions that make it easier to test the scaling service locally.
 package helpers
 
 import (
+	"log"
+
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"math"
 )
 
 // ComputeRealMandelboxCapacity is a helper function to compute the real mandelbox capacity.
@@ -50,4 +53,13 @@ func ComputeExpectedMandelboxCapacity(imageID string, activeInstances []subscrip
 
 	expectedMandelboxCapacity += realMandelboxCapacity
 	return int64(expectedMandelboxCapacity)
+}
+
+// ComputeInstancesToScale computes the number of instances we want to scale,
+// according to the current number of desired mandelboxes.
+func ComputeInstancesToScale(desiredMandelboxes int, currentCapacity int64, instanceCapacity int64) int {
+
+	diff := desiredMandelboxes - currentCapacity
+
+	return int(a)
 }

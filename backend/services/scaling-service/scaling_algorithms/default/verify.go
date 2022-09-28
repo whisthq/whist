@@ -89,9 +89,14 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	// We consider the expected mandelbox capacity (active instances + starting instances)
 	// to account for warmup time and so that we don't scale up unnecesary instances.
 	if mandelboxCapacity < int64(desiredFreeMandelboxesPerRegion[event.Region]) {
+
+		// TODO: Change to a different instance type once we support more types or cloud providers
+		instancesToScale := helpers.ComputeInstancesToScale(desiredFreeMandelboxesPerRegion[event.Region], mandelboxCapacity, instanceCapacity["g4dn.2xlarge"])
+
 		logger.Infow(utils.Sprintf("Current mandelbox capacity of %d is less than desired %d. Scaling up %d instances to satisfy minimum desired capacity.",
-			mandelboxCapacity, desiredFreeMandelboxesPerRegion[event.Region], defaultInstanceBuffer), contextFields)
-		err = s.ScaleUpIfNecessary(defaultInstanceBuffer, scalingCtx, event, latestImage)
+			mandelboxCapacity, desiredFreeMandelboxesPerRegion[event.Region], instancesToScale), contextFields)
+
+		err = s.ScaleUpIfNecessary(instancesToScale, scalingCtx, event, latestImage)
 		if err != nil {
 			return err
 		}
