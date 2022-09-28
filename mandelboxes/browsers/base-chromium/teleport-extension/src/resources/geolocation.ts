@@ -1,3 +1,7 @@
+const getUniqueId = () => {
+  return string(Date.now())
+}
+
 const getGeolocation = () => {
   const meta_longitude = document.documentElement.querySelector(
     'meta[name="longitude"]'
@@ -42,30 +46,62 @@ const spoofLocation = (
   } as GeolocationPosition)
 }
 
+// In a cloud tab:
+// 1. Site requests location - 
+//     > call one of navigator.geolocation functions
+// 2. Server extension tells client extension that there is a location request
+//     > create invisible DOM and listen for it in the content
+// 3. Call relevant geolocation function locally
+// 3a. Client extension requests user for location permission via webui (todo: security origin location permission difference)
+// 3b. Location permission is provided or denied
+// 4. Geolocation is sent from client extension to server extension
+// 5. Worker (which is also listening on socket) messages geolocation content script (tab-specific)
+// 6. Content script inserts geolocation information into the appropriate (tab-specific) DOM - can be serialized JSON of what client returned
+// 7. navigator.geolocation.getCurrentPosition has a listener for specific DOM change (see step 6) with .then that calls the appropriate callback
+
+// NOTE: avoid race conditions by using counter/ID - track and respond to individual geolocation commands via a unique ID (timestamp?)
+
+
+// TODO: also override watchCurrentPosition and clearWatch
 navigator.geolocation.getCurrentPosition = (
   successCallback,
   _errorCallback,
   _options
 ) => {
-  let geolocation = getGeolocation() as
-    | undefined
-    | { longitude: number; latitude: number }
+  const uniqueId = getUniqueId()
 
-  if (geolocation === undefined) {
-    const observer = new MutationObserver((_mutations, obs) => {
-      geolocation = getGeolocation()
+  metaGeolocation = document.createElement("meta")
+  metaGeolocation.name = `${uniqueId}-geolocation`
+  metaGeolocation.content = JSON.stringify({
+    function: "getCurrentPosition",
+    longitude: NaN,
+    latitude: NaN,
+    options: _options,
+  })
+  document.documentElement.appendChild(metaGeolocation)
 
-      if (geolocation !== undefined) {
-        spoofLocation(geolocation, successCallback)
-        obs.disconnect()
-      }
-    })
+  // metaGeolocation.content = "getCurrentPosition" // TODO: set this to a stringified JSON with all information needed
+  // TODO: abstract out functions to set DOM content and listen for DOM changes
 
-    observer.observe(document, {
-      childList: true,
-      subtree: true,
-    })
-  } else {
-    spoofLocation(geolocation, successCallback)
-  }
+  // let geolocation = getGeolocation() as
+  //   | undefined
+  //   | { longitude: number; latitude: number }
+
+  // if (geolocation === undefined) {
+  //   const observer = new MutationObserver((_mutations, obs) => {
+  //     geolocation = getGeolocation()
+
+  //     if (geolocation !== undefined) {
+  //       spoofLocation(geolocation, successCallback)
+  //       obs.disconnect()
+  //     }
+  //   })
+
+  //   observer.observe(document, {
+  //     childList: true,
+  //     subtree: true,
+  //   })
+  // } else {
+  //   spoofLocation(geolocation, successCallback)
+  // }
 }
