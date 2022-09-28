@@ -129,8 +129,14 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		assignContext := contextFields
 		assignContext = append(assignContext, zap.String("assign_region", region))
 
-		logger.Infow(utils.Sprintf("Trying to find instance in region %s, with commit hash %s.",
-			region, mandelboxRequest.CommitHash), assignContext)
+		// TODO: set different cloud provider when doing multi-cloud
+		regionImage, err := s.DBClient.QueryLatestImage(scalingCtx, s.GraphQLClient, "AWS", region)
+		if err != nil {
+			return utils.MakeError("failed to query latest image in %s: %s", region, err)
+		}
+
+		logger.Infow(utils.Sprintf("Trying to find instance in region %s, with commit hash %s and image %s",
+			region, mandelboxRequest.CommitHash, regionImage.ImageID), assignContext)
 
 		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region)
 		if err != nil {
@@ -138,7 +144,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		}
 
 		if len(instanceResult) == 0 {
-			logger.Warningw(utils.Sprintf("Failed to find any instances with capacity in %s. Trying on next region.", region), assignContext)
+			logger.Warningw(utils.Sprintf("Failed to find any instances with capacity in %s. Trying on next region", region), assignContext)
 			continue
 		}
 
@@ -147,12 +153,12 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			assignedInstance = instanceResult[i]
 
 			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash &&
-				assignedInstance.ImageID == latestImage.ImageID {
-				logger.Infow(utils.Sprintf("Found instance %s with commit hash %s.", assignedInstance.ID, assignedInstance.ClientSHA), assignContext)
+				assignedInstance.ImageID == regionImage.ImageID {
+				logger.Infow(utils.Sprintf("Found instance %s with commit hash %s", assignedInstance.ID, assignedInstance.ClientSHA), assignContext)
 				instanceFound = true
 				break
 			}
-			logger.Warningw(utils.Sprintf("Found an instance in %s but it has a different commit hash %s. Trying on next region.", region, assignedInstance.ClientSHA), assignContext)
+			logger.Warningw(utils.Sprintf("Found an instance in %s but it has a different commit hash %s. Trying on next region", region, assignedInstance.ClientSHA), assignContext)
 		}
 
 		// Break of outer loop if instance was found. If no instance with
@@ -184,7 +190,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		logger.Errorw(utils.Sprintf("failed to assign user to closest region: assigned to %s instead of %s (region %d of %d)",
 			assignedInstance.Region, availableRegions[0], instanceProximityIndex+1, len(availableRegions)), contextFields)
 	} else {
-		logger.Infow(utils.Sprintf("Successfully assigned user to closest requested region."), contextFields)
+		logger.Infow(utils.Sprintf("Successfully assigned user to closest requested region %s", assignedInstance.Region), contextFields)
 	}
 
 	var (
