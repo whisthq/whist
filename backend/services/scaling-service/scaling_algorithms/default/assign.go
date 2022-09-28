@@ -243,7 +243,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// version from the request is less than the one we have locally, it
 	// means the request comes from an outdated frontend application.
 	if parsedFrontendVersion != nil && parsedRequestVersion != nil {
-		logger.Infow(utils.Sprintf("Local version is %s, version received from request is %s.", parsedFrontendVersion.String(), parsedRequestVersion.String()), contextFields)
+		logger.Infow(utils.Sprintf("Local version is %s, version received from request is %s", parsedFrontendVersion.String(), parsedRequestVersion.String()), contextFields)
 		isOutdatedFrontend = parsedRequestVersion.LessThan(parsedFrontendVersion)
 	}
 

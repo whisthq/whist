@@ -157,16 +157,39 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 	return len(testMandelboxes), nil
 }
 
-func (db *mockDBClient) QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Mandelbox, error) {
-	return testMandelboxes, nil
+func (db *mockDBClient) QueryMandelbox(_ context.Context, _ subscriptions.WhistGraphQLClient, instanceID string, status string) ([]subscriptions.Mandelbox, error) {
+	var mandelboxes []subscriptions.Mandelbox
+	for _, mandelbox := range testMandelboxes {
+		if mandelbox.InstanceID == instanceID &&
+			mandelbox.Status == status {
+			mandelboxes = append(mandelboxes, mandelbox)
+		}
+	}
+
+	return mandelboxes, nil
 }
 
-func (db *mockDBClient) QueryUserMandelboxes(context.Context, subscriptions.WhistGraphQLClient, string) ([]subscriptions.Mandelbox, error) {
-	return testMandelboxes, nil
+func (db *mockDBClient) QueryUserMandelboxes(_ context.Context, _ subscriptions.WhistGraphQLClient, userID string) ([]subscriptions.Mandelbox, error) {
+	var userMandelboxes []subscriptions.Mandelbox
+	for _, mandelbox := range testMandelboxes {
+		if string(mandelbox.UserID) == userID {
+			userMandelboxes = append(userMandelboxes, mandelbox)
+		}
+	}
+
+	return userMandelboxes, nil
 }
 
-func (db *mockDBClient) UpdateMandelbox(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Mandelbox) (int, error) {
-	return 0, nil
+func (db *mockDBClient) UpdateMandelbox(_ context.Context, _ subscriptions.WhistGraphQLClient, mandelbox subscriptions.Mandelbox) (int, error) {
+	var affected int
+	for i := 0; i < len(testMandelboxes); i++ {
+		if testMandelboxes[i].ID == mandelbox.ID {
+			affected++
+			testMandelboxes[i] = mandelbox
+		}
+	}
+
+	return affected, nil
 }
 
 // mockHostHandler is used to test all interactions with cloud providers

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -113,7 +114,6 @@ func TestMandelboxAssign(t *testing.T) {
 						ID:         types.MandelboxID(uuid.New()),
 						App:        "CHROME",
 						InstanceID: "test-assign-instance-1",
-						UserID:     "test-user-id",
 						SessionID:  utils.Sprintf("%v", time.Now().UnixMilli()),
 						Status:     "WAITING",
 						CreatedAt:  time.Now(),
@@ -123,7 +123,6 @@ func TestMandelboxAssign(t *testing.T) {
 						ID:         types.MandelboxID(uuid.New()),
 						App:        "CHROME",
 						InstanceID: "test-assign-instance-2",
-						UserID:     "test-user-id",
 						SessionID:  utils.Sprintf("%v", time.Now().UnixMilli()),
 						Status:     "WAITING",
 						CreatedAt:  time.Now(),
@@ -133,7 +132,6 @@ func TestMandelboxAssign(t *testing.T) {
 						ID:         types.MandelboxID(uuid.New()),
 						App:        "CHROME",
 						InstanceID: "test-assign-instance-3",
-						UserID:     "test-user-id",
 						SessionID:  utils.Sprintf("%v", time.Now().UnixMilli()),
 						Status:     "WAITING",
 						CreatedAt:  time.Now(),
@@ -202,4 +200,147 @@ func TestMandelboxAssign(t *testing.T) {
 			})
 		}
 	}
+}
+
+// TestMandelboxLimit will try to request more mandelboxes than the set limit
+// and verify the correct response is sent when exceeding the limit.
+func TestMandelboxLimit(t *testing.T) {
+	context, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Populate test instances that will be used when
+	// mocking database functions.
+	testInstances = []subscriptions.Instance{
+		{
+			ID:                "test-assign-instance-1",
+			Provider:          "AWS",
+			ImageID:           "test-image-id",
+			Status:            "ACTIVE",
+			Type:              "g4dn.2xlarge",
+			Region:            "us-east-1",
+			IPAddress:         "1.1.1.1/24",
+			ClientSHA:         "test-sha",
+			RemainingCapacity: instanceCapacity["g4dn.xlarge"],
+		},
+		{
+			ID:                "test-assign-instance-2",
+			Provider:          "AWS",
+			ImageID:           "test-image-id",
+			Status:            "ACTIVE",
+			Type:              "g4dn.2xlarge",
+			Region:            "us-east-1",
+			IPAddress:         "1.1.1.1/24",
+			ClientSHA:         "test-sha",
+			RemainingCapacity: instanceCapacity["g4dn.xlarge"],
+		},
+		{
+			ID:                "test-assign-instance-3",
+			Provider:          "AWS",
+			ImageID:           "test-image-id",
+			Status:            "ACTIVE",
+			Type:              "g4dn.2xlarge",
+			Region:            "us-east-1",
+			IPAddress:         "1.1.1.1/24",
+			ClientSHA:         "test-sha",
+			RemainingCapacity: instanceCapacity["g4dn.xlarge"],
+		},
+	}
+
+	// Set the current image for testing
+	testImages = []subscriptions.Image{
+		{
+			Provider:  "AWS",
+			Region:    "test-region",
+			ImageID:   "test-image-id",
+			ClientSHA: "test-sha",
+			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
+		},
+	}
+
+	testMandelboxes = []subscriptions.Mandelbox{
+		{
+			ID:         types.MandelboxID(uuid.New()),
+			App:        "CHROME",
+			InstanceID: "test-assign-instance-1",
+			SessionID:  utils.Sprintf("%v", time.Now().UnixMilli()),
+			Status:     "WAITING",
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+		},
+		{
+			ID:         types.MandelboxID(uuid.New()),
+			App:        "CHROME",
+			InstanceID: "test-assign-instance-2",
+			SessionID:  utils.Sprintf("%v", time.Now().UnixMilli()),
+			Status:     "WAITING",
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+		},
+		{
+			ID:         types.MandelboxID(uuid.New()),
+			App:        "CHROME",
+			InstanceID: "test-assign-instance-3",
+			SessionID:  utils.Sprintf("%v", time.Now().UnixMilli()),
+			Status:     "WAITING",
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+		},
+	}
+
+	testAssignRequest := &httputils.MandelboxAssignRequest{
+		Regions:    []string{"us-east-1"},
+		CommitHash: "test-sha",
+		UserEmail:  "user@whist.com",
+		UserID:     "test_user_id",
+		Version:    "2.13.2",
+	}
+	testAssignRequest.CreateResultChan()
+
+	frontendVersion = &subscriptions.FrontendVersion{
+		ID:    1,
+		Major: 3,
+		Minor: 0,
+		Micro: 0,
+	}
+
+	wg := &sync.WaitGroup{}
+	errorChan := make(chan error, 1)
+
+	for i := 0; i <= int(config.GetMandelboxLimitPerUser()); i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := testAlgorithm.MandelboxAssign(context, ScalingEvent{Data: testAssignRequest})
+			errorChan <- err
+		}()
+
+		var assignResult httputils.MandelboxAssignRequestResult
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			res := <-testAssignRequest.ResultChan
+			assignResult = res.Result.(httputils.MandelboxAssignRequestResult)
+		}()
+
+		wg.Wait()
+		err := <-errorChan
+
+		if err != nil &&
+			i < int(config.GetMandelboxLimitPerUser()) {
+			t.Errorf("did not expect error, got: %s", err)
+		}
+
+		if assignResult.Error == "USER_ALREADY_ACTIVE" &&
+			i < int(config.GetMandelboxLimitPerUser()) {
+			t.Errorf("request got limited when not exceeding limit")
+		}
+
+		if assignResult.Error == "USER_ALREADY_ACTIVE" &&
+			i == int(config.GetMandelboxLimitPerUser()) {
+			t.Log(assignResult)
+			t.Log("Request got limited correctly after exceeding mandelbox limit")
+		}
+	}
+
 }
