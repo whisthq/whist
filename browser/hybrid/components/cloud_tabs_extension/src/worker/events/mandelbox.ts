@@ -1,5 +1,11 @@
 import { from, of } from "rxjs"
-import { switchMap, map, filter, share } from "rxjs/operators"
+import {
+  switchMap,
+  map,
+  filter,
+  share,
+  combineLatestWith,
+} from "rxjs/operators"
 
 import { getStorage } from "@app/worker/utils/storage"
 import {
@@ -13,8 +19,11 @@ import { config } from "@app/constants/app"
 import { AsyncReturnType } from "@app/@types/api"
 import { AWSRegion, AWSRegionOrdering } from "@app/constants/location"
 import { AuthInfo } from "@app/@types/payload"
+import { networkConnected } from "./idle"
 
 const mandelboxNeeded = stateDidChange("waitingCloudTabs").pipe(
+  combineLatestWith(networkConnected),
+  filter(([_, connected]) => connected),
   filter((change: any) => change?.applyData?.name === "push"),
   filter(
     () =>
