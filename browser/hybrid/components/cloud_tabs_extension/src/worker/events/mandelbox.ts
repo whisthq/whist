@@ -19,11 +19,12 @@ import { config } from "@app/constants/app"
 import { AsyncReturnType } from "@app/@types/api"
 import { AWSRegion, AWSRegionOrdering } from "@app/constants/location"
 import { AuthInfo } from "@app/@types/payload"
-import { networkConnected } from "./idle"
+import { networkConnected } from "@app/worker/events/idle"
 
 const mandelboxNeeded = stateDidChange("waitingCloudTabs").pipe(
   combineLatestWith(networkConnected),
   filter(([_, connected]) => connected),
+  map(([change, _]) => change),
   filter((change: any) => change?.applyData?.name === "push"),
   filter(
     () =>

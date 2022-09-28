@@ -1,5 +1,5 @@
 import { fromEventPattern, merge } from "rxjs"
-import { filter } from "rxjs/operators"
+import { filter, distinctUntilChanged } from "rxjs/operators"
 
 const activatedFromSleep = fromEventPattern(
   (handler: any) => chrome.idle.onStateChanged.addListener(handler),
@@ -24,6 +24,6 @@ const networkConnected = merge(
   [navigator.onLine],
   networkOnline,
   networkOffline
-)
+).pipe(distinctUntilChanged())
 
 export { activatedFromSleep, networkConnected }
