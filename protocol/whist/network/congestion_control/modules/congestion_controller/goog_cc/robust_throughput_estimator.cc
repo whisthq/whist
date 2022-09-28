@@ -53,7 +53,7 @@ void RobustThroughputEstimator::IncomingPacketFeedbackVector(
   RTC_DCHECK(std::is_sorted(packet_feedback_vector.begin(),
                             packet_feedback_vector.end(),
                             PacketResult::ReceiveTimeOrder()));
-    fprintf(stderr,"robust used!!!!\n");
+  //fprintf(stderr,"robust used!!!!\n");
   for (const auto& packet : packet_feedback_vector) {
     // Ignore packets without valid send or receive times.
     // (This should not happen in production since lost packets are filtered

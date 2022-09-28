@@ -596,8 +596,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             get_bitrates(&start_rate, &min_rate, &max_rate);
 
 
-            bool global_first_time=true;
-            if(global_first_time==0){
+            static bool global_first_time=true;
+            if(global_first_time){
                 input.start_bitrate=start_rate;
                 global_first_time=false;
             }

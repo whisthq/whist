@@ -111,6 +111,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       std::optional<webrtc::DataRate> start_rate;
       if(first_time)
       {
+         //printf("<<%f>>\n", input.start_bitrate.value());
          start_rate=webrtc::DataRate::BitsPerSec(input.start_bitrate.value());
          delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
          delay_based_bwe->SetStartBitrate(start_rate.value());
