@@ -25,6 +25,9 @@ fn check_for_updates() -> Result<(), String> {
     )
 }
 
+// This no longer needs to be in rust
+// Geolocation can also be deleted from rust
+// Instead, we should receive a geolocation message on the extension
 fn send_startup_params() -> Result<(), String> {
     let longitude = std::env::var("LONGITUDE").unwrap_or("".to_string());
     let latitude = std::env::var("LATITUDE").unwrap_or("".to_string());

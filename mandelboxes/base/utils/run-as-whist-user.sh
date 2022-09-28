@@ -78,12 +78,12 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq -rc 'has("kiosk_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
     KIOSK_MODE="$(jq -rc '.kiosk_mode' < $WHIST_JSON_FILE)"
   fi
-  if [ "$( jq -rc 'has("latitude")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    LATITUDE="$(jq -rc '.latitude' < $WHIST_JSON_FILE)"
-  fi
-  if [ "$( jq -rc 'has("longitude")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    LONGITUDE="$(jq -rc '.longitude' < $WHIST_JSON_FILE)"
-  fi
+  # if [ "$( jq -rc 'has("latitude")' < $WHIST_JSON_FILE )" == "true"  ]; then
+  #   LATITUDE="$(jq -rc '.latitude' < $WHIST_JSON_FILE)"
+  # fi
+  # if [ "$( jq -rc 'has("longitude")' < $WHIST_JSON_FILE )" == "true"  ]; then
+  #   LONGITUDE="$(jq -rc '.longitude' < $WHIST_JSON_FILE)"
+  # fi
   if [ "$( jq -rc 'has("client_os")' < $WHIST_JSON_FILE )" == "true"  ]; then
     CLIENT_OS="$(jq -rc '.client_os' < $WHIST_JSON_FILE)"
   fi
