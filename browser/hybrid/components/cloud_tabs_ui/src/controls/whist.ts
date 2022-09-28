@@ -43,33 +43,34 @@ const initializeRequestMandelbox = () => {
   }, 100)
 }
 
-const initializeWhistFreezeHandler = () => {
+const initializeWhistFreezeAllHandler = () => {
   const whistTag: any = document.querySelector("whist")
 
   ;(chrome as any).whist.onMessage.addListener((message: string) => {
     const parsed = JSON.parse(message)
 
-    if (parsed.type === "WINDOW_FOCUSED") {
-      if (
-        parsed.value.windowId < 0 ||
-        parsed.value.windowId !== sessionStorage.getNumber("windowId")
-      ) {
-        whistTag.freeze()
-      } else if (parsed.value.tabId !== sessionStorage.getNumber("tabId")) {
-        whistTag.freeze()
+    if (parsed.type == "CHANGE_FOCUSED_TAB" && parsed.value.id === getTabId()) {
+      if (whistParameters !== null && !whistTag.isWhistConnected()) {
+        whistTag.focus()
+        whistTag.whistConnect(whistParameters)
       }
-    }
 
-    if (
-      parsed.type === "TAB_ACTIVATED" &&
-      parsed.value.id !== sessionStorage.getNumber("tabId")
-    ) {
-      whistTag.freeze()
+      var spotlightId = whistTag.freezeAll()
+
+      ;(chrome as any).whist.broadcastWhistMessage(
+        JSON.stringify({
+          type: "WEB_UIS_FROZEN",
+          value: {
+            newActiveTabId: getTabId(),
+            spotlightId: spotlightId,
+          },
+        })
+      )
     }
   })
 }
 
-const initializeWhistThawHandler = () => {
+const initializeWhistSpotlightHandler = () => {
   const whistTag: any = document.querySelector("whist")
 
   ;(chrome as any).whist.onMessage.addListener((message: string) => {
@@ -83,19 +84,26 @@ const initializeWhistThawHandler = () => {
         whistTag.focus()
         whistTag.whistConnect(whistParameters)
       }
-      // We delay by 100ms because this is the amount of time we expect the protocol to lag behind
-      // the socket.io message, since the protocol has extra video encode/decode latency.
-      // Lower values were tested and they led to flashes of other tabs being seen.
-      setTimeout(() => {
-        whistTag.thaw()
-      }, 100)
+
+      var spotlightId = parsed.value.spotlightId
+
+      if (spotlightId != undefined) {
+        // We delay by 100ms because this is the amount of time we expect the protocol to lag behind
+        // the socket.io message, since the protocol has extra video encode/decode latency.
+        // Lower values were tested and they led to flashes of other tabs being seen.
+        setTimeout(() => {
+          whistTag.requestSpotlight(spotlightId)
+        }, 100)
+      }
     }
   })
 }
 
 export {
   initializeWhistTagHandler,
-  initializeWhistFreezeHandler,
-  initializeWhistThawHandler,
   initializeRequestMandelbox,
+  // initializeWhistFreezeHandler,
+  // initializeWhistThawHandler,
+  initializeWhistFreezeAllHandler,
+  initializeWhistSpotlightHandler,
 }

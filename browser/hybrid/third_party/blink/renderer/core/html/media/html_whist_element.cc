@@ -346,7 +346,6 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
   } else if (event_type == event_type_names::kDragleave) {
     auto* drag_event = DynamicTo<DragEvent>(&event);
     SendFileDragEvent({}, true, group_id, drag_event);
-    SendFileDragEvent({}, true, group_id, drag_event);
     drag_event->SetDefaultHandled();
   } else if (event_type == event_type_names::kDrop) {
     auto* drag_event = DynamicTo<DragEvent>(&event);
@@ -399,15 +398,15 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
   }
 }
 
-void HTMLWhistElement::whistPause() {
-  WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_playing, whist_window_id_, false);
+unsigned int HTMLWhistElement::freezeAll() {
+  return WHIST_VIRTUAL_INTERFACE_CALL(video.freeze_all_windows);
 }
 
-void HTMLWhistElement::whistPlay() {
+void HTMLWhistElement::requestSpotlight(int spotlight_id) {
   // We must re-send the latest resize message here, because if the video was
-  // resize during the pause, we will play a stretched video.
+  // resized during the pause, we will play a stretched video.
   ProcessCachedResize();
-  WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_playing, whist_window_id_, true);
+  WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_spotlight, whist_window_id_, spotlight_id);
 }
 
 bool HTMLWhistElement::isWhistConnected() {

@@ -28,6 +28,7 @@ struct WhistWindowInformation {
 };
 static std::mutex whist_window_mutex;
 static std::map<int, WhistWindowInformation> whist_windows;
+static unsigned int spotlight_expected_id = 0;
 
 static void on_cursor_change_handler(void* ptr, const char* cursor_type, bool relative_mouse_mode) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
@@ -171,9 +172,19 @@ static void vi_api_free_frame_ref(void* frame_ref) {
     av_frame_free(&frame);
 }
 
-static void vi_api_set_video_playing(int window_id, bool playing) {
+static unsigned int vi_api_freeze_all_windows() {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
-    whist_windows[window_id].playing = playing;
+    spotlight_expected_id++;
+    for (auto& [window_id, window_info] : whist_windows) {
+        window_info.playing = false;
+    }
+    return spotlight_expected_id;
+}
+
+static void vi_api_set_video_spotlight(int window_id, unsigned int spotlight_id) {
+    std::lock_guard<std::mutex> guard(whist_window_mutex);
+    if (spotlight_id != spotlight_expected_id) return;
+    whist_windows[window_id].playing = true;
 }
 
 void virtual_interface_send_frame(AVFrame* frame) {
@@ -312,7 +323,8 @@ static const VirtualInterface vi = {
             .free_frame_ref = vi_api_free_frame_ref,
             .set_on_cursor_change_callback = vi_api_set_on_cursor_change_callback,
             .set_video_frame_callback = vi_api_set_video_frame_callback,
-            .set_video_playing = vi_api_set_video_playing,
+            .freeze_all_windows = vi_api_freeze_all_windows,
+            .set_video_spotlight = vi_api_set_video_spotlight,
         },
     .events =
         {

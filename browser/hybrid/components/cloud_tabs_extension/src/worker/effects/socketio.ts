@@ -9,14 +9,12 @@ import {
   socketDisconnected,
 } from "@app/worker/events/socketio"
 import { serverCookiesSynced } from "@app/worker/events/cookies"
+import { tabRemoved, tabUpdated, tabZoomed } from "@app/worker/events/tabs"
 import {
-  tabActivated,
-  tabRemoved,
-  tabUpdated,
-  tabFocused,
-  tabZoomed,
-} from "@app/worker/events/tabs"
-import { webuiNavigate, webuiRefresh } from "@app/worker/events/webui"
+  webUiNavigate,
+  webUiRefresh,
+  webUisAreFrozen,
+} from "@app/worker/events/webui"
 import {
   getActiveTab,
   isCloudTab,
@@ -63,14 +61,19 @@ merge(
     }
   })
 
-// If a tab is activated, active it on the server
-merge(tabActivated, tabFocused)
-  .pipe(withLatestFrom(serverCookiesSynced, socket))
-  .subscribe(([tab, _synced, socket]: [chrome.tabs.Tab, any, Socket]) => {
-    if (isCloudTab(tab)) {
-      socket.emit("activate-tab", tab, false)
+// Web UIs get frozen in response to tabs switching, so activate the new active tab on the server
+webUisAreFrozen
+  .pipe(withLatestFrom(socket))
+  .subscribe(
+    ([[newActiveTab, spotlightId], socket]: [
+      [chrome.tabs.Tab, number],
+      Socket
+    ]) => {
+      if (isCloudTab(newActiveTab)) {
+        socket.emit("activate-tab", newActiveTab, false, spotlightId)
+      }
     }
-  })
+  )
 
 // If a tab is removed, remove it on the server
 tabRemoved
@@ -104,14 +107,14 @@ tabZoomed
     socket.emit("zoom-tab", zoomChangeInfo)
   })
 
-webuiNavigate
+webUiNavigate
   .pipe(withLatestFrom(socket))
   .subscribe(async ([message, socket]: [any, Socket]) => {
     const tab = await getTab(message.id)
     socket.emit("activate-tab", { ...tab, url: message.url }, true)
   })
 
-webuiRefresh
+webUiRefresh
   .pipe(withLatestFrom(socket))
   .subscribe(([message, socket]: [any, Socket]) => {
     socket.emit("refresh-tab", message)

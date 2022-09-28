@@ -1,7 +1,8 @@
-import { fromEventPattern } from "rxjs"
-import { filter, map, share } from "rxjs/operators"
+import { fromEventPattern, from, of, zip } from "rxjs"
+import { filter, map, share, switchMap } from "rxjs/operators"
+import { getTab } from "@app/worker/utils/tabs"
 
-const webuiNavigate = fromEventPattern(
+const webUiNavigate = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
@@ -12,7 +13,7 @@ const webuiNavigate = fromEventPattern(
   share()
 )
 
-const webuiOpenSupport = fromEventPattern(
+const webUiOpenSupport = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
@@ -22,7 +23,7 @@ const webuiOpenSupport = fromEventPattern(
   share()
 )
 
-const webuiRefresh = fromEventPattern(
+const webUiRefresh = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
@@ -33,7 +34,7 @@ const webuiRefresh = fromEventPattern(
   share()
 )
 
-const webuiMandelboxNeeded = fromEventPattern(
+const webUiMandelboxNeeded = fromEventPattern(
   (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
   (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
   (message: any) => message
@@ -53,10 +54,39 @@ const welcomePageOpened = fromEventPattern(
   share()
 )
 
+const webUiMouseEntered = fromEventPattern(
+  (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
+  (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
+  (message: any) => message
+).pipe(
+  map((message: string) => JSON.parse(message)),
+  filter((message: any) => message.type === "MOUSE_ENTERED"),
+  switchMap((message: any) => from(getTab(message.value.id))),
+  share()
+)
+
+const webUisAreFrozen = fromEventPattern(
+  (handler: any) => (chrome as any).whist.onMessage.addListener(handler),
+  (handler: any) => (chrome as any).whist.onMessage.removeListener(handler),
+  (message: any) => message
+).pipe(
+  map((message: string) => JSON.parse(message)),
+  filter((message: any) => message.type === "WEB_UIS_FROZEN"),
+  switchMap((message: any) =>
+    zip([
+      from(getTab(message.value.newActiveTabId)),
+      of(message.value.spotlightId),
+    ])
+  ),
+  share()
+)
+
 export {
-  webuiNavigate,
-  webuiOpenSupport,
-  webuiRefresh,
-  webuiMandelboxNeeded,
+  webUiNavigate,
+  webUiOpenSupport,
+  webUiRefresh,
+  webUiMandelboxNeeded,
   welcomePageOpened,
+  webUiMouseEntered,
+  webUisAreFrozen,
 }

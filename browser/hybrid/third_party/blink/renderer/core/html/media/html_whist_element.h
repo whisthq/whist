@@ -76,8 +76,8 @@ class CORE_EXPORT HTMLWhistElement final
     void ProcessCachedResize();
 
     // These functions are called from JavaScript -- see html_whist_element.idl for bindings.
-    void whistPause();
-    void whistPlay();
+    unsigned int freezeAll();
+    void requestSpotlight(int spotlight_id);
     bool isWhistConnected();
     void whistConnect(const String& whist_parameters);
 

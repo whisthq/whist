@@ -10,11 +10,12 @@ import {
 } from "./controls/history"
 import {
   initializeWhistTagHandler,
-  initializeWhistFreezeHandler,
-  initializeWhistThawHandler,
+  initializeWhistFreezeAllHandler,
+  initializeWhistSpotlightHandler,
   initializeRequestMandelbox,
 } from "./controls/whist"
 import { initializePageRefreshHandler } from "./controls/refresh"
+import { initializeMouseEnterHandler } from "./controls/mouse"
 
 import {
   createStartNotification,
@@ -33,11 +34,12 @@ window.onload = () => {
     initializeTitleUpdater()
     initializeFaviconUpdater()
     initializePageRefreshHandler()
+    initializeMouseEnterHandler()
   })
 
   initializeLoadingScreen()
   initializeWhistTagHandler()
-  initializeWhistFreezeHandler()
-  initializeWhistThawHandler()
+  initializeWhistFreezeAllHandler()
+  initializeWhistSpotlightHandler()
   initializeRequestMandelbox()
 }

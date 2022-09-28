@@ -47,7 +47,8 @@ typedef struct VirtualInterface {
         void (*free_frame_ref)(void* frame_ref);
         void (*set_on_cursor_change_callback)(int window_id, OnCursorChangeCallback cb);
         void (*set_video_frame_callback)(int window_id, VideoFrameCallback cb);
-        void (*set_video_playing)(int window_id, bool playing);
+        unsigned int (*freeze_all_windows)(void);
+        void (*set_video_spotlight)(int window_id, unsigned int spotlight_id);
     } video;
     struct {
         void (*send)(const WhistFrontendEvent* event);
