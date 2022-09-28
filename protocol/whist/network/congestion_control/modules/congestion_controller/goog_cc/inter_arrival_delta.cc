@@ -14,14 +14,11 @@
 
 #include "api/units/time_delta.h"
 #include "api/units/timestamp.h"
+#include "common_fixes.h"
 //#include "rtc_base/logging.h"
 
 namespace webrtc {
-#if ENABLE_WHIST_CHANGE
-static constexpr TimeDelta kBurstDeltaThreshold = TimeDelta::Micros(4800);
-#else
 static constexpr TimeDelta kBurstDeltaThreshold = TimeDelta::Millis(5);
-#endif
 static constexpr TimeDelta kMaxBurstDuration = TimeDelta::Millis(100);
 constexpr TimeDelta InterArrivalDelta::kArrivalTimeOffsetThreshold;
 
@@ -122,6 +119,11 @@ bool InterArrivalDelta::NewTimestampGroup(Timestamp arrival_time,
   } else if (BelongsToBurst(arrival_time, send_time)) {
     return false;
   } else {
+    if(ENABLE_WHIST_CHANGE){
+      // since in whist we have group id to indicate the group, we don't need to group
+      //  based on send time.
+      return true;
+    }
     return send_time - current_timestamp_group_.first_send_time >
            send_time_group_length_;
   }
@@ -142,6 +144,17 @@ bool InterArrivalDelta::BelongsToBurst(Timestamp arrival_time,
       return true;
   }*/
   TimeDelta propagation_delta = arrival_time_delta - send_time_delta;
+  if(ENABLE_WHIST_CHANGE)
+  {
+      if (propagation_delta < TimeDelta::Zero() &&
+      arrival_time_delta <= TimeDelta::Millis(9) &&
+      arrival_time - current_timestamp_group_.first_arrival < kMaxBurstDuration){
+        return true;
+        //since whist pacer doesn't strictly send packets in burst of 5ms,
+        //we need a loser condition than the 5ms kBurstDeltaThreshold
+      }
+      return false;
+  }
   if (propagation_delta < TimeDelta::Zero() &&
       arrival_time_delta <= kBurstDeltaThreshold &&
       arrival_time - current_timestamp_group_.first_arrival < kMaxBurstDuration)
