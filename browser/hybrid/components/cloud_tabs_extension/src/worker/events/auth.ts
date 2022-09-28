@@ -3,7 +3,7 @@ import { filter, share, switchMap, take, throttle, map } from "rxjs/operators"
 import { NodeEventHandler } from "rxjs/internal/observable/fromEvent"
 
 import { webpageLoaded } from "@app/worker/events/webRequest"
-import { activatedFromSleep } from "@app/worker/events/idle"
+import { activatedFromSleep, networkConnected } from "@app/worker/events/idle"
 import {
   authSuccess as _authSuccess,
   authFailure as _authFailure,
@@ -43,8 +43,11 @@ const authInfo = merge(
   merge(
     webpageLoaded.pipe(take(1)),
     activatedFromSleep,
+    networkConnected,
     timer(0, DAY_MS / 2)
   ).pipe(
+    // Important to filter before the throttle so we don't lose network connection events
+    filter(() => navigator.onLine),
     // We throttle by 10s so there's no race condition of two simultaneous auth refresh requests
     throttle(() => interval(SEC_MS * 10)),
     switchMap(() => from(initWhistAuth()))
