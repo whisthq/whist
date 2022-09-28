@@ -19,6 +19,11 @@ const networkOffline = fromEventPattern(
   () => false
 )
 
-const networkConnected = merge(networkOnline, networkOffline)
+const networkConnected = merge(
+  // Initially emit the starting state in case we've missed the first online/offline event.
+  [navigator.onLine],
+  networkOnline,
+  networkOffline
+)
 
 export { activatedFromSleep, networkConnected }
