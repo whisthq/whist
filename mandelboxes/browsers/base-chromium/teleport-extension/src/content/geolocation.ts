@@ -18,7 +18,10 @@ const initLocationSpoofer = () => {
               const geolocationContent = JSON.parse(metaTag.content)
               chrome.runtime.sendMessage(<ContentScriptMessage>{
                 type: ContentScriptMessageType.GEOLOCATION_REQUEST,
-                value: geolocationContent,
+                value: {
+                  params: geolocationContent,
+                  metaTagName: metaTag.name
+                },
               })
             }
           }

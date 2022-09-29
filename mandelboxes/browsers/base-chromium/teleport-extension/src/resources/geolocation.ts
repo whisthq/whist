@@ -2,50 +2,6 @@ const getUniqueId = () => {
   return Date.now().toString()
 }
 
-const getGeolocation = () => {
-  const meta_longitude = document.documentElement.querySelector(
-    'meta[name="longitude"]'
-  ) as HTMLMetaElement
-  const meta_latitude = document.documentElement.querySelector(
-    'meta[name="latitude"]'
-  ) as HTMLMetaElement
-
-  const latitude = (meta_latitude?.content as unknown as string) ?? undefined
-  const longitude = (meta_longitude?.content as unknown as string) ?? undefined
-
-  if (latitude !== undefined && longitude !== undefined) {
-    const longitude = parseFloat(meta_longitude.content)
-    const latitude = parseFloat(meta_latitude.content)
-
-    return {
-      longitude,
-      latitude,
-    }
-  }
-  return undefined
-}
-
-const spoofLocation = (
-  geolocation: {
-    longitude: number
-    latitude: number
-  },
-  successCallback: (position: GeolocationPosition) => void
-) => {
-  successCallback({
-    coords: {
-      accuracy: 15.0,
-      altitude: null,
-      altitudeAccuracy: null,
-      heading: null,
-      latitude: geolocation.latitude,
-      longitude: geolocation.longitude,
-      speed: null,
-    } as GeolocationCoordinates,
-    timestamp: Date.now(),
-  } as GeolocationPosition)
-}
-
 // In a cloud tab:
 // 1. Site requests location - 
 //     > call one of navigator.geolocation functions
@@ -74,7 +30,6 @@ navigator.geolocation.getCurrentPosition = (
   metaGeolocation.name = `${uniqueId}-geolocation`
   metaGeolocation.content = JSON.stringify({
     function: "getCurrentPosition",
-    coords: {},
     options: _options,
   })
   document.documentElement.appendChild(metaGeolocation)
