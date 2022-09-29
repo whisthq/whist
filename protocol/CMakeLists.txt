@@ -47,10 +47,18 @@ option(CLIENT_SHARED_LIB "Build the client as a shared library" OFF)
 option(USE_CCACHE "Use ccache to speed up builds" OFF)
 option(USE_MIMALLOC "Link the client to mimalloc" ON)
 
+if(USE_CCACHE)
+    set(CMAKE_C_COMPILER_LAUNCHER "ccache")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+    set(CMAKE_CUDA_COMPILER_LAUNCHER "ccache")
+    # Unclear whether we need these two, as I think we just treat these as C/CXX
+    set(CMAKE_OBJC_COMPILER_LAUNCHER "ccache")
+    set(CMAKE_OBJCXX_COMPILER_LAUNCHER "ccache")
+endif()
+
 option(NOGPU "Disable GPU acceleration" OFF)
 if(NOGPU)
     add_compile_definitions(NOGPU=true)
-endif()
 
 # Add our compiler flags
 include(cmake/compiler-options.cmake)
