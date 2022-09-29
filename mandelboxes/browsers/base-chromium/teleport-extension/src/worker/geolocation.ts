@@ -11,7 +11,7 @@ const initLocationHandler = (socket: Socket) => {
 
     socket.emit(
       "geolocation-requested", 
-      msg.value.params, msg.value.metaTagName, sender.tab.id
+      msg.value.params, msg.value.metaTagName, sender.tab?.id
     )
   })
 }
