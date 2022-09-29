@@ -1,5 +1,5 @@
 import { socket } from "@app/worker/events/socketio"
-import { geolocationRequested } from "@app/worker/events/geolocation"
+import { geolocationRequested, geolocationRequestCompleted } from "@app/worker/events/geolocation"
 import { getTab } from "@app/worker/utils/tabs"
 
 import { withLatestFrom } from "rxjs/operators"
@@ -23,5 +23,17 @@ geolocationRequested
           },
         })
       )
+    }
+  )
+
+geolocationRequestCompleted
+  .pipe(withLatestFrom(socket))
+  .subscribe(
+    ([[success, response, metaTagName, tabId], socket]: [
+      [bool, any, string, number],
+      Socket
+    ]) => {
+      console.log("send geolocation to server")
+      socket.emit("geolocation-request-completed", success, response, metaTagName, tabId)
     }
   )
