@@ -1,3 +1,7 @@
+import {
+  ContentScriptMessage,
+  ContentScriptMessageType,
+} from "@app/constants/ipc"
 import { injectResourceIntoDOM } from "@app/utils/dom"
 
 const initLocationSpoofer = () => {
@@ -23,7 +27,7 @@ const initLocationSpoofer = () => {
     })
   })
   metaGeolocationObserver.observe(document.documentElement, {
-    childList: true
+    childList: true,
     subtree: true
   })
 }

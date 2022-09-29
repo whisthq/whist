@@ -1,4 +1,8 @@
-import { NativeHostMessage, NativeHostMessageType } from "@app/constants/ipc"
+import {
+  ContentScriptMessage,
+  ContentScriptMessageType,
+} from "@app/constants/ipc"
+import { Socket } from "socket.io-client"
 
 const initLocationHandler = (socket: Socket) => {
   // Listen for geolocation request event and send payload to client extension 

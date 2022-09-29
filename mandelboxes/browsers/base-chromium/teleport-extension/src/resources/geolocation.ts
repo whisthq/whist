@@ -1,5 +1,5 @@
 const getUniqueId = () => {
-  return string(Date.now())
+  return Date.now().toString()
 }
 
 const getGeolocation = () => {
@@ -70,7 +70,7 @@ navigator.geolocation.getCurrentPosition = (
 ) => {
   const uniqueId = getUniqueId()
 
-  metaGeolocation = document.createElement("meta")
+  const metaGeolocation = document.createElement("meta")
   metaGeolocation.name = `${uniqueId}-geolocation`
   metaGeolocation.content = JSON.stringify({
     function: "getCurrentPosition",
