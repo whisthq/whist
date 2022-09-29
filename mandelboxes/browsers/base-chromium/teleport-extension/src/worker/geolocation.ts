@@ -28,14 +28,22 @@ const initLocationHandler = (socket: Socket) => {
   })
 
   // Listen for geolocation request responses from the client
-  socket.on("geolocation-request-completed", ([success, response, metaTagName, tabId]: [boolean, any, string, number]) => {
+  socket.on("geolocation-request-completed", async ([success, response, metaTagName, tabId]: [boolean, any, string, number]) => {
     console.log("listening for geolocation-request-completed")
-    chrome.runtime.sendMessage(<ContentScriptMessage>{
-      type: ContentScriptMessageType.GEOLOCATION_RESPONSE,
-      value: {
-        success, response, metaTagName, tabId
-      },
-    })
+    const openTabs = await getOpenTabs()
+    const foundTab = find(openTabs, (t) => t.clientTabId === tabId)
+
+    if (foundTab) {
+      chrome.tabs.sendMessage(
+        tabId: foundTab.id, 
+        <ContentScriptMessage>{
+          type: ContentScriptMessageType.GEOLOCATION_RESPONSE,
+          value: {
+            success, response, metaTagName, tabId
+          },
+        }
+      )
+    }
   })
 }
 
