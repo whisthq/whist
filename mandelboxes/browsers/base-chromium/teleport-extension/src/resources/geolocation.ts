@@ -74,34 +74,8 @@ navigator.geolocation.getCurrentPosition = (
   metaGeolocation.name = `${uniqueId}-geolocation`
   metaGeolocation.content = JSON.stringify({
     function: "getCurrentPosition",
-    longitude: NaN,
-    latitude: NaN,
+    coords: {},
     options: _options,
   })
   document.documentElement.appendChild(metaGeolocation)
-
-  // metaGeolocation.content = "getCurrentPosition" // TODO: set this to a stringified JSON with all information needed
-  // TODO: abstract out functions to set DOM content and listen for DOM changes
-
-  // let geolocation = getGeolocation() as
-  //   | undefined
-  //   | { longitude: number; latitude: number }
-
-  // if (geolocation === undefined) {
-  //   const observer = new MutationObserver((_mutations, obs) => {
-  //     geolocation = getGeolocation()
-
-  //     if (geolocation !== undefined) {
-  //       spoofLocation(geolocation, successCallback)
-  //       obs.disconnect()
-  //     }
-  //   })
-
-  //   observer.observe(document, {
-  //     childList: true,
-  //     subtree: true,
-  //   })
-  // } else {
-  //   spoofLocation(geolocation, successCallback)
-  // }
 }

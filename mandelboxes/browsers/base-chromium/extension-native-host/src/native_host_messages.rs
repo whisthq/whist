@@ -9,8 +9,6 @@ use std::io::{Read, Write};
 pub enum NativeHostMessageType {
     #[serde(rename = "DOWNLOAD_COMPLETE")]
     DownloadComplete,
-    #[serde(rename = "GEOLOCATION")]
-    Geolocation,
     // Technically we abuse notation -- if we _send_ to the extension, it will
     // disconnect the native host. But we use this internally to signal various
     // _received_ messages from the extension which mean that we should exit from
@@ -116,7 +114,6 @@ mod tests {
 
     send_message_tests! {
         send_message_download_null: (NativeHostMessageType::DownloadComplete, json!(null)),
-        send_message_geolocaiton_number: (NativeHostMessageType::Geolocation, json!(42)),
         send_message_update_string: (NativeHostMessageType::NativeHostUpdate, json!("foo")),
         send_message_keepalive_object: (NativeHostMessageType::NativeHostKeepalive, json!({
             "foo": "bar",
@@ -174,7 +171,6 @@ mod tests {
 
     send_then_read_message_tests! {
         send_then_read_message_download_null: (NativeHostMessageType::DownloadComplete, json!(null)),
-        send_then_read_message_geolocaiton_number: (NativeHostMessageType::Geolocation, json!(42)),
         send_then_read_message_update_string: (NativeHostMessageType::NativeHostUpdate, json!("foo")),
         send_then_read_message_keepalive_object: (NativeHostMessageType::NativeHostKeepalive, json!({
             "foo": "bar",
