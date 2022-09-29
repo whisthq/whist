@@ -33,7 +33,7 @@ const initLocationHandler = (socket: Socket) => {
     const openTabs = await getOpenTabs()
     const foundTab = find(openTabs, (t) => t.clientTabId === tabId)
 
-    if (foundTab) {
+    if (foundTab.tab.id) {
       chrome.tabs.sendMessage(
         foundTab.tab.id,
         {
