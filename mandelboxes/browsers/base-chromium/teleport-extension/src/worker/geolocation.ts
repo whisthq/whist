@@ -15,9 +15,9 @@ const initLocationHandler = (socket: Socket) => {
     console.log("received geolocation-requested from tab ", sender.tab)
 
     var clientTabId = undefined
-    if (sender.tab !== undefined) {
+    if (sender.tab) {
       const openTabs = await getOpenTabs()
-      const foundTab = find(openTabs, (t) => t.tab.id === sender.tab.id)
+      const foundTab = find(openTabs, (t) => t.tab.id === sender.tab?.id)
       clientTabId = foundTab?.clientTabId
     }
 
