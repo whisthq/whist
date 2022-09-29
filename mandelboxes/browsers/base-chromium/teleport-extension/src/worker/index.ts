@@ -38,8 +38,8 @@ initNativeHostDisconnectHandler(nativeHostPort)
 // Enables relative mouse mode
 initCursorLockHandler(nativeHostPort)
 
-// Receive geolocation from extension host
-initLocationHandler(nativeHostPort)
+// Send and receive geolocation actions
+initLocationHandler(socket)
 
 // Listen to the client for tab actions
 initActivateTabListener(socket)
