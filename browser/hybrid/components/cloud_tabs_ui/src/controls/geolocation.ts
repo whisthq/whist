@@ -1,3 +1,5 @@
+import { getTabId } from "./session"
+
 const intializeGeolocationRequestHandler = () => {
   ;(chrome as any).whist.onMessage.addListener((message: string) => {
     const parsed = JSON.parse(message)
@@ -11,7 +13,7 @@ const intializeGeolocationRequestHandler = () => {
       switch(requestedFunction) {
         case 'getCurrentPosition':
           navigator.geolocation.getCurrentPosition(
-            (position: Position) => {
+            (position: GeolocationPosition) => {
               // Send message back to server with position
               ;(chrome as any).whist.broadcastWhistMessage(
                 JSON.stringify({
@@ -24,7 +26,7 @@ const intializeGeolocationRequestHandler = () => {
                 })
               )
             },
-            (positionError: PositionError) => {
+            (positionError: GeolocationPositionError) => {
               // Send message back to server with failure
               ;(chrome as any).whist.broadcastWhistMessage(
                 JSON.stringify({

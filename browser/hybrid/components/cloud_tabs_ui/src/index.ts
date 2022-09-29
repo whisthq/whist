@@ -16,6 +16,7 @@ import {
 } from "./controls/whist"
 import { initializePageRefreshHandler } from "./controls/refresh"
 import { initializeMouseEnterHandler } from "./controls/mouse"
+import { intializeGeolocationRequestHandler } from "./controls/geolocation"
 
 import {
   createStartNotification,
@@ -42,4 +43,5 @@ window.onload = () => {
   initializeWhistFreezeAllHandler()
   initializeWhistSpotlightHandler()
   initializeRequestMandelbox()
+  intializeGeolocationRequestHandler()
 }

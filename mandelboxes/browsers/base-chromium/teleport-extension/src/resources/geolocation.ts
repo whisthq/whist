@@ -24,6 +24,7 @@ navigator.geolocation.getCurrentPosition = (
   _errorCallback,
   _options
 ) => {
+  console.log("getCurrentPosition (resources)")
   const uniqueId = getUniqueId()
 
   const metaGeolocation = document.createElement("meta")
