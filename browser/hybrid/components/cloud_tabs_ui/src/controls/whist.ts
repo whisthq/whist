@@ -102,8 +102,6 @@ const initializeWhistSpotlightHandler = () => {
 export {
   initializeWhistTagHandler,
   initializeRequestMandelbox,
-  // initializeWhistFreezeHandler,
-  // initializeWhistThawHandler,
   initializeWhistFreezeAllHandler,
   initializeWhistSpotlightHandler,
 }
