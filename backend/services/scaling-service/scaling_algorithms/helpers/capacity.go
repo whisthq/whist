@@ -57,8 +57,9 @@ func ComputeExpectedMandelboxCapacity(imageID string, activeInstances []subscrip
 // currentCapacity: the current free mandelboxes in the database. Obtained by querying database and computing capacity.
 // instanceCapacity: the mandelbox capacity for the specific instance type in use (e.g. a "g4dn.2xlarge" instance can run 2 mandelboxes).
 func ComputeInstancesToScale(desiredMandelboxes int, currentCapacity int, instanceCapacity int) int {
+	// This will never happen realistically, but we should try to handle all cases.
 	if instanceCapacity <= 0 {
-		return 1
+		return 0
 	}
 
 	desiredCapacity := desiredMandelboxes - currentCapacity
