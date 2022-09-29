@@ -102,7 +102,7 @@ type Instance struct {
 	ClientSHA         string    `json:"client_sha"`         // Commit hash
 	IPAddress         string    `json:"ip_addr"`            // Public IPv4 address
 	Type              string    `json:"instance_type"`      // Instance type
-	RemainingCapacity int64     `json:"remaining_capacity"` // Number of mandelboxes that can be allocated
+	RemainingCapacity int       `json:"remaining_capacity"` // Number of mandelboxes that can be allocated
 	Status            string    `json:"status"`             // Current status of the instance
 	CreatedAt         time.Time `json:"created_at"`         // Timestamp when the instance was creates
 	UpdatedAt         time.Time `json:"updated_at"`         // Timestamp when the instance was last updated
@@ -215,7 +215,7 @@ func ToInstances(dbInstances []WhistInstance) []Instance {
 			ClientSHA:         string(instance.ClientSHA),
 			IPAddress:         instance.IPAddress,
 			Type:              string(instance.Type),
-			RemainingCapacity: int64(instance.RemainingCapacity),
+			RemainingCapacity: int(instance.RemainingCapacity),
 			Status:            string(instance.Status),
 			CreatedAt:         instance.CreatedAt,
 			UpdatedAt:         instance.UpdatedAt,

@@ -63,9 +63,10 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		fakeMandelboxesForDb []subscriptions.Mandelbox
 	)
 
-	// Compute the size of the buffer we want to start
+	// Compute the size of the buffer we want to start. We pass in a current capacity of 0
+	// because we want a full buffer of instances for the new version.
 	// TODO: change to a different instance type once we support more cloud providers/types
-	instancesToScale := helpers.ComputeInstancesToScale(desiredFreeMandelboxesPerRegion[event.Region], instanceCapacity["g4dn.2xlarge"])
+	instancesToScale := helpers.ComputeInstancesToScale(desiredFreeMandelboxesPerRegion[event.Region], 0, instanceCapacity["g4dn.2xlarge"])
 
 	// If we are running on a local or testing environment, spinup "fake" instances to avoid
 	// creating them on a cloud provider. In any other case we call the host handler to create
@@ -82,7 +83,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		// Set the instance capacity field and add to the slice
 		// that will be passed to the database.
 		for i := 0; i < len(instancesForDb); i++ {
-			instancesForDb[i].RemainingCapacity = int64(instanceCapacity[instancesForDb[i].Type])
+			instancesForDb[i].RemainingCapacity = instanceCapacity[instancesForDb[i].Type]
 		}
 	}
 

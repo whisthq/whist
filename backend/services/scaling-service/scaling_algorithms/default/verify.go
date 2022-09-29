@@ -88,7 +88,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 
 	// We consider the expected mandelbox capacity (active instances + starting instances)
 	// to account for warmup time and so that we don't scale up unnecesary instances.
-	if mandelboxCapacity < int64(desiredFreeMandelboxesPerRegion[event.Region]) {
+	if mandelboxCapacity < desiredFreeMandelboxesPerRegion[event.Region] {
 
 		// TODO: Change to a different instance type once we support more types or cloud providers
 		instancesToScale := helpers.ComputeInstancesToScale(desiredFreeMandelboxesPerRegion[event.Region], mandelboxCapacity, instanceCapacity["g4dn.2xlarge"])

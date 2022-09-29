@@ -9,36 +9,33 @@ some functions that make it easier to test the scaling service locally.
 package helpers
 
 import (
-	"log"
+	"math"
 
 	"github.com/whisthq/whist/backend/services/subscriptions"
-	"math"
 )
 
 // ComputeRealMandelboxCapacity is a helper function to compute the real mandelbox capacity.
 // Real capcity is the number of free mandelboxes available on instances with active status.
-func ComputeRealMandelboxCapacity(imageID string, activeInstances []subscriptions.Instance) int64 {
-	var (
-		realMandelboxCapacity int
-	)
+func ComputeRealMandelboxCapacity(imageID string, activeInstances []subscriptions.Instance) int {
+	var realMandelboxCapacity int
 
 	// Loop over active instances (status ACTIVE), only consider the ones with the current image
 	for _, instance := range activeInstances {
 		if instance.ImageID == imageID {
-			realMandelboxCapacity += int(instance.RemainingCapacity)
+			realMandelboxCapacity += instance.RemainingCapacity
 		}
 	}
 
-	return int64(realMandelboxCapacity)
+	return realMandelboxCapacity
 }
 
 // ComputeExpectedMandelboxCapacity is a helper function to compute the expected mandelbox capacity.
 // Expected capacity is the number of free mandelboxes available on instances with active status and
 // in starting instances.
-func ComputeExpectedMandelboxCapacity(imageID string, activeInstances []subscriptions.Instance, startingInstances []subscriptions.Instance) int64 {
+func ComputeExpectedMandelboxCapacity(imageID string, activeInstances []subscriptions.Instance, startingInstances []subscriptions.Instance) int {
 	var (
-		realMandelboxCapacity     int64
-		expectedMandelboxCapacity int64
+		realMandelboxCapacity     int
+		expectedMandelboxCapacity int
 	)
 
 	// Get the capacity from active instances
@@ -52,14 +49,20 @@ func ComputeExpectedMandelboxCapacity(imageID string, activeInstances []subscrip
 	}
 
 	expectedMandelboxCapacity += realMandelboxCapacity
-	return int64(expectedMandelboxCapacity)
+	return expectedMandelboxCapacity
 }
 
-// ComputeInstancesToScale computes the number of instances we want to scale,
-// according to the current number of desired mandelboxes.
-func ComputeInstancesToScale(desiredMandelboxes int, currentCapacity int64, instanceCapacity int64) int {
+// ComputeInstancesToScale computes the number of instances we want to scale, according to the current number of desired mandelboxes.
+// desiredMandelboxes: the number of free mandelboxes we want at all times. Set in the config db.
+// currentCapacity: the current free mandelboxes in the database. Obtained by querying database and computing capacity.
+// instanceCapacity: the mandelbox capacity for the specific instance type in use (e.g. a "g4dn.2xlarge" instance can run 2 mandelboxes).
+func ComputeInstancesToScale(desiredMandelboxes int, currentCapacity int, instanceCapacity int) int {
+	if instanceCapacity <= 0 {
+		return 1
+	}
 
-	diff := desiredMandelboxes - currentCapacity
+	desiredCapacity := desiredMandelboxes - currentCapacity
+	instancesToScale := math.Ceil(float64(desiredCapacity) / float64(instanceCapacity))
 
-	return int(a)
+	return int(instancesToScale)
 }

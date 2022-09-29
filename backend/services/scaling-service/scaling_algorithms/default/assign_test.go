@@ -30,7 +30,7 @@ func TestMandelboxAssign(t *testing.T) {
 
 	var tests = []struct {
 		name             string
-		capacity         int64
+		capacity         int
 		regions          []string
 		clientSHA, want  string
 		shouldBeAssigned bool
@@ -72,7 +72,7 @@ func TestMandelboxAssign(t *testing.T) {
 						Region:            "us-east-1",
 						IPAddress:         "1.1.1.1/24",
 						ClientSHA:         "test-sha",
-						RemainingCapacity: int64(tt.capacity),
+						RemainingCapacity: tt.capacity,
 					},
 					{
 						ID:                "test-assign-instance-2",
@@ -83,7 +83,7 @@ func TestMandelboxAssign(t *testing.T) {
 						Region:            "us-west-1",
 						IPAddress:         "1.1.1.1/24",
 						ClientSHA:         "test-sha",
-						RemainingCapacity: int64(tt.capacity),
+						RemainingCapacity: tt.capacity,
 					},
 					{
 						ID:                "test-assign-instance-3",
@@ -94,7 +94,7 @@ func TestMandelboxAssign(t *testing.T) {
 						Region:            "ap-south-1",
 						IPAddress:         "1.1.1.1/24",
 						ClientSHA:         "test-sha",
-						RemainingCapacity: int64(tt.capacity),
+						RemainingCapacity: tt.capacity,
 					},
 				}
 
