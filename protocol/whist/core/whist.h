@@ -16,12 +16,6 @@ Includes
 
 #include "platform.h"
 
-#if OS_IS(OS_MACOS)
-#define USING_MLOCK true
-#else
-#define USING_MLOCK false
-#endif
-
 #ifdef __cplusplus
 
 // whist.h supports direct cpp inclusion, with internal extern "C"

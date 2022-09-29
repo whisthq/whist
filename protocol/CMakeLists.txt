@@ -45,6 +45,7 @@ endif()
 option(SANITIZE "Enable sanitizer during build (address, thread, undefined)." OFF)
 option(CLIENT_SHARED_LIB "Build the client as a shared library" OFF)
 option(USE_CCACHE "Use ccache to speed up builds" OFF)
+option(USE_MIMALLOC "Link the client to mimalloc" ON)
 
 option(NOGPU "Disable GPU acceleration" OFF)
 if(NOGPU)
@@ -277,7 +278,7 @@ else()
     find_package(OpenSSL REQUIRED)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND USE_MIMALLOC)
 # We manually compile a malloc hook so we can mlock all memory allocations in the protocol, improving latency when memory pressure is high
 # see github.com/whisthq/mimalloc
 message(STATUS "Looking for mimalloc lib: libmimalloc.a")
@@ -307,6 +308,9 @@ message(STATUS "Looking for mimalloc lib: libmimalloc.a")
         message(FATAL_ERROR "Library Sentry was not found! ${SENTRY_DIR_PATH}")
     endif()
     list(APPEND SHARED_LIBS_PATHS ${SENTRY_DIR_PATH})
+    add_compile_definitions(USING_MLOCK=true)
+else()
+    add_compile_definitions(USING_MLOCK=false)
 endif()
 
 set(SDL2_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
