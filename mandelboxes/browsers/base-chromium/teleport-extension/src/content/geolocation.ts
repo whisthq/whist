@@ -43,7 +43,9 @@ const initLocationSpoofer = () => {
       `meta[name="${msg.value.metaTagName}"]`
     ) as HTMLMetaElement
 
-    metaGeolocation?.content = JSON.stringify(msg.value)
+    if (metaGeolocation) {
+      metaGeolocation.content = JSON.stringify(msg.value)
+    }
   })
 }
 

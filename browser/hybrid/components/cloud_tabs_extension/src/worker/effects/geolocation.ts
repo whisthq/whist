@@ -30,7 +30,7 @@ geolocationRequestCompleted
   .pipe(withLatestFrom(socket))
   .subscribe(
     ([[success, response, metaTagName, tabId], socket]: [
-      [bool, any, string, number],
+      [boolean, any, string, number],
       Socket
     ]) => {
       console.log("send geolocation to server")
