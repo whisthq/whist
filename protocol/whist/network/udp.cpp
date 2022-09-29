@@ -2207,6 +2207,7 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
                                   (1 - PING_LAMBDA_SHORT_TERM) * ping_time;
     context->raw_ping= ping_time;
     whist_plotter_insert_sample("ping_time", get_timestamp_sec(), ping_time*MS_IN_SECOND);
+    whist_plotter_insert_sample("congestion_detected", get_timestamp_sec(), context->network_settings.congestion_detected *150);
     // Don't update long term latency during congestion
     if (!context->network_settings.congestion_detected) {
         context->long_term_latency = PING_LAMBDA_LONG_TERM * context->long_term_latency +
