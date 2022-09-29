@@ -40,8 +40,8 @@ const initLocationHandler = (socket: Socket) => {
           type: ContentScriptMessageType.GEOLOCATION_RESPONSE,
           value: {
             success, response, metaTagName, tabId
-          } as ContentScriptMessage,
-        }
+          }, 
+        } as ContentScriptMessage,
       )
     }
   })
