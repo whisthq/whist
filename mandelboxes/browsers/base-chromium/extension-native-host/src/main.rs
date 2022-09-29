@@ -25,27 +25,6 @@ fn check_for_updates() -> Result<(), String> {
     )
 }
 
-// This no longer needs to be in rust
-// Geolocation can also be deleted from rust
-// Instead, we should receive a geolocation message on the extension
-fn send_startup_params() -> Result<(), String> {
-    let longitude = std::env::var("LONGITUDE").unwrap_or("".to_string());
-    let latitude = std::env::var("LATITUDE").unwrap_or("".to_string());
-    if !longitude.is_empty() && !latitude.is_empty() {
-        send_message(
-            std::io::stdout(),
-            &NativeHostMessage {
-                msg_type: NativeHostMessageType::Geolocation,
-                value: json!({
-                    "longitude": longitude,
-                    "latitude": latitude,
-                }),
-            },
-        )?;
-    };
-    Ok(())
-}
-
 fn send_keepalive_messages(keep_running: &AtomicBool) -> Result<(), String> {
     const KEEPALIVE: NativeHostMessage = NativeHostMessage {
         msg_type: NativeHostMessageType::NativeHostKeepalive,
@@ -97,7 +76,6 @@ fn handle_pointer_lock(msg: NativeHostMessage) -> Result<(), String> {
 
 fn main() -> Result<(), String> {
     check_for_updates()?;
-    send_startup_params()?;
 
     let keep_running = Arc::new(AtomicBool::new(true));
 
