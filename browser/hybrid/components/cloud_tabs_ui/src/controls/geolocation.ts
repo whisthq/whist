@@ -4,6 +4,8 @@ const intializeGeolocationRequestHandler = () => {
   ;(chrome as any).whist.onMessage.addListener((message: string) => {
     const parsed = JSON.parse(message)
 
+    console.log(parsed)
+
     if (
       (parsed.type === "GEOLOCATION_REQUESTED") &&
       parsed.value.id === getTabId()

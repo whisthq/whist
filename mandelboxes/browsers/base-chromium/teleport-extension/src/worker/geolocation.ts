@@ -9,7 +9,7 @@ const initLocationHandler = (socket: Socket) => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage, sender: chrome.runtime.MessageSender) => {
     if (msg.type !== ContentScriptMessageType.GEOLOCATION_REQUEST) return
 
-    console.log("received geolocation-requested")
+    console.log("received geolocation-requested from tab ", sender.tab)
 
     socket.emit(
       "geolocation-requested", 

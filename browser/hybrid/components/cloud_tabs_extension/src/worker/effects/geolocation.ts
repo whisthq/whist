@@ -12,6 +12,7 @@ geolocationRequested
       [any, string, number],
       Socket
     ]) => {
+      console.log("geolocationRequested")
       ;(chrome as any).whist.broadcastWhistMessage(
         JSON.stringify({
           type: "GEOLOCATION_REQUESTED",
