@@ -41,7 +41,7 @@ navigator.geolocation.getCurrentPosition = (
     if (metaTagContentJSON.success) {
       // success true means geolocation request returned a GeolocationPosition
       successCallback(metaTagContentJSON.response as GeolocationPosition)
-    } else {
+    } else if (_errorCallback) {
       _errorCallback(metaTagContentJSON.response as GeolocationPositionError)
     }
   })
