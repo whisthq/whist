@@ -35,12 +35,12 @@ const initLocationHandler = (socket: Socket) => {
 
     if (foundTab) {
       chrome.tabs.sendMessage(
-        tabId: foundTab.id, 
-        message: <ContentScriptMessage>{
+        tabId: foundTab.tab.id,
+        message: {
           type: ContentScriptMessageType.GEOLOCATION_RESPONSE,
           value: {
             success, response, metaTagName, tabId
-          },
+          } as ContentScriptMessage,
         }
       )
     }
