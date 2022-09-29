@@ -34,4 +34,19 @@ navigator.geolocation.getCurrentPosition = (
     options: _options,
   })
   document.documentElement.appendChild(metaGeolocation)
+
+  // Listen for changes to content of the meta tag to get response
+  const metaGeolocationObserver = new MutationObserver((mutationList, observer) => {
+    const metaTagContentJSON = JSON.parse(metaGeolocation.content)
+    if (metaTagContentJSON.success) {
+      // success true means geolocation request returned a GeolocationPosition
+      successCallback(metaTagContentJSON.response as GeolocationPosition)
+    } else {
+      _errorCallback(metaTagContentJSON.response as GeolocationPositionError)
+    }
+  })
+  metaGeolocationObserver.observe(metaGeolocation, {
+    attributes: true,
+    attributeFilter: [ "content" ]
+  })
 }

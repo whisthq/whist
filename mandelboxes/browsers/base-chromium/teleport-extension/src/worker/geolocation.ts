@@ -26,6 +26,16 @@ const initLocationHandler = (socket: Socket) => {
       msg.value.params, msg.value.metaTagName, clientTabId
     )
   })
+
+  // Listen for geolocation request responses from the client
+  socket.on("geolocation-request-completed", async ([success, response, metaTagName, tabId]: [bool, any, string, number]) => {
+    chrome.runtime.sendMessage(<ContentScriptMessage>{
+      type: ContentScriptMessageType.GEOLOCATION_RESPONSE,
+      value: {
+        success, response, metaTagName, tabId
+      },
+    })
+  })
 }
 
 export { initLocationHandler }

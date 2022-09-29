@@ -30,9 +30,20 @@ const initLocationSpoofer = () => {
       }
     })
   })
-  metaGeolocationObserver.observe(document, {
+  metaGeolocationObserver.observe(document.documentElement, {
     childList: true,
     subtree: true
+  })
+
+  // Listen for GEOLOCATION_RESPONSE message and update corresponding meta tag contents
+  chrome.runtime.onMessage.addListener(async (msg: ContentScriptMessage) => {
+    if (msg.type !== ContentScriptMessageType.GEOLOCATION_RESPONSE) return
+
+    const metaGeolocation = document.documentElement.querySelector(
+      `meta[name="${msg.value.metaTagName}"]`
+    ) as HTMLMetaElement
+
+    metaGeolocation?.content = JSON.stringify(msg.value)
   })
 }
 

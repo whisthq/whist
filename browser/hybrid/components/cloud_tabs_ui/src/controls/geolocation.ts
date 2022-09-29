@@ -19,9 +19,10 @@ const intializeGeolocationRequestHandler = () => {
               // Send message back to server with position
               ;(chrome as any).whist.broadcastWhistMessage(
                 JSON.stringify({
-                  type: "GEOLOCATION_REQUEST_SUCCESS",
+                  type: "GEOLOCATION_REQUEST_COMPLETED",
                   value: {
-                    position: position,
+                    success: true,
+                    response: position,
                     metaTagName: serverMetaTagName,
                     tabId: parsed.value.id
                   },
@@ -32,9 +33,10 @@ const intializeGeolocationRequestHandler = () => {
               // Send message back to server with failure
               ;(chrome as any).whist.broadcastWhistMessage(
                 JSON.stringify({
-                  type: "GEOLOCATION_REQUEST_FAILURE",
+                  type: "GEOLOCATION_REQUEST_COMPLETED",
                   value: {
-                    positionError: positionError,
+                    success: false,
+                    response: positionError,
                     metaTagName: serverMetaTagName,
                     tabId: parsed.value.id
                   },
