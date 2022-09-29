@@ -205,13 +205,6 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	logger.Infow("Starting scale up action.", contextFields)
 	defer logger.Infow("Finished scale up action.", contextFields)
 
-<<<<<<< HEAD
-	// Try scale up in given region
-	instanceNum := int32(instancesToScale)
-
-=======
-	// Slice that will hold the instances and pass them to the dbclient
->>>>>>> 4183516c6 (Standardize types to int where possible, finish function to compute instances to scale)
 	var (
 		// Slice that will hold the instances and pass them to the dbclient
 		instancesForDb []subscriptions.Instance
