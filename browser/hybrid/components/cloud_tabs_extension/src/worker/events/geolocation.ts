@@ -1,4 +1,4 @@
-import { fromEvent, of, zip, map, filter, fromEventPattern } from "rxjs"
+import { fromEvent, of, zip, map, filter, fromEventPattern, tap } from "rxjs"
 import { switchMap, share } from "rxjs/operators"
 import { Socket } from "socket.io-client"
 
@@ -23,6 +23,7 @@ const geolocationRequestCompleted = fromEventPattern(
       of(message.value.tabId),
     ])
   ),
+  tap((stuff: any) => console.log("GEOLOCATION_REQUEST_COMPLETED", stuff)),
   share()
 )
 

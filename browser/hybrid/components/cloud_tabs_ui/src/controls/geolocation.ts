@@ -1,15 +1,25 @@
 import { getTabId } from "./session"
 
+// TODO: copy position and positionError to allow stringify
+
 const geolocationSuccessCallback = (metaTagName: string, tabId: number) => {
   return (position: GeolocationPosition) => {
-    console.log("success ", position)
+    console.log("success ", position, JSON.stringify({
+        type: "GEOLOCATION_REQUEST_COMPLETED",
+        value: {
+          success: true,
+          response: defaultsDeep({coords: {}}, position),
+          metaTagName: metaTagName,
+          tabId: tabId
+        },
+      }))
     // Send message back to server with position
     ;(chrome as any).whist.broadcastWhistMessage(
       JSON.stringify({
         type: "GEOLOCATION_REQUEST_COMPLETED",
         value: {
           success: true,
-          response: position,
+          response: defaultsDeep({coords: {}}, position),
           metaTagName: metaTagName,
           tabId: tabId
         },
@@ -20,14 +30,22 @@ const geolocationSuccessCallback = (metaTagName: string, tabId: number) => {
 
 const geolocationErrorCallback = (metaTagName: string, tabId: number) => {
   return (positionError: GeolocationPositionError) => {
-    console.log("error ", positionError)
+    console.log("error ", positionError, JSON.stringify({
+        type: "GEOLOCATION_REQUEST_COMPLETED",
+        value: {
+          success: false,
+          response: defaultsDeep({}, positionError),
+          metaTagName: metaTagName,
+          tabId: tabId
+        },
+      }))
     // Send message back to server with failure
     ;(chrome as any).whist.broadcastWhistMessage(
       JSON.stringify({
         type: "GEOLOCATION_REQUEST_COMPLETED",
         value: {
           success: false,
-          response: positionError,
+          response: defaultsDeep({}, positionError),
           metaTagName: metaTagName,
           tabId: tabId
         },
