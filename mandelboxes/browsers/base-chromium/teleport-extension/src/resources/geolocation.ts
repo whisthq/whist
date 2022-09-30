@@ -38,15 +38,17 @@ const geolocationPositionFunction = (
       return
     }
 
-    if (metaTagContentJSON.success) {
-      // success true means geolocation request returned a GeolocationPosition
-      successCallback(metaTagContentJSON.response as GeolocationPosition)
-    } else if (errorCallback) {
-      errorCallback(metaTagContentJSON.response as GeolocationPositionError)
-    }
+    if ('success' in metaTagContentJSON) {
+      if (metaTagContentJSON.success) {
+        // success true means geolocation request returned a GeolocationPosition
+        successCallback(metaTagContentJSON.response as GeolocationPosition)
+      } else if (!metaTagContentJSON.success && errorCallback) {
+        errorCallback(metaTagContentJSON.response as GeolocationPositionError)
+      }
 
-    // If getCurrentPosition, set complete after first metaTag change
-    if (functionName === "getCurrentPosition") {
+      // If a state of success has been determined, and the calling function was
+      // getCurrentPosition, then clear the observer
+
       setMetaGeolocationTagFinished(metaGeolocation)
     }
   })
