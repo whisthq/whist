@@ -29,7 +29,7 @@ const initLocationHandler = (socket: Socket) => {
 
   // Listen for geolocation request responses from the client
   socket.on("geolocation-request-completed", async ([success, response, metaTagName, tabId]: [boolean, any, string, number]) => {
-    console.log("listening for geolocation-request-completed")
+    console.log("listening for geolocation-request-completed ", success, response, metaTagName, tabId)
     const openTabs = await getOpenTabs()
     const foundTab = find(openTabs, (t) => t.clientTabId === tabId)
 
