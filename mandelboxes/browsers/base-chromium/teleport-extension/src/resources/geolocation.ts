@@ -14,8 +14,8 @@ const setMetaGeolocationTagFinished = (metaGeolocationTag: HTMLMetaElement) => {
 
 const geolocationPositionFunction = (
   functionName: string,
-  successCallback: (GeolocationPosition) => void,
-  errorCallback: (GeolocationPositionError) => void,
+  successCallback: (position: GeolocationPosition) => void,
+  errorCallback: (positionError: GeolocationPositionError) => void,
   options: any
 ) => {
   const uniqueId = getUniqueId()
