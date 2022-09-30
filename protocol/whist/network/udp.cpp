@@ -686,7 +686,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                                                              context->short_term_latency);
 
             whist_plotter_insert_sample("packet_loss_ratio", get_timestamp_sec(), packet_loss_ratio*100);
-            if(!wcc_v2) whist_plotter_insert_sample("incoming_bitrate", get_timestamp_sec(), incoming_bitrate<0?-1: incoming_bitrate/1000.0/100.0);
+            whist_plotter_insert_sample("incoming_bitrate", get_timestamp_sec(), incoming_bitrate<0?-1: incoming_bitrate/1000.0/100.0);
             whist_plotter_insert_sample("short_term_latency", get_timestamp_sec(), context->short_term_latency*1000);
             whist_plotter_insert_sample("long_term_latency", get_timestamp_sec(), context->long_term_latency*1000);
 
