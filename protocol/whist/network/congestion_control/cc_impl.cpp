@@ -107,7 +107,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       {
          //printf("<<%f>>\n", input.start_bitrate.value());
          start_rate=webrtc::DataRate::BitsPerSec(input.start_bitrate.value());
-         delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
+         delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value())); //need this before set startbitrate
          delay_based_bwe->SetStartBitrate(start_rate.value());
          first_time=false;
          first_ts=current_time;

@@ -206,7 +206,7 @@ typedef struct {
     bool connection_lost;
     double long_term_latency;
     double short_term_latency;
-    double raw_ping;
+    double raw_ping_sec;
 
     // Latency Calculation (Only used on server)
     WhistMutex timestamp_mutex;
@@ -558,9 +558,6 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     timestamp_us d_relative= departure_time - d_first +t_first*1e6;
     timestamp_us a_relative= arrival_time - a_first +t_first*1e6;
 
-    //whist_plotter_insert_sample("departure_time", get_timestamp_sec(), d_relative/1000.0);
-    //whist_plotter_insert_sample("arrival_time", get_timestamp_sec(), a_relative/1000.0);
-
     whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0  -10);
     whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0- 20);
 
@@ -585,7 +582,6 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     if(wcc_v2)
     {
         double old_bitrate=context->network_settings.video_bitrate;
-
         auto cc_controler= (CongestionCongrollerInterface* ) context->congestion_controller;
         if(true)
         {
@@ -597,11 +593,12 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
 
 
             static bool global_first_time=true;
+            // the first connection conncection with start_rate
             if(global_first_time){
                 input.start_bitrate=start_rate;
                 global_first_time=false;
             }
-            else {
+            else { //if first conncection fails, start with min rate
                 input.start_bitrate=min_rate;
             }
             input.max_bitrate=max_rate;
@@ -624,19 +621,18 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
 
             double incoming_rate=get_incoming_bitrate(context);
             if(incoming_rate>0){
-                input.incoming_bitrate=incoming_rate;
+                input.incoming_bitrate=incoming_rate; //not used anymore, only for debugging
             }
 
             input.packet_loss=get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
                                                              context->short_term_latency);
 
-            //printf("<<%f>>\n",input.packet_loss.value());
-            //input.packet_loss=0;
+            FATAL_ASSERT(input.packet_loss>=0 && input.packet_loss<=1);
 
-            if(context->raw_ping>0){
-                input.rtt_ms=context->raw_ping *MS_IN_SECOND;
+            if(context->raw_ping_sec>0){
+                input.rtt_ms=context->raw_ping_sec *MS_IN_SECOND;
             }
-
+            //=============important call here=============
             CCOutput output=cc_controler->feed_info(input);
             context->network_settings.video_bitrate = output.target_bitrate.value();
             context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
@@ -644,33 +640,16 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
 
         static double last_process_time_ms=0;
         double current_time_ms = get_timestamp_sec()*MS_IN_SECOND;
-        if( (current_time_ms - last_process_time_ms)> 10)
+        if( (current_time_ms - last_process_time_ms)> 10) //TODO: review if this is too often
         {
+            //=============important call here=============
             CCOutput output= cc_controler->process_interval(current_time_ms);
             context->network_settings.video_bitrate = output.target_bitrate.value();
             context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
             send_network_settings=true;
             last_process_time_ms =current_time_ms;
         }
-        //this happens too often
-        /*
-        if(context->network_settings.video_bitrate != old_bitrate)
-        {
-
-            send_network_settings=true;
-        }*/
     }
-
-    /*
-    if (send_network_settings || get_timer(&context->last_network_settings_send_time) > 0.05) 
-    {
-        auto cc_controler= (CongestionCongrollerInterface* ) context->congestion_controller;
-        CCInput input;
-        CCOutput output= cc_controler->process_interval(input);
-        FATAL_ASSERT(output.target_bitrate.has_value());
-        context->network_settings.video_bitrate = output.target_bitrate.value();
-    }*/
-
 
     if (group_id > context->curr_group_id) {
         if (context->prev_group_id != 0 &&
@@ -685,7 +664,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             double packet_loss_ratio = get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
                                                              context->short_term_latency);
 
-            whist_plotter_insert_sample("packet_loss_ratio", get_timestamp_sec(), packet_loss_ratio*100);
+            whist_plotter_insert_sample("packet_loss_ratio_100", get_timestamp_sec(), packet_loss_ratio*100);
             whist_plotter_insert_sample("incoming_bitrate", get_timestamp_sec(), incoming_bitrate<0?-1: incoming_bitrate/1000.0/100.0);
             whist_plotter_insert_sample("short_term_latency", get_timestamp_sec(), context->short_term_latency*1000);
             whist_plotter_insert_sample("long_term_latency", get_timestamp_sec(), context->long_term_latency*1000);
@@ -1312,7 +1291,7 @@ bool create_udp_socket_context(SocketContext* network_context, const char* desti
         if (ret == 0) {
             context->fec_controller = create_fec_controller(get_timestamp_sec());
             context->congestion_controller = create_congestion_controller();
-            context->raw_ping=100;
+            context->raw_ping_sec=0.1;
             context->first_time=true;
         }
     }
@@ -2206,7 +2185,7 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     // Calculate latency
     context->short_term_latency = PING_LAMBDA_SHORT_TERM * context->short_term_latency +
                                   (1 - PING_LAMBDA_SHORT_TERM) * ping_time;
-    context->raw_ping= ping_time;
+    context->raw_ping_sec= ping_time;
     whist_plotter_insert_sample("ping_time", get_timestamp_sec(), ping_time*MS_IN_SECOND);
     whist_plotter_insert_sample("congestion_detected", get_timestamp_sec(), context->network_settings.congestion_detected *150);
     // Don't update long term latency during congestion
