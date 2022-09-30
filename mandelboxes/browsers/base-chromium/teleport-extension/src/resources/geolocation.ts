@@ -14,8 +14,8 @@ const setMetaGeolocationTagFinished = (metaGeolocationTag: HTMLMetaElement) => {
 
 const geolocationPositionFunction = (
   functionName: string,
-  successCallback,
-  errorCallback,
+  successCallback: (GeolocationPosition) => void,
+  errorCallback: (GeolocationPositionError) => void,
   options: any
 ) => {
   const uniqueId = getUniqueId()
@@ -41,7 +41,7 @@ const geolocationPositionFunction = (
     if (metaTagContentJSON.success) {
       // success true means geolocation request returned a GeolocationPosition
       successCallback(metaTagContentJSON.response as GeolocationPosition)
-    } else if (_errorCallback) {
+    } else if (errorCallback) {
       errorCallback(metaTagContentJSON.response as GeolocationPositionError)
     }
 
