@@ -1,13 +1,45 @@
 import { getTabId } from "./session"
 
+const geolocationSuccessCallback = (metaTagName: string, tabId: number) => {
+  return (position: GeolocationPosition) => {
+    // Send message back to server with position
+    ;(chrome as any).whist.broadcastWhistMessage(
+      JSON.stringify({
+        type: "GEOLOCATION_REQUEST_COMPLETED",
+        value: {
+          success: true,
+          response: position,
+          metaTagName: metaTagName,
+          tabId: tabId
+        },
+      })
+    )
+  }
+}
+
+const geolocationErrorCallback = (metaTagName: string, tabId: number) => {
+  return (positionError: GeolocationPositionError) => {
+    // Send message back to server with failure
+    ;(chrome as any).whist.broadcastWhistMessage(
+      JSON.stringify({
+        type: "GEOLOCATION_REQUEST_COMPLETED",
+        value: {
+          success: false,
+          response: positionError,
+          metaTagName: metaTagName,
+          tabId: tabId
+        },
+      })
+    )
+  }
+}
+
 const intializeGeolocationRequestHandler = () => {
   ;(chrome as any).whist.onMessage.addListener((message: string) => {
     const parsed = JSON.parse(message)
 
-    console.log(parsed)
-
     if (
-      (parsed.type === "GEOLOCATION_REQUESTED") &&
+      parsed.type === "GEOLOCATION_REQUESTED" &&
       parsed.value.id === getTabId()
     ) {
       const requestedFunction = parsed.value.params.function
@@ -15,36 +47,30 @@ const intializeGeolocationRequestHandler = () => {
       switch(requestedFunction) {
         case 'getCurrentPosition':
           navigator.geolocation.getCurrentPosition(
-            (position: GeolocationPosition) => {
-              // Send message back to server with position
-              ;(chrome as any).whist.broadcastWhistMessage(
-                JSON.stringify({
-                  type: "GEOLOCATION_REQUEST_COMPLETED",
-                  value: {
-                    success: true,
-                    response: position,
-                    metaTagName: serverMetaTagName,
-                    tabId: parsed.value.id
-                  },
-                })
-              )
-            },
-            (positionError: GeolocationPositionError) => {
-              // Send message back to server with failure
-              ;(chrome as any).whist.broadcastWhistMessage(
-                JSON.stringify({
-                  type: "GEOLOCATION_REQUEST_COMPLETED",
-                  value: {
-                    success: false,
-                    response: positionError,
-                    metaTagName: serverMetaTagName,
-                    tabId: parsed.value.id
-                  },
-                })
-              )
-            },
-            parsed.value.options // TODO: do we need to check if options exists?
+            geolocationSuccessCallback(serverMetaTagName, parsed.value.id),
+            geolocationErrorCallback(serverMetaTagName, parsed.value.id),
+            parsed.value.options
           )
+
+        case 'watchPosition':
+          const watchHandle = navigator.geolocation.watchPosition(
+            geolocationSuccessCallback(serverMetaTagName, parsed.value.id),
+            geolocationErrorCallback(serverMetaTagName, parsed.value.id),
+            parsed.value.options
+          )
+          // Listen for an event for clearing this specific watch
+          ;(chrome as any).whist.onMessage.addListener((message: string) => {
+            const clearWatchParsed = JSON.parse(message)
+
+            if (
+              clearWatchParsed.type === "GEOLOCATION_REQUESTED" &&
+              clearWatchParsed.value.id === getTabId() &&
+              clearWatchParsed.value.params.function === "clearWatch" &&
+              clearWatchParsed.value.metaTagName === serverMetaTagName
+            ) {
+              navigator.geolocation.clearWatch(watchHandle)
+            }
+          })
       }
     }
   })
