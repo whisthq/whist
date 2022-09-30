@@ -17,7 +17,7 @@ var (
 	// defaultInstanceBuffer is the number of instances with space to run
 	// mandelboxes. This value is used when deciding how many instances to
 	// scale up if we don't have enough capacity.
-	defaultInstanceBuffer = 1
+	defaultInstanceBuffer int = 1
 	// desiredFreeMandelboxesPerRegion is the number of free mandelboxes we always
 	// want available in a region. This value is set per-region and it represents
 	// the free mandelboxes we want on each.
@@ -90,9 +90,9 @@ var (
 // generateInstanceCapacityMap uses the global instanceTypeToGPUNum and instanceTypeToVCPUNum maps
 // to generate the maximum mandelbox capacity for each instance type in the intersection
 // of their keys.
-func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]int) map[string]int64 {
+func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]int) map[string]int {
 	// Initialize the instance capacity map
-	capacityMap := map[string]int64{}
+	capacityMap := map[string]int{}
 	for instanceType, gpuNum := range instanceToGPUMap {
 		// Only populate for instances that are in both maps
 		vcpuNum, ok := instanceToVCPUMap[instanceType]
@@ -100,7 +100,7 @@ func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]
 			continue
 		}
 		min := utils.Min(gpuNum*constants.MaxMandelboxesPerGPU, vcpuNum/VCPUsPerMandelbox)
-		capacityMap[instanceType] = int64(min)
+		capacityMap[instanceType] = min
 	}
 	return capacityMap
 }

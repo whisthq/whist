@@ -69,7 +69,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Extra capacity is considered once we have a full instance worth of capacity
 	// more than the desired free mandelboxes. TODO: Set the instance type once we
 	// have support for more instance types. For now default to `g4dn.2xlarge`.
-	extraCapacity := int64(desiredFreeMandelboxesPerRegion[event.Region]) + (int64(defaultInstanceBuffer) * instanceCapacity["g4dn.2xlarge"])
+	extraCapacity := desiredFreeMandelboxesPerRegion[event.Region] + (defaultInstanceBuffer * instanceCapacity["g4dn.2xlarge"])
 
 	// Acquire lock on protected from scale down map
 	s.protectedMapLock.Lock()
@@ -205,9 +205,6 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	logger.Infow("Starting scale up action.", contextFields)
 	defer logger.Infow("Finished scale up action.", contextFields)
 
-	// Try scale up in given region
-	instanceNum := int32(instancesToScale)
-
 	var (
 		// Slice that will hold the instances and pass them to the dbclient
 		instancesForDb []subscriptions.Instance
@@ -224,7 +221,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 		instancesForDb, fakeMandelboxesForDb = helpers.SpinUpFakeInstances(instancesToScale, image.ImageID, event.Region)
 	} else {
 		// Call the host handler to handle the instance spinup in the cloud provider
-		instancesForDb, err = s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, image)
+		instancesForDb, err = s.Host.SpinUpInstances(scalingCtx, int32(instancesToScale), maxWaitTimeReady, image)
 		if err != nil {
 			return utils.MakeError("failed to spin up instances: %s", err)
 		}
@@ -235,7 +232,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 		}
 
 		for i := 0; i < len(instancesForDb); i++ {
-			instancesForDb[i].RemainingCapacity = int64(instanceCapacity[instancesForDb[i].Type])
+			instancesForDb[i].RemainingCapacity = instanceCapacity[instancesForDb[i].Type]
 			logger.Infow(utils.Sprintf("Created tagged instance with ID %s", instancesForDb[i].ID), contextFields)
 		}
 	}
