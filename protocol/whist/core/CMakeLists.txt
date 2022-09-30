@@ -19,7 +19,7 @@ add_library(whistCore STATIC
         whist_string.c
         )
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND USE_MIMALLOC)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND USE_MIMALLOC)
     target_sources(whistCore PRIVATE
         mimalloc_hook.cpp
     )

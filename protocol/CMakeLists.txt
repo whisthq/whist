@@ -286,8 +286,8 @@ else()
     find_package(OpenSSL REQUIRED)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    if (USE_MIMALLOC)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    if(USE_MIMALLOC)
         # We manually compile a malloc hook so we can mlock all memory allocations in the protocol, improving latency when memory pressure is high
         # see github.com/whisthq/mimalloc
         message(STATUS "Looking for mimalloc lib: libmimalloc.a")
