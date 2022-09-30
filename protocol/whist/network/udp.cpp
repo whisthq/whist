@@ -1770,7 +1770,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     }
 
     if (udp_packet->type == UDP_WHIST_SEGMENT) {
-        udp_packet->udp_whist_segment_data.departure_time = current_time_us();
+        udp_packet->udp_whist_segment_data.departure_time = get_timestamp_sec()*US_IN_MS*MS_IN_SECOND;
     }
 
     UDPNetworkPacket udp_network_packet;
@@ -1867,7 +1867,8 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
 
         // Tracks arrival time for congestion control algo
         if (arrival_time) {
-            *arrival_time = current_time_us();
+            *arrival_time = get_timestamp_sec()*US_IN_MS*MS_IN_SECOND;
+            //*arrival_time = current_time_us();
         }
         // Verify the reported packet length
         // This is before the `decrypt_packet` call, so the packet might be malicious
