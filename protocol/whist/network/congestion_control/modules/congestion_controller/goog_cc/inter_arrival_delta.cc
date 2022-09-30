@@ -137,12 +137,14 @@ bool InterArrivalDelta::BelongsToBurst(Timestamp arrival_time,
   TimeDelta send_time_delta = send_time - current_timestamp_group_.send_time;
   if (send_time_delta.IsZero())
     return true;
-  /*
-  if (ENABLE_WHIST_CHANGE)
-  {
-    if(send_time_delta.us()<50)
+  if (ENABLE_WHIST_CHANGE){
+    //trying to be compatible with out pacer
+    //since whist pacer doesn't strictly send packets in burst of 5ms
+    //if the finish time of last group is too close to next group
+    //then the gradient might has problem, we merge them to reduce the issue.
+    if(send_time_delta.ms() < 1)
       return true;
-  }*/
+  }
   TimeDelta propagation_delta = arrival_time_delta - send_time_delta;
   if(ENABLE_WHIST_CHANGE)
   {
