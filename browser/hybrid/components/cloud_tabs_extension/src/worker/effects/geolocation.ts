@@ -12,7 +12,6 @@ geolocationRequested
       [any, string, number],
       Socket
     ]) => {
-      console.log("geolocationRequested")
       ;(chrome as any).whist.broadcastWhistMessage(
         JSON.stringify({
           type: "GEOLOCATION_REQUESTED",
@@ -33,7 +32,6 @@ geolocationRequestCompleted
       [boolean, any, string, number],
       Socket
     ]) => {
-      console.log("send geolocation to server")
       socket.emit("geolocation-request-completed", success, response, metaTagName, tabId)
     }
   )

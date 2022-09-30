@@ -1,48 +1,46 @@
 const getUniqueId = () => {
-  return Date.now().toString()
+  // This should always be an integer
+  return Date.now()
 }
 
-// In a cloud tab:
-// 1. Site requests location - 
-//     > call one of navigator.geolocation functions
-// 2. Server extension tells client extension that there is a location request
-//     > create invisible DOM and listen for it in the content
-// 3. Call relevant geolocation function locally
-// 3a. Client extension requests user for location permission via webui (todo: security origin location permission difference)
-// 3b. Location permission is provided or denied
-// 4. Geolocation is sent from client extension to server extension
-// 5. Worker (which is also listening on socket) messages geolocation content script (tab-specific)
-// 6. Content script inserts geolocation information into the appropriate (tab-specific) DOM - can be serialized JSON of what client returned
-// 7. navigator.geolocation.getCurrentPosition has a listener for specific DOM change (see step 6) with .then that calls the appropriate callback
+const setMetaGeolocationTagFinished = (metaGeolocationTag: HTMLMetaTag) => {
+  metaGeolocationTag.content = JSON.stringify({deleteTag: true})
+}
 
-// NOTE: avoid race conditions by using counter/ID - track and respond to individual geolocation commands via a unique ID (timestamp?)
-
-
-// TODO: also override watchCurrentPosition and clearWatch
-navigator.geolocation.getCurrentPosition = (
-  successCallback,
-  _errorCallback,
-  _options
+const geolocationPositionFunction = (
+  functionName: string,
+  options: any
 ) => {
-  console.log("getCurrentPosition (resources)")
   const uniqueId = getUniqueId()
 
   const metaGeolocation = document.createElement("meta")
   metaGeolocation.name = `${uniqueId}-geolocation`
   metaGeolocation.content = JSON.stringify({
-    function: "getCurrentPosition",
-    options: _options,
+    function: functionName,
+    options: options,
   })
 
   // Listen for changes to content of the meta tag to get response
   const metaGeolocationObserver = new MutationObserver((mutationList, observer) => {
     const metaTagContentJSON = JSON.parse(metaGeolocation.content)
-    console.log(metaTagContentJSON)
+
+    // If contents say deleteTag, then remove observer and remove tag
+    if (metaTagContentJSON.deleteTag) {
+      observer.disconnect()
+      document.documentElement.removeChild(metaGeolocationTag)
+      return
+    }
+
     if (metaTagContentJSON.success) {
       // success true means geolocation request returned a GeolocationPosition
       successCallback(metaTagContentJSON.response as GeolocationPosition)
     } else if (_errorCallback) {
-      _errorCallback(metaTagContentJSON.response as GeolocationPositionError)
+      errorCallback(metaTagContentJSON.response as GeolocationPositionError)
+    }
+
+    // If getCurrentPosition, set complete after first metaTag change
+    if (functionName === "getCurrentPosition") {
+      setMetaGeolocationTagFinished(metaGeolocation)
     }
   })
   metaGeolocationObserver.observe(metaGeolocation, {
@@ -51,4 +49,45 @@ navigator.geolocation.getCurrentPosition = (
   })
 
   document.documentElement.appendChild(metaGeolocation)
+
+  return uniqueId
+}
+
+navigator.geolocation.getCurrentPosition = (
+  successCallback,
+  errorCallback,
+  options
+) => {
+  geolocationPositionFunction("getCurrentPosition", options)
+}
+
+navigator.geolocation.watchPosition = (
+  successCallback,
+  _errorCallback,
+  _options
+) => {
+  // Use the unique ID as the handler number for reference in `clearWatch`
+  const handlerId = geolocationPositionFunction("watchPosition", options)
+
+  return handlerId
+}
+
+navigator.geolocation.clearWatch = (id) => {
+  const metaGeolocationTag = document.documentElement.querySelector(
+    `meta[name="${id}-geolocation"]`
+  ) as HTMLMetaElement
+
+  if (metaGeolocationTag) {
+    setMetaGeolocationTagFinished(metaGeolocationTag)
+  }
+
+  // Need to send message to extension since we're not creating
+  // a new meta tag and so the content script won't catch this
+  chrome.runtime.sendMessage(<ContentScriptMessage>{
+    type: ContentScriptMessageType.GEOLOCATION_REQUEST,
+    value: {
+      params: {function: "clearWatch"},
+      metaTagName: metaTag.name
+    },
+  })
 }
