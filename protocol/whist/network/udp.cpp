@@ -530,7 +530,7 @@ static void send_desired_network_settings(UDPContext* context) {
         network_settings_packet.udp_network_settings_data.network_settings.saturate_bandwidth=1;
     }
 
-    if(no_burst_mode||always_saturate) {
+    if(no_burst_mode||always_saturate) { // if always_saturate enabled, burst_mode must be disabled as well, otherwise there are problems
         network_settings_packet.udp_network_settings_data.network_settings.burst_bitrate = context->network_settings.video_bitrate;
     }
 
@@ -581,7 +581,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
 
     if(wcc_v2)
     {
-        double old_bitrate=context->network_settings.video_bitrate;
+        //double old_bitrate=context->network_settings.video_bitrate;
         auto cc_controler= (CongestionCongrollerInterface* ) context->congestion_controller;
         if(true)
         {
@@ -660,7 +660,6 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                 &context->group_stats[context->prev_group_id % MAX_GROUP_STATS];
 
             int incoming_bitrate = get_incoming_bitrate(context);
-
             double packet_loss_ratio = get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
                                                              context->short_term_latency);
 
@@ -771,32 +770,21 @@ static bool udp_update(void* raw_context) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
             if (packet_type == PACKET_VIDEO) {
                 add_incoming_bits(context, arrival_time, network_payload_size * BITS_IN_BYTE);
-                if(!wcc_v2)
-                {
-                    if (!udp_packet.udp_whist_segment_data.is_a_nack &&
-                        !udp_packet.udp_whist_segment_data.is_a_duplicate) {
-                        update_max_unordered_packets(&context->unordered_packet_info,
-                                                    udp_packet.udp_whist_segment_data.id,
-                                                    udp_packet.udp_whist_segment_data.index);
-                        if (udp_packet.group_id >= context->curr_group_id) {
-                            udp_congestion_control(context,
-                                                udp_packet.udp_whist_segment_data.departure_time,
-                                                arrival_time, udp_packet.group_id, network_payload_size);
-                        }
-                    }
-                }
-                else {
-                    if (!udp_packet.udp_whist_segment_data.is_a_nack &&
-                        !udp_packet.udp_whist_segment_data.is_a_duplicate) {
-                        update_max_unordered_packets(&context->unordered_packet_info,
-                                                    udp_packet.udp_whist_segment_data.id,
-                                                    udp_packet.udp_whist_segment_data.index);
-                        }
-                    if (udp_packet.group_id >= context->curr_group_id) {
+                if (!udp_packet.udp_whist_segment_data.is_a_nack &&
+                    !udp_packet.udp_whist_segment_data.is_a_duplicate) {
+                    update_max_unordered_packets(&context->unordered_packet_info,
+                                                udp_packet.udp_whist_segment_data.id,
+                                                udp_packet.udp_whist_segment_data.index);
+                    if (!wcc_v2&&udp_packet.group_id >= context->curr_group_id) {
                         udp_congestion_control(context,
                                             udp_packet.udp_whist_segment_data.departure_time,
                                             arrival_time, udp_packet.group_id, network_payload_size);
                     }
+                }
+                if (wcc_v2&&udp_packet.group_id >= context->curr_group_id) { //feed everything regardless of nack/dup
+                    udp_congestion_control(context,
+                                        udp_packet.udp_whist_segment_data.departure_time,
+                                        arrival_time, udp_packet.group_id, network_payload_size);
                 }
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet

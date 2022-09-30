@@ -18,8 +18,6 @@ relate different events across server and client.
 #include <whist/core/whist.h>
 #include "clock.h"
 
-#include "whist/debug/plotter.h"
-
 struct WhistTimerInternal {
 #if OS_IS(OS_WIN32)
     LARGE_INTEGER pc;
@@ -129,7 +127,6 @@ timestamp_us current_time_us(void) {
 #else
     struct timespec time_now;
     clock_gettime(CLOCK_REALTIME, &time_now);
-
     output = ((uint64_t)time_now.tv_sec * US_IN_SECOND) + time_now.tv_nsec / NS_IN_US;
 #endif
     // Ensure that this cast is correct, uint64_t -> timestamp_us
