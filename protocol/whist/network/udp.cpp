@@ -773,18 +773,18 @@ static bool udp_update(void* raw_context) {
                 if (!udp_packet.udp_whist_segment_data.is_a_nack &&
                     !udp_packet.udp_whist_segment_data.is_a_duplicate) {
                     update_max_unordered_packets(&context->unordered_packet_info,
-                                                udp_packet.udp_whist_segment_data.id,
-                                                udp_packet.udp_whist_segment_data.index);
+                                                 udp_packet.udp_whist_segment_data.id,
+                                                 udp_packet.udp_whist_segment_data.index);
                     if (!wcc_v2&&udp_packet.group_id >= context->curr_group_id) {
                         udp_congestion_control(context,
-                                            udp_packet.udp_whist_segment_data.departure_time,
-                                            arrival_time, udp_packet.group_id, network_payload_size);
+                                               udp_packet.udp_whist_segment_data.departure_time,
+                                               arrival_time, udp_packet.group_id, network_payload_size);
                     }
                 }
                 if (wcc_v2&&udp_packet.group_id >= context->curr_group_id) { //feed everything regardless of nack/dup
                     udp_congestion_control(context,
-                                        udp_packet.udp_whist_segment_data.departure_time,
-                                        arrival_time, udp_packet.group_id, network_payload_size);
+                                           udp_packet.udp_whist_segment_data.departure_time,
+                                           arrival_time, udp_packet.group_id, network_payload_size);
                 }
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
