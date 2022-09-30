@@ -1,14 +1,21 @@
+import {
+  ContentScriptMessage,
+  ContentScriptMessageType,
+} from "@app/constants/ipc"
+
 const getUniqueId = () => {
   // This should always be an integer
   return Date.now()
 }
 
-const setMetaGeolocationTagFinished = (metaGeolocationTag: HTMLMetaTag) => {
+const setMetaGeolocationTagFinished = (metaGeolocationTag: HTMLMetaElement) => {
   metaGeolocationTag.content = JSON.stringify({deleteTag: true})
 }
 
 const geolocationPositionFunction = (
   functionName: string,
+  successCallback,
+  errorCallback,
   options: any
 ) => {
   const uniqueId = getUniqueId()
@@ -27,7 +34,7 @@ const geolocationPositionFunction = (
     // If contents say deleteTag, then remove observer and remove tag
     if (metaTagContentJSON.deleteTag) {
       observer.disconnect()
-      document.documentElement.removeChild(metaGeolocationTag)
+      document.documentElement.removeChild(metaGeolocation)
       return
     }
 
@@ -58,16 +65,16 @@ navigator.geolocation.getCurrentPosition = (
   errorCallback,
   options
 ) => {
-  geolocationPositionFunction("getCurrentPosition", options)
+  geolocationPositionFunction("getCurrentPosition", successCallback, errorCallback, options)
 }
 
 navigator.geolocation.watchPosition = (
   successCallback,
-  _errorCallback,
-  _options
+  errorCallback,
+  options
 ) => {
   // Use the unique ID as the handler number for reference in `clearWatch`
-  const handlerId = geolocationPositionFunction("watchPosition", options)
+  const handlerId = geolocationPositionFunction("watchPosition", successCallback, errorCallback, options)
 
   return handlerId
 }
@@ -87,7 +94,7 @@ navigator.geolocation.clearWatch = (id) => {
     type: ContentScriptMessageType.GEOLOCATION_REQUEST,
     value: {
       params: {function: "clearWatch"},
-      metaTagName: metaTag.name
+      metaTagName: metaGeolocationTag.name
     },
   })
 }
