@@ -2,6 +2,7 @@ import { getTabId } from "./session"
 
 const geolocationSuccessCallback = (metaTagName: string, tabId: number) => {
   return (position: GeolocationPosition) => {
+    console.log("success ", position)
     // Send message back to server with position
     ;(chrome as any).whist.broadcastWhistMessage(
       JSON.stringify({
@@ -19,6 +20,7 @@ const geolocationSuccessCallback = (metaTagName: string, tabId: number) => {
 
 const geolocationErrorCallback = (metaTagName: string, tabId: number) => {
   return (positionError: GeolocationPositionError) => {
+    console.log("error ", positionError)
     // Send message back to server with failure
     ;(chrome as any).whist.broadcastWhistMessage(
       JSON.stringify({
