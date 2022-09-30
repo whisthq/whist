@@ -11,6 +11,7 @@
 
 #include <algorithm>
 
+#include "common_fixes.h"
 #include "rtc_base/numerics/safe_minmax.h"
 //#include "whist.h"
 
@@ -18,6 +19,10 @@ namespace webrtc {
 LinkCapacityEstimator::LinkCapacityEstimator() {}
 
 DataRate LinkCapacityEstimator::UpperBound() const {
+  if (ENABLE_WHIST_CHANGE && estimate_kbps_.has_value()){
+      return DataRate::KilobitsPerSec(estimate_kbps_.value() +
+                                      4 * deviation_estimate_kbps());
+  }
   if (estimate_kbps_.has_value())
     return DataRate::KilobitsPerSec(estimate_kbps_.value() +
                                     3 * deviation_estimate_kbps());
@@ -25,6 +30,10 @@ DataRate LinkCapacityEstimator::UpperBound() const {
 }
 
 DataRate LinkCapacityEstimator::LowerBound() const {
+  if (ENABLE_WHIST_CHANGE && estimate_kbps_.has_value()){
+    return DataRate::KilobitsPerSec(
+        std::max(0.0, estimate_kbps_.value() - 4 * deviation_estimate_kbps()));
+  }
   if (estimate_kbps_.has_value())
     return DataRate::KilobitsPerSec(
         std::max(0.0, estimate_kbps_.value() - 3 * deviation_estimate_kbps()));
@@ -33,6 +42,7 @@ DataRate LinkCapacityEstimator::LowerBound() const {
 
 void LinkCapacityEstimator::Reset() {
   estimate_kbps_.reset();
+  est_cnt_=0;
 }
 
 void LinkCapacityEstimator::OnOveruseDetected(DataRate acknowledged_rate) {
@@ -44,6 +54,8 @@ void LinkCapacityEstimator::OnProbeRate(DataRate probe_rate) {
 }
 
 void LinkCapacityEstimator::Update(DataRate capacity_sample, double alpha) {
+  est_cnt_++;
+
   double sample_kbps = capacity_sample.kbps();
   if (!estimate_kbps_.has_value()) {
     estimate_kbps_ = sample_kbps;

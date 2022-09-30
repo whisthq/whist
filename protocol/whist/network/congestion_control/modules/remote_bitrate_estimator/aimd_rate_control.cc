@@ -27,6 +27,7 @@
 #include "rtc_base/experiments/field_trial_parser.h"
 //#include "rtc_base/logging.h"
 #include "rtc_base/numerics/safe_minmax.h"
+#include "whist/utils/clock.h"
 
 //#include "whist.h"
 
@@ -295,7 +296,10 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
       link_capacity_.Reset();
     }
   }
-
+  if(link_capacity_.has_estimate()){
+    whist_plotter_insert_sample("link_uppder", get_timestamp_sec(), link_capacity_.UpperBound().bps()/100/1000);
+    whist_plotter_insert_sample("link_lower", get_timestamp_sec(), link_capacity_.LowerBound().bps()/100/1000);
+  }
   switch (rate_control_state_) {
     case RateControlState::kRcHold:
       break;
@@ -328,7 +332,11 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
         if (increase_to_network_estimate_ && network_estimate_ &&
             network_estimate_->link_capacity_upper.IsFinite()) {
           increased_bitrate = increase_limit;
+#if ENABLE_WHIST_CHANGE
+        } else if (link_capacity_.has_estimate() && link_capacity_.est_cnt_>1) {
+#else
         } else if (link_capacity_.has_estimate()) {
+#endif
           // The link_capacity estimate is reset if the measured throughput
           // is too far from the estimate. We can therefore assume that our
           // target rate is reasonably close to link capacity and use additive
