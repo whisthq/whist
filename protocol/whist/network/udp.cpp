@@ -634,7 +634,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             //input.packet_loss=0;
 
             if(context->raw_ping>0){
-                input.rtt_ms=context->raw_ping;
+                input.rtt_ms=context->raw_ping *MS_IN_SECOND;
             }
 
             CCOutput output=cc_controler->feed_info(input);

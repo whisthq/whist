@@ -174,7 +174,7 @@ TrendlineEstimator::TrendlineEstimator(
       delay_hist_(),
       k_up_(0.0087),
 #if ENABLE_WHIST_CHANGE  //the default parameter is too police for competing bandwidth with other flows
-      k_down_(0.039/10),
+      k_down_(0.039),
 #else
       k_down(0.039)
 #endif

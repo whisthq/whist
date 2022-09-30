@@ -42,12 +42,14 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
     webrtc::FieldTrials * ft;
     bool first_time=true;
     long long last_group_id=-1;
+    webrtc::Timestamp first_ts= webrtc::Timestamp::MinusInfinity();
 
     PacketInfo last_group_packet;
 
     public:
     CongestionCongrollerImpl()
     {
+        //rtt_stat.init("window_rtt", rtt_window_size, 0.005);
         webrtc::field_trial::InitFieldTrialsFromString("");
         ft= new webrtc::FieldTrials("");
         /*
@@ -98,14 +100,6 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       
       //RTC_CHECK(input.packets.size()==1);
 
-      if(input.rtt_ms.has_value())
-      {
-        RTC_CHECK(input.rtt_ms.has_value() && input.rtt_ms.value() >0);
-        send_side_bwd->UpdateRtt(webrtc::TimeDelta::Millis(input.rtt_ms.value()), current_time);
-        delay_based_bwe->OnRttUpdate(webrtc::TimeDelta::Millis(input.rtt_ms.value()));
-      }
-
-
       RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value() && input.start_bitrate.has_value());
 
       std::optional<webrtc::DataRate> start_rate;
@@ -116,7 +110,34 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
          delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
          delay_based_bwe->SetStartBitrate(start_rate.value());
          first_time=false;
+         first_ts=current_time;
       }
+
+      if(input.rtt_ms.has_value())
+      {
+        RTC_CHECK(input.rtt_ms.has_value() && input.rtt_ms.value() >0);
+        //fprintf(stderr,"<%f>\n", input.rtt_ms.value());
+        webrtc::TimeDelta adjusted_rtt = webrtc::TimeDelta::Millis(input.rtt_ms.value());
+        
+        /*
+        if(current_time-first_ts < webrtc::TimeDelta::Seconds( start_period))
+        {
+          //noop
+        } else {
+           rtt_stat.insert( input.current_time_ms/1000, input.rtt_ms.value());
+
+           if(current_time-first_ts >webrtc::TimeDelta::Seconds(start_period + rtt_window_size/2))
+           {
+               adjusted_rtt = webrtc::TimeDelta::Millis(rtt_stat.get_i_percentage_max( 95));
+           }
+
+           whist_plotter_insert_sample("adjusted_rtt", get_timestamp_sec(), adjusted_rtt.ms());
+        }*/
+
+        send_side_bwd->UpdateRtt(webrtc::TimeDelta::Millis(input.rtt_ms.value()), current_time);
+        delay_based_bwe->OnRttUpdate(adjusted_rtt);
+      }
+
 
       send_side_bwd->SetBitrates(start_rate, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
                                      webrtc::DataRate::BitsPerSec(input.max_bitrate.value()),  current_time);
