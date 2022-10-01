@@ -437,8 +437,10 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
     DataRate current_bitrate) const {
 #if ENABLE_WHIST_CHANGE
   g_in_slow_increase=0;
-#endif
+  double alpha = 1 + g_increase_ratio;
+#else
   double alpha = 1.08;
+#endif
   if (last_time.IsFinite()) {
     auto time_since_last_update = at_time - last_time;
     alpha = pow(alpha, std::min(time_since_last_update.seconds<double>(), 1.0));
@@ -461,13 +463,13 @@ DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
     RTC_CHECK(link_capacity_.est_cnt_>0);
     if(link_capacity_.est_cnt_ ==1)
     {
-       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,0.04*current_bitrate_.bps() * time_period_seconds);
+       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(g_increase_ratio/2)*current_bitrate_.bps() * time_period_seconds);
     }
     else if(link_capacity_.est_cnt_ ==2) {
-       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,0.02*current_bitrate_.bps() * time_period_seconds);
+       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(g_increase_ratio/4)*current_bitrate_.bps() * time_period_seconds);
     }
     else {
-       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,0.01*current_bitrate_.bps() * time_period_seconds);
+       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,0.015*current_bitrate_.bps() * time_period_seconds);
     }
   }
   return DataRate::BitsPerSec(data_rate_increase_bps);

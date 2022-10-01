@@ -546,9 +546,13 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
       //   If instead one would do: current_bitrate_ *= 1.08^(delta time),
       //   it would take over one second since the lower packet loss to achieve
       //   108kbps.
+#if ENABLE_WHIST_CHANGE
+      DataRate new_bitrate = DataRate::BitsPerSec(
+          min_bitrate_history_.front().second.bps() * (1.f +g_increase_ratio) + 0.5);
+#else
       DataRate new_bitrate = DataRate::BitsPerSec(
           min_bitrate_history_.front().second.bps() * 1.08 + 0.5);
-
+#endif
       // Add 1 kbps extra, just to make sure that we do not get stuck
       // (gives a little extra increase at low rates, negligible at higher
       // rates).
