@@ -112,6 +112,11 @@ int current_time_str(char* buffer, size_t size) {
 }
 
 timestamp_us current_time_us(void) {
+    // there are so many place of mis using CLOCK_REALTIME in the code base
+    // this is a tmp fix of all those problems
+    // TODO: fix in a better way
+    return get_timestamp_sec()* MS_IN_SECOND* US_IN_MS;
+
     uint64_t output;
 #if OS_IS(OS_WIN32)
 /* Windows epoch starts on 1601-01-01T00:00:00Z. But UNIX/Linux epoch starts on
