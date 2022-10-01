@@ -23,7 +23,11 @@
 namespace webrtc {
 
 namespace {
+#if ENABLE_WHIST_CHANGE
+constexpr int kInitialRateWindowMs = 100;
+#else
 constexpr int kInitialRateWindowMs = 500;
+#endif
 constexpr int kRateWindowMs = 150;
 constexpr int kMinRateWindowMs = 150;
 constexpr int kMaxRateWindowMs = 1000;
