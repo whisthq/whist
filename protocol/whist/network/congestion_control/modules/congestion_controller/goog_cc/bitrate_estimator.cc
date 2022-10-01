@@ -24,7 +24,7 @@ namespace webrtc {
 
 namespace {
 #if ENABLE_WHIST_CHANGE
-constexpr int kInitialRateWindowMs = 100;
+constexpr int kInitialRateWindowMs = 50;
 #else
 constexpr int kInitialRateWindowMs = 500;
 #endif

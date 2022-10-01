@@ -18,7 +18,7 @@ extern "C"
 }
 
 extern bool g_in_slow_increase;
-const double kWhistClampMin= 6.f;
+const double kWhistClampMin= 5.f;
 
 #define ENABLE_WHIST_CHANGE true
 namespace webrtc
