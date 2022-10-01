@@ -293,7 +293,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
       first_process_time= at_time;
     }
     //printf("%f %f\n",at_time.ms()*1.0, time_first_throughput_estimate_.ms()*1.0);
-    if(at_time-first_process_time < TimeDelta::Seconds(6)){
+    if(at_time-first_process_time < TimeDelta::Seconds(g_startup_duration)){
       //printf("<<<force reset!!!!!!!!!!!!!>>>\n");
       link_capacity_.Reset();
     }

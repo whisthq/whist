@@ -34,6 +34,111 @@ using namespace std;
 
 #include "modules/congestion_controller/goog_cc/acknowledged_bitrate_estimator_interface.h"
 
+
+// Data with timestamp and value
+struct Data {
+    double time;
+    double value;
+};
+
+// A data structure to get statistics of data in a sliding window
+struct SlidingWindowStat {
+    string name;  // name for the object, only for debug
+
+    double window_size;        // sliding window size, unit: sec
+    double sample_period;      // how often samples get inserted, unit: sec
+    double last_sampled_time;  // last time a smaple got inserted, init: sec
+    long long sum;  // a running sum of all samples inside the window, convert to int to avoid float
+                    // error accumulation
+    const int float_scale = 1000 * 1000;  // scale float to int with this factor
+
+    multiset<double> ordered_data;  // stores values in order
+    deque<pair<Data, multiset<double>::iterator>>
+        q;  // a queue of original data, with iterator pointing to the ordered_data
+
+    // init or re-init the data structure
+    void init(string name_in, double window_size_in, double sample_period_in) {
+        name = name_in;
+        window_size = window_size_in;
+        sample_period = sample_period_in;
+        last_sampled_time = 0;
+        clear();
+    }
+
+    // try to insert a sample into the end of sliding window
+    void insert(double current_time, double value) {
+        // when insert, need to respect the sample_period
+        if (current_time - last_sampled_time < sample_period) {
+            return;
+        }
+        last_sampled_time = current_time;
+
+        if (LOG_FEC_CONTROLLER && name == "packet_loss") {
+            LOG_INFO("[FEC_CONTROLLER]sampled value=%.2f for %s\n", value * 100.0, name.c_str());
+        }
+
+        //  maintain the data structure
+        Data data;
+        data.time = current_time;
+        data.value = value;
+        sum += value * float_scale;
+        auto it = ordered_data.insert(value);
+        q.push_back(make_pair(data, it));
+    }
+
+    // clear the data structure
+    void clear() {
+        sum = 0;
+        q.clear();
+        ordered_data.clear();
+    }
+
+    // get num of samples stored
+    int size() { return (int)q.size(); }
+
+    // peek the data at front of the sliding window
+    Data peek_front() { return q.front().first; }
+
+    // pop the data at front of the sliding window
+    void pop_front() {
+        // maintain the data structure when doing pop
+        ordered_data.erase(q.front().second);
+        sum -= q.front().first.value * float_scale;
+        q.pop_front();
+    }
+
+    // get the average of values inside sliding window
+    double get_avg() { return sum * 1.0 / float_scale / size(); }
+
+    // get the max value inside sliding window
+    double get_max() { return *ordered_data.rbegin(); }
+
+    // get the i percentage max value inside the sliding window
+    // the fumction is inefficient for small i
+
+    // TODO: there is a data structure that can calculate any i in log(n) time,
+    // if the below code is not efficient enough, we can implement it.
+    double get_i_percentage_max(int i) {
+        //FATAL_ASSERT(i >= 1 && i <= 100);
+        int backward_steps = size() * (100 - i) / 100.0;
+        backward_steps = min(backward_steps, size() - 1);
+        auto it = ordered_data.rbegin();
+        while (backward_steps--) {
+            it++;
+        }
+        return *it;
+    }
+
+    // slide the front of window, drop all values which are too old
+    void slide_window(double current_time) {
+        while (size() > 0 && peek_front().time < current_time - window_size) {
+            pop_front();
+        }
+    }
+};
+
+
+
 class CongestionCongrollerImpl:CongestionCongrollerInterface
 {
     std::unique_ptr<webrtc::DelayBasedBwe> delay_based_bwe;
@@ -46,10 +151,13 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
 
     PacketInfo last_group_packet;
 
+    const int rtt_window_size=2;
+    SlidingWindowStat rtt_stat;
+
     public:
     CongestionCongrollerImpl()
     {
-        //rtt_stat.init("window_rtt", rtt_window_size, 0.005);
+        rtt_stat.init("window_rtt", rtt_window_size, 0.005);
         webrtc::field_trial::InitFieldTrialsFromString("");
         ft= new webrtc::FieldTrials("");
         /*
@@ -115,27 +223,22 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
 
       if(input.rtt_ms.has_value())
       {
-        RTC_CHECK(input.rtt_ms.has_value() && input.rtt_ms.value() >0);
-        //fprintf(stderr,"<%f>\n", input.rtt_ms.value());
-        webrtc::TimeDelta adjusted_rtt = webrtc::TimeDelta::Millis(input.rtt_ms.value());
-        
-        /*
-        if(current_time-first_ts < webrtc::TimeDelta::Seconds( start_period))
+        RTC_CHECK(input.rtt_ms.value() >0);
+        double rtt_ms= input.rtt_ms.value();
+        double adjusted_rtt_ms = rtt_ms;
+        send_side_bwd->UpdateRtt(webrtc::TimeDelta::Millis(rtt_ms), current_time);
+
+        if(current_time-first_ts > webrtc::TimeDelta::Seconds( g_startup_duration))
         {
-          //noop
-        } else {
            rtt_stat.insert( input.current_time_ms/1000, input.rtt_ms.value());
-
-           if(current_time-first_ts >webrtc::TimeDelta::Seconds(start_period + rtt_window_size/2))
+           if(current_time-first_ts >webrtc::TimeDelta::Seconds(g_startup_duration + rtt_window_size/2))
            {
-               adjusted_rtt = webrtc::TimeDelta::Millis(rtt_stat.get_i_percentage_max( 95));
+              double window_rtt = rtt_stat.get_i_percentage_max( 90);
+              whist_plotter_insert_sample("window_rtt", get_timestamp_sec(), window_rtt);
+              //adjusted_rtt_ms=max<double>(adjusted_rtt_ms,window_rtt);
            }
-
-           whist_plotter_insert_sample("adjusted_rtt", get_timestamp_sec(), adjusted_rtt.ms());
-        }*/
-
-        send_side_bwd->UpdateRtt(webrtc::TimeDelta::Millis(input.rtt_ms.value()), current_time);
-        delay_based_bwe->OnRttUpdate(adjusted_rtt);
+        }
+        delay_based_bwe->OnRttUpdate(webrtc::TimeDelta::Millis(adjusted_rtt_ms));
       }
 
 
