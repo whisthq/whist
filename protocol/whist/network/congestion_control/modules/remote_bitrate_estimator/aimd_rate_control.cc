@@ -20,6 +20,7 @@
 //#include "absl/strings/match.h"
 #include "api/transport/network_types.h"
 #include "api/units/data_rate.h"
+#include "api/units/time_delta.h"
 #include "common_fixes.h"
 #include "modules/remote_bitrate_estimator/include/bwe_defines.h"
 //#include "modules/remote_bitrate_estimator/overuse_detector.h"
@@ -153,7 +154,8 @@ bool AimdRateControl::TimeToReduceFurther(Timestamp at_time,
   const TimeDelta bitrate_reduction_interval =
       rtt_.Clamped(TimeDelta::Millis(10), TimeDelta::Millis(200));
 #if ENABLE_WHIST_CHANGE
-  if (at_time - time_last_bitrate_change_ >= bitrate_reduction_interval  && at_time - time_last_bitrate_decrease_ >= TimeDelta::Millis(500)) {
+  TimeDelta bitrate_reduction_interval_by_decrease =bitrate_reduction_interval*2;
+  if (at_time - time_last_bitrate_change_ >= bitrate_reduction_interval  && at_time - time_last_bitrate_decrease_ >= bitrate_reduction_interval_by_decrease.Clamped(TimeDelta::Millis(200), TimeDelta::Millis(1000)) ) {
 #else
   if (at_time - time_last_bitrate_change_ >= bitrate_reduction_interval) {
 #endif
