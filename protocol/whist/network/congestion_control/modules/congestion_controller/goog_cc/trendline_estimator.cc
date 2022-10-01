@@ -19,10 +19,13 @@
 //#include "absl/types/optional.h"
 #include "api/network_state_predictor.h"
 //#include "modules/remote_bitrate_estimator/test/bwe_test_logging.h"
+#include "common_fixes.h"
 #include "rtc_base/checks.h"
 //#include "rtc_base/experiments/struct_parameters_parser.h"
 //#include "rtc_base/logging.h"
 #include "rtc_base/numerics/safe_minmax.h"
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 
 //#include "whist.h"
 
@@ -289,6 +292,33 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
   BWE_TEST_LOGGING_PLOT(1, "T", now_ms, modified_trend);
   BWE_TEST_LOGGING_PLOT(1, "threshold", now_ms, threshold_);
   whist_plotter_insert_sample("modified_trend", now_ms/1000.0, modified_trend +100);
+#if ENABLE_WHIST_CHANGE
+  double small_threshold= threshold_ - kWhistClampMin  + 2.f;
+  RTC_CHECK( small_threshold > 0);
+  //printf("<%f %f>\n",modified_trend, small_threshold);
+  if (threshold_ == kWhistClampMin && modified_trend > small_threshold && g_in_slow_increase) {
+    if (small_time_over_using_ == -1) {
+      small_time_over_using_ = ts_delta / 2;
+    } else {
+      small_time_over_using_ += ts_delta;
+    }
+    small_overuse_counter_++;
+    if (small_time_over_using_ > 800 && small_overuse_counter_ > 80) {
+      if (trend >= prev_trend_ ) {
+        small_time_over_using_ = 0;
+        small_overuse_counter_ = 0;
+        small_hypothesis_ = BandwidthUsage::kBwOverusing;
+        //fprintf(stderr,"<%f %f>",small_time_over_using_, (double)small_overuse_counter_);
+        whist_plotter_insert_sample("small_threshold_overusing", get_timestamp_sec(), 160);
+      }
+    }
+  } else {
+    small_hypothesis_ = BandwidthUsage::kBwNormal;
+    small_time_over_using_ = -1;
+    small_overuse_counter_ = 0;
+  }
+#endif
+
   if (modified_trend > threshold_) {
     if (time_over_using_ == -1) {
       // Initialize the timer. Assume that we've been
@@ -321,6 +351,12 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
     overuse_counter_ = 0;
     hypothesis_ = BandwidthUsage::kBwNormal;
   }
+
+  if (ENABLE_WHIST_CHANGE && small_hypothesis_ ==BandwidthUsage::kBwOverusing) {
+    //fprintf(stderr,"!!!!!!\n");
+    hypothesis_=BandwidthUsage::kBwOverusing;
+  }
+
   prev_trend_ = trend;
   UpdateThreshold(modified_trend, now_ms);
 }
@@ -342,7 +378,7 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   int64_t time_delta_ms = std::min(now_ms - last_update_ms_, kMaxTimeDeltaMs);
   threshold_ += k * (fabs(modified_trend) - threshold_) * time_delta_ms;
 #ifdef ENABLE_WHIST_CHANGE
-  threshold_ = rtc::SafeClamp(threshold_, 6.f, 600.f);
+  threshold_ = rtc::SafeClamp(threshold_, kWhistClampMin, 600.f);
 #else
   threshold_ = rtc::SafeClamp(threshold_, 6.f, 600.f);
 #endif

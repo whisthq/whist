@@ -2,6 +2,9 @@
 #include "api/units/data_rate.h"
 #include "common_fixes.h"
 #include <sstream>
+
+bool g_in_slow_increase=0;
+
 namespace webrtc {
 
 std::string ToString(TimeDelta value) {

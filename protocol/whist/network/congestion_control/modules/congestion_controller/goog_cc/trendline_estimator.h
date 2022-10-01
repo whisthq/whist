@@ -118,6 +118,13 @@ class TrendlineEstimator : public DelayIncreaseDetectorInterface {
   double prev_trend_;
   double time_over_using_;
   int overuse_counter_;
+
+#if ENABLE_WHIST_CHANGE
+  double small_time_over_using_=-1;
+  int small_overuse_counter_=0;
+  BandwidthUsage small_hypothesis_;
+#endif
+
   BandwidthUsage hypothesis_;
   BandwidthUsage hypothesis_predicted_;
   NetworkStatePredictor* network_state_predictor_;

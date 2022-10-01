@@ -17,6 +17,8 @@ extern "C"
 #include "whist/utils/clock.h"
 }
 
+extern bool g_in_slow_increase;
+const double kWhistClampMin= 6.f;
 
 #define ENABLE_WHIST_CHANGE true
 namespace webrtc

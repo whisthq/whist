@@ -429,6 +429,9 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
     Timestamp at_time,
     Timestamp last_time,
     DataRate current_bitrate) const {
+#if ENABLE_WHIST_CHANGE
+  g_in_slow_increase=0;
+#endif
   double alpha = 1.08;
   if (last_time.IsFinite()) {
     auto time_since_last_update = at_time - last_time;
@@ -441,6 +444,9 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
 
 DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
                                                Timestamp last_time) const {
+#if ENABLE_WHIST_CHANGE
+  g_in_slow_increase=1;
+#endif
   double time_period_seconds = (at_time - last_time).seconds<double>();
   double data_rate_increase_bps =
       GetNearMaxIncreaseRateBpsPerSecond() * time_period_seconds;
