@@ -371,6 +371,10 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
         // BWE drops.
         if (link_capacity_.has_estimate()) {
           decreased_bitrate = beta_ * link_capacity_.estimate();
+#if ENABLE_WHIST_CHANGE
+          if(at_time - time_last_bitrate_decrease_ <TimeDelta::Micros(1000))
+              decreased_bitrate = 0.95 * link_capacity_.estimate();
+#endif
         }
       }
       // Avoid increasing the rate when over-using.
