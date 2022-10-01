@@ -335,7 +335,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
             network_estimate_->link_capacity_upper.IsFinite()) {
           increased_bitrate = increase_limit;
 #if ENABLE_WHIST_CHANGE
-        } else if (link_capacity_.has_estimate() && link_capacity_.est_cnt_>1) {
+        } else if (link_capacity_.has_estimate() /*&& link_capacity_.est_cnt_>1*/) {
 #else
         } else if (link_capacity_.has_estimate()) {
 #endif
@@ -447,14 +447,23 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
 DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
                                                Timestamp last_time) const {
 #if ENABLE_WHIST_CHANGE
-  g_in_slow_increase=1;
+  g_in_slow_increase= (link_capacity_.est_cnt_ >=3? 1:0);
 #endif
   double time_period_seconds = (at_time - last_time).seconds<double>();
   double data_rate_increase_bps =
       GetNearMaxIncreaseRateBpsPerSecond() * time_period_seconds;
   if(ENABLE_WHIST_CHANGE){
-    if(data_rate_increase_bps < 0.01*current_bitrate_.bps() * time_period_seconds){
-      data_rate_increase_bps = 0.01*current_bitrate_.bps() * time_period_seconds;
+    RTC_CHECK(link_capacity_.has_estimate());
+    RTC_CHECK(link_capacity_.est_cnt_>0);
+    if(link_capacity_.est_cnt_ ==1)
+    {
+       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,0.04*current_bitrate_.bps() * time_period_seconds);
+    }
+    else if(link_capacity_.est_cnt_ ==2) {
+       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,0.02*current_bitrate_.bps() * time_period_seconds);
+    }
+    else {
+       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,0.01*current_bitrate_.bps() * time_period_seconds);
     }
   }
   return DataRate::BitsPerSec(data_rate_increase_bps);
