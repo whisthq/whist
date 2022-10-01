@@ -1279,7 +1279,7 @@ bool create_udp_socket_context(SocketContext* network_context, const char* desti
         if (ret == 0) {
             context->fec_controller = create_fec_controller(get_timestamp_sec());
             context->congestion_controller = create_congestion_controller();
-            context->raw_ping_sec=0.1;
+            context->raw_ping_sec=0.05;
             context->first_time=true;
         }
     }
