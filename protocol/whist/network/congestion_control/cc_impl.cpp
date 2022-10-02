@@ -146,9 +146,9 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
     std::unique_ptr<webrtc::AcknowledgedBitrateEstimatorInterface> acknowledged_bitrate_estimator_;
     webrtc::FieldTrials * ft;
     bool first_time=true;
-    long long last_group_id=-1;
     webrtc::Timestamp first_ts= webrtc::Timestamp::MinusInfinity();
 
+    long long last_group_id=-1;
     PacketInfo last_group_packet;
 
     const int rtt_window_size=2;
@@ -173,28 +173,6 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         send_side_bwd= std::make_unique<webrtc::SendSideBandwidthEstimation> (ft,nullptr);
         delay_based_bwe->SetMinBitrate(webrtc::congestion_controller::GetMinBitrate());
         acknowledged_bitrate_estimator_=webrtc::AcknowledgedBitrateEstimatorInterface::Create(ft);
-        /*
-        int a;
-
-        //RTC_DCHECK(1>2)<<"!!!!!";
-
-        webrtc::TrendlineEstimator tl(&ft,nullptr);
-
-        tl.UpdateTrendline(1, 1, 1, 1, 1);
-
-        webrtc::InterArrivalDelta iad(webrtc::TimeDelta::Seconds(2));
-
-        auto tt=webrtc::Timestamp::Seconds(2);
-        auto dd=webrtc::TimeDelta::Seconds(2);
-        iad.ComputeDeltas(tt, tt, tt, 111, &dd, &dd, &a);
-
-        webrtc::LinkCapacityEstimator lce;
-        lce.UpperBound();
-
-        webrtc::AimdRateControl arc(&ft);
-
-        printf("zong!!\n");
-        */
     }
 
    ~CongestionCongrollerImpl() override
@@ -205,25 +183,35 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
   virtual CCOutput feed_info(CCInput input) override
   {
       webrtc::Timestamp current_time= webrtc::Timestamp::Millis( input.current_time_ms);
-      
-      //RTC_CHECK(input.packets.size()==1);
 
-      RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value() && input.start_bitrate.has_value());
-
-      std::optional<webrtc::DataRate> start_rate;
+      /*
+      ========================================
+      do first time handling, mainly related to start bitrate
+      ========================================
+      */
       if(first_time)
       {
+         RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value() && input.start_bitrate.has_value());
+         std::optional<webrtc::DataRate> start_rate;
          //printf("<<%f>>\n", input.start_bitrate.value());
          start_rate=webrtc::DataRate::BitsPerSec(input.start_bitrate.value());
          delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value())); //need this before set startbitrate
          delay_based_bwe->SetStartBitrate(start_rate.value());
+
+         send_side_bwd->SetBitrates(start_rate, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
+                              webrtc::DataRate::BitsPerSec(input.max_bitrate.value()),  current_time);
+
          first_time=false;
          first_ts=current_time;
       }
 
-      if(input.rtt_ms.has_value())
+      /*
+      ========================================
+      feed rtt into both loss-based and delay-based controller
+      ========================================
+      */
       {
-        RTC_CHECK(input.rtt_ms.value() >0);
+        RTC_CHECK(input.rtt_ms.has_value() && input.rtt_ms.value() >0);
         double rtt_ms= input.rtt_ms.value();
         double adjusted_rtt_ms = rtt_ms;
         send_side_bwd->UpdateRtt(webrtc::TimeDelta::Millis(rtt_ms), current_time);
@@ -241,46 +229,57 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         delay_based_bwe->OnRttUpdate(webrtc::TimeDelta::Millis(adjusted_rtt_ms));
       }
 
-
-      send_side_bwd->SetBitrates(start_rate, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
-                                     webrtc::DataRate::BitsPerSec(input.max_bitrate.value()),  current_time);
-
-      delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
-
-      RTC_CHECK(input.packet_loss.has_value());
-      RTC_CHECK(input.packet_loss.value()>=0 && input.packet_loss.value()<=1);
-
-      double packet_loss= input.packet_loss.value();
-      //packet_loss-=0.05; // might have problem, maybe better to change inside loss based controller
-      packet_loss = max<double>(0,packet_loss);
-
-      send_side_bwd->UpdatePacketsLost(1e6*packet_loss, 1e6,current_time);
-      //send_side_bwd->UpdatePacketsLostDirect(input.packet_loss.value(), current_time);
-
-
-      webrtc::TransportPacketsFeedback report;
-      optional<webrtc::DataRate> dummy_probe;
-      optional<webrtc::NetworkStateEstimate> dummy_est;
-
-      RTC_CHECK(input.packets.size()==1);
-      report.feedback_time=current_time;
-      report.packet_feedbacks.emplace_back();
-      report.packet_feedbacks[0].receive_time= webrtc::Timestamp::Millis(input.packets[0].arrival_time_ms);
-      report.packet_feedbacks[0].sent_packet.send_time= webrtc::Timestamp::Millis(input.packets[0].depature_time_ms);
-      report.packet_feedbacks[0].sent_packet.size = webrtc::DataSize::Bytes(input.packets[0].packet_size);
-
-
-      acknowledged_bitrate_estimator_->IncomingPacketFeedbackVector(report.SortedByReceiveTime());
-
-       auto acknowledged_bitrate = acknowledged_bitrate_estimator_->bitrate();
-       /*
-      optional<webrtc::DataRate> incoming_optional;
-      if(input.incoming_bitrate.has_value())
+      /*
+      ========================================
+      feed min-max bitrate into both loss-based and delay-based controller
+      ========================================
+      */
       {
-        send_side_bwd->SetAcknowledgedRate(webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value()),current_time);
-        incoming_optional = webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value());
-      }*/
+        RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value() && input.start_bitrate.has_value());
+        send_side_bwd->SetBitrates(std::nullopt, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
+                                      webrtc::DataRate::BitsPerSec(input.max_bitrate.value()),  current_time);
+        delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
+      }
 
+      /*
+      ========================================
+      feed packet loss ratio to loss based controller
+      ========================================
+      */
+      {
+        RTC_CHECK(input.packet_loss.has_value());
+        RTC_CHECK(input.packet_loss.value()>=0 && input.packet_loss.value()<=1);
+
+        double packet_loss= input.packet_loss.value();
+        //packet_loss-=0.05; // might have problem, maybe better to change inside loss based controller
+        packet_loss = max<double>(0,packet_loss);
+
+        send_side_bwd->UpdatePacketsLost(1e6*packet_loss, 1e6,current_time);
+        //send_side_bwd->UpdatePacketsLostDirect(input.packet_loss.value(), current_time);
+      }
+
+      /*
+      ========================================
+      feed incoming bitrate infointo bitrate_esitmator
+      ========================================
+      */
+      {
+        webrtc::TransportPacketsFeedback report;
+        RTC_CHECK(input.packets.size()==1);
+        report.feedback_time=current_time;
+        report.packet_feedbacks.emplace_back();
+        report.packet_feedbacks[0].receive_time= webrtc::Timestamp::Millis(input.packets[0].arrival_time_ms);
+        report.packet_feedbacks[0].sent_packet.send_time= webrtc::Timestamp::Millis(input.packets[0].depature_time_ms);
+        report.packet_feedbacks[0].sent_packet.size = webrtc::DataSize::Bytes(input.packets[0].packet_size);
+        acknowledged_bitrate_estimator_->IncomingPacketFeedbackVector(report.SortedByReceiveTime());
+      }
+
+      /*
+      ========================================
+      feed bitrate estimation into loss-based controller
+      ========================================
+      */
+      auto acknowledged_bitrate = acknowledged_bitrate_estimator_->bitrate();
       if(acknowledged_bitrate.has_value())
       {
         send_side_bwd->SetAcknowledgedRate(webrtc::DataRate::BitsPerSec(acknowledged_bitrate->bps()),current_time);
@@ -288,42 +287,58 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         //incoming_optional = webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value());
       }
 
+      /*
+      ========================================
+      group packet and feed grouped packet's arrival and departure into delay-based controller
+      ========================================
+      */
       webrtc::DelayBasedBwe::Result result;
-
-      webrtc::TransportPacketsFeedback grouped_report;
-
-      long long current_group_id= input.packets[0].group_id;
-
-      if(current_group_id > last_group_id)
       {
-        if(last_group_id!=-1)
+        webrtc::TransportPacketsFeedback grouped_report;
+                optional<webrtc::DataRate> dummy_probe;
+          optional<webrtc::NetworkStateEstimate> dummy_est;
+
+        RTC_CHECK(input.packets.size()==1);
+        long long current_group_id= input.packets[0].group_id;
+
+        if(current_group_id > last_group_id)
         {
-          grouped_report.feedback_time=current_time;
-          grouped_report.packet_feedbacks.emplace_back();
-          grouped_report.packet_feedbacks[0].receive_time= webrtc::Timestamp::Millis(last_group_packet.arrival_time_ms);
-          grouped_report.packet_feedbacks[0].sent_packet.send_time= webrtc::Timestamp::Millis(last_group_packet.depature_time_ms);
-          grouped_report.packet_feedbacks[0].sent_packet.size = webrtc::DataSize::Bytes(last_group_packet.packet_size);
+          if(last_group_id!=-1)
+          {
+            grouped_report.feedback_time=current_time;
+            grouped_report.packet_feedbacks.emplace_back();
+            grouped_report.packet_feedbacks[0].receive_time= webrtc::Timestamp::Millis(last_group_packet.arrival_time_ms);
+            grouped_report.packet_feedbacks[0].sent_packet.send_time= webrtc::Timestamp::Millis(last_group_packet.depature_time_ms);
+            grouped_report.packet_feedbacks[0].sent_packet.size = webrtc::DataSize::Bytes(last_group_packet.packet_size);
 
-          result=delay_based_bwe->IncomingPacketFeedbackVector(
-              grouped_report, acknowledged_bitrate, dummy_probe, dummy_est,
-              false);
+            result=delay_based_bwe->IncomingPacketFeedbackVector(
+                grouped_report, acknowledged_bitrate, dummy_probe, dummy_est,
+                false);
+          }
+
+          last_group_packet= input.packets[0];
+          last_group_id = current_group_id;
         }
-
-        last_group_packet= input.packets[0];
-        last_group_id = current_group_id;
       }
 
-
-
+      /*
+      ========================================
+      feed delay-based controller's target bitrate back into loss-based controller
+      ========================================
+      */
       if (result.updated) {
-            send_side_bwd->UpdateDelayBasedEstimate(report.feedback_time,
+            send_side_bwd->UpdateDelayBasedEstimate(current_time,
                                                             result.target_bitrate);
             whist_plotter_insert_sample("delay_based_bwd", get_timestamp_sec(), result.target_bitrate.bps()/1000.0/100.0);
       }
-      //whist_plotter_insert_sample("fuck", get_timestamp_sec(), 100);
-
       //whist_plotter_insert_sample("delay_last_est", get_timestamp_sec(), delay_based_bwe->last_estimate().bps()/1000.0/100.0);
 
+      /*
+      ========================================
+      return final target bitrate to outside. (not really used by outside, at the moment)
+      ========================================
+      */
+      //send_side_bwd->UpdateEstimate(current_time);  // seems not necessary, the original webrtc code doesn't call it in feedback
       CCOutput output;
       webrtc::DataRate loss_based_target_rate = send_side_bwd->target_rate();
       output.target_bitrate=loss_based_target_rate.bps();
@@ -331,22 +346,18 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
   }
   virtual CCOutput process_interval(double current_time_ms) override
   {
-   // CCOutput output;
-    webrtc::Timestamp current_time= webrtc::Timestamp::Millis(current_time_ms);
-
-    send_side_bwd->UpdateEstimate(current_time);
-    
-    CCOutput output;
-    webrtc::DataRate loss_based_target_rate = send_side_bwd->target_rate();
-    output.target_bitrate=loss_based_target_rate.bps();
-
-    return output;
+      webrtc::Timestamp current_time= webrtc::Timestamp::Millis(current_time_ms);
+      /*
+      ========================================
+      do period update of loss-base controller, and return final bitrate to outside
+      ========================================
+      */
+      send_side_bwd->UpdateEstimate(current_time);
+      CCOutput output;
+      webrtc::DataRate loss_based_target_rate = send_side_bwd->target_rate();
+      output.target_bitrate=loss_based_target_rate.bps();
+      return output;
   }
-  /*
-  double get_target_bitrate() override{
-    fprintf(stderr,"it works!!!\n");
-    return 0;
-   }*/
 };
 
 

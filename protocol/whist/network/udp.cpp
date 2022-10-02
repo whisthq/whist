@@ -633,9 +633,10 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                 input.rtt_ms=context->raw_ping_sec *MS_IN_SECOND;
             }
             //=============important call here=============
-            CCOutput output=cc_controler->feed_info(input);
-            context->network_settings.video_bitrate = output.target_bitrate.value();
-            context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
+            cc_controler->feed_info(input);
+            //CCOutput output=cc_controler->feed_info(input);
+            //context->network_settings.video_bitrate = output.target_bitrate.value();
+            //context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
         }
 
         static double last_process_time_ms=0;
