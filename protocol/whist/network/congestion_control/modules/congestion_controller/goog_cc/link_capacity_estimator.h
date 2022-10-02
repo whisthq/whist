@@ -25,8 +25,9 @@ class LinkCapacityEstimator {
   void OnProbeRate(DataRate probe_rate);
   bool has_estimate() const;
   DataRate estimate() const;
-
-  int est_cnt_=0; //WHIST_ADD
+#if ENABLE_WHIST_CHANGE
+  int est_cnt_=0;
+#endif
  private:
   friend class GoogCcStatePrinter;
   void Update(DataRate capacity_sample, double alpha);
@@ -34,7 +35,6 @@ class LinkCapacityEstimator {
   double deviation_estimate_kbps() const;
   absl::optional<double> estimate_kbps_;
   double deviation_kbps_ = 0.4;
-
 };
 }  // namespace webrtc
 

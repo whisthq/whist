@@ -142,7 +142,7 @@ bool InterArrivalDelta::BelongsToBurst(Timestamp arrival_time,
     //since whist pacer doesn't strictly send packets in burst of 5ms
     //if the finish time of last group is too close to next group
     //then the gradient might has problem, we merge them to reduce the issue.
-    if(send_time_delta.ms() < 1)
+    if(send_time_delta < TimeDelta::Millis(1.5f))
       return true;
   }
   TimeDelta propagation_delta = arrival_time_delta - send_time_delta;

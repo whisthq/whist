@@ -42,7 +42,9 @@ DataRate LinkCapacityEstimator::LowerBound() const {
 
 void LinkCapacityEstimator::Reset() {
   estimate_kbps_.reset();
+#if ENABLE_WHIST_CHANGE
   est_cnt_=0;
+#endif
 }
 
 void LinkCapacityEstimator::OnOveruseDetected(DataRate acknowledged_rate) {
@@ -54,7 +56,9 @@ void LinkCapacityEstimator::OnProbeRate(DataRate probe_rate) {
 }
 
 void LinkCapacityEstimator::Update(DataRate capacity_sample, double alpha) {
+#if ENABLE_WHIST_CHANGE
   est_cnt_++;
+#endif
 
   double sample_kbps = capacity_sample.kbps();
   if (!estimate_kbps_.has_value()) {
