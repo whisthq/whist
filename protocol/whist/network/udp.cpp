@@ -1402,8 +1402,8 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
             // to prevent accidentally making a blocking -1 call
             set_timeout(
                 context->socket,
-                max<int>(connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND,
-                         0));
+                max<double>(
+                    connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND, 0));
         }
         // Check to see if we received a UDP_CONNECTION_ATTEMPT
         UDPPacket client_packet;
