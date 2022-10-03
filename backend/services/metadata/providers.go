@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/metadata/gcp"
 	"github.com/whisthq/whist/backend/services/types"
@@ -28,7 +29,7 @@ type CloudMetadataRetriever interface {
 	GetInstanceName() types.InstanceName
 	GetPlacementRegion() types.PlacementRegion
 	GetPublicIpv4() net.IP
-	PopulateMetadata() (map[string]string, error)
+	PopulateMetadata() (map[string]string, *multierror.Error)
 	GetUserID() types.UserID
 }
 

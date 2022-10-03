@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
@@ -73,53 +74,55 @@ func (gc *Metadata) GetUserID() types.UserID {
 // PopulateMetadata should be called before trying to get any of the metadata values.
 // This function makes the initial calls to the endpoint and populates the `Metadata`
 // struct.
-func (am *Metadata) PopulateMetadata() (map[string]string, error) {
-	imageID, err := metadataRetriever("ami-id")
-	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field ami-id: %s", err)
+func (am *Metadata) PopulateMetadata() (map[string]string, *multierror.Error) {
+	var errors *multierror.Error
+	var metadata = make(map[string]string)
+
+	if imageID, err := metadataRetriever("ami-id"); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get aws metadata field ami-id: %s", err))
+	} else {
+		metadata["aws.image_id"] = imageID
+		am.imageID = types.ImageID(imageID)
 	}
 
 	instanceID, err := metadataRetriever("instance-id")
 	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field instance-id: %s", err)
+		multierror.Append(errors, utils.MakeError("failed to get aws metadata field instance-id: %s", err))
+	} else {
+		metadata["aws.instance_id"] = instanceID
+		am.instanceID = types.InstanceID(instanceID)
 	}
 
-	instanceType, err := metadataRetriever("instance-type")
-	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field instance-type: %s", err)
+	if instanceType, err := metadataRetriever("instance-type"); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get aws metadata field instance-type: %s", err))
+	} else {
+		metadata["aws.instance_type"] = instanceType
+		am.instanceType = types.InstanceType(instanceType)
 	}
 
 	region, err := metadataRetriever("placement/region")
 	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field placement-region: %s", err)
+		multierror.Append(errors, utils.MakeError("failed to get aws metadata field placement-region: %s", err))
+	} else {
+		metadata["aws.region"] = region
+		am.region = types.PlacementRegion(region)
 	}
 
-	ip, err := metadataRetriever("public-ipv4")
-	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field public-ipv4: %s", err)
+	if ip, err := metadataRetriever("public-ipv4"); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get aws metadata field public-ipv4: %s", err))
+	} else {
+		metadata["aws.ip"] = ip
+		am.ip = net.ParseIP(ip).To4()
 	}
 
-	instanceName, err := getInstanceName(instanceID, region)
-	if err != nil {
-		return nil, utils.MakeError("failed to get aws instance name: %s", err)
+	if instanceName, err := getInstanceName(instanceID, region); err != nil {
+		multierror.Append(errors, utils.MakeError("failed to get aws instance name: %s", err))
+	} else {
+		metadata["aws.instance_name"] = instanceName
+		am.instanceName = types.InstanceName(instanceName)
 	}
 
-	metadata := make(map[string]string)
-	metadata["aws.image_id"] = imageID
-	metadata["aws.instance_id"] = instanceID
-	metadata["aws.instance_name"] = instanceName
-	metadata["aws.instance_type"] = instanceType
-	metadata["aws.region"] = region
-	metadata["aws.ip"] = ip
-
-	am.imageID = types.ImageID(imageID)
-	am.instanceID = types.InstanceID(instanceID)
-	am.instanceName = types.InstanceName(instanceName)
-	am.instanceType = types.InstanceType(instanceType)
-	am.region = types.PlacementRegion(region)
-	am.ip = net.ParseIP(ip).To4()
-
-	return metadata, nil
+	return metadata, errors
 }
 
 // This function is declared as a variable so it can be mocked on tests.
