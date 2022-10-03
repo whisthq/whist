@@ -7,4 +7,4 @@
 
 console.log(navigator)
 Object.defineProperty(navigator, 'language', {value: "boi"})
-console.log("updated ", navigator)
+console.log("updated resources ", navigator)
