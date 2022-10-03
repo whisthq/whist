@@ -11,8 +11,7 @@ Includes
 */
 #include <whist/core/whist.h>
 
-extern "C"
-{
+extern "C" {
 #include <stddef.h>
 #include "udp.h"
 #include <whist/utils/aes.h>
@@ -732,7 +731,8 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
     }
 
     // Construct the WhistPacket based on the parameters given
-    WhistPacket* whist_packet = (WhistPacket*)allocate_region(PACKET_HEADER_SIZE + whist_packet_payload_size);
+    WhistPacket* whist_packet =
+        (WhistPacket*)allocate_region(PACKET_HEADER_SIZE + whist_packet_payload_size);
     whist_packet->id = packet_id;
     whist_packet->type = packet_type;
     whist_packet->payload_size = whist_packet_payload_size;
@@ -1071,7 +1071,7 @@ bool create_udp_socket_context(SocketContext* network_context, const char* desti
     FATAL_ASSERT(using_stun == false);
 
     // Create the UDPContext, and set to zero
-    UDPContext* context = (UDPContext *)safe_malloc(sizeof(UDPContext));
+    UDPContext* context = (UDPContext*)safe_malloc(sizeof(UDPContext));
     memset(context, 0, sizeof(UDPContext));
     // Create the mutex
     context->timestamp_mutex = whist_create_mutex();
@@ -1159,7 +1159,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
      * Create a nack buffer for the specified packet type which will resend packets to the client in
      * case of data loss.
      */
-    UDPContext* context = (UDPContext *)socket_context->context;
+    UDPContext* context = (UDPContext*)socket_context->context;
 
     int type_index = (int)type;
     FATAL_ASSERT(0 <= type_index && type_index < NUM_PACKET_TYPES);
@@ -1176,8 +1176,8 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     // Allocate buffers than can handle the above maximum sizes
     // Memory isn't an issue here, because we'll use our region allocator,
     // so unused memory never gets allocated by the kernel
-    context->nack_buffers[type_index] = (UDPPacket **)malloc(sizeof(UDPPacket*) * num_buffers);
-    context->nack_buffer_valid[type_index] = (bool **)malloc(sizeof(bool*) * num_buffers);
+    context->nack_buffers[type_index] = (UDPPacket**)malloc(sizeof(UDPPacket*) * num_buffers);
+    context->nack_buffer_valid[type_index] = (bool**)malloc(sizeof(bool*) * num_buffers);
     context->nack_mutex[type_index] = whist_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
     // This is just used to sanitize the pre-FEC buffer that's passed into send_packet
@@ -1187,10 +1187,11 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     // Allocate each nack buffer, based on num_buffers
     for (int i = 0; i < num_buffers; i++) {
         // Allocate a buffer of max_num_ids WhistPacket's
-        context->nack_buffers[type_index][i] = (UDPPacket *)allocate_region(sizeof(UDPPacket) * max_num_ids);
+        context->nack_buffers[type_index][i] =
+            (UDPPacket*)allocate_region(sizeof(UDPPacket) * max_num_ids);
         // Allocate nack buffer validity
         // We hold this separately, since writing anything to the region causes it to allocate
-        context->nack_buffer_valid[type_index][i] = (bool *)malloc(sizeof(bool) * max_num_ids);
+        context->nack_buffer_valid[type_index][i] = (bool*)malloc(sizeof(bool) * max_num_ids);
         for (int j = 0; j < max_num_ids; j++) {
             context->nack_buffer_valid[type_index][i][j] = false;
         }
@@ -1345,7 +1346,7 @@ bool udp_handle_pending_nacks(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
     NackID nack_id;
     bool ret = false;
-    while (fifo_queue_dequeue_item((QueueContext *)context->nack_queue, &nack_id) != -1) {
+    while (fifo_queue_dequeue_item((QueueContext*)context->nack_queue, &nack_id) != -1) {
         udp_handle_nack(context, PACKET_VIDEO, nack_id.frame_id, nack_id.packet_index, false);
         ret = true;
     }
@@ -1400,7 +1401,8 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
             // to prevent accidentally making a blocking -1 call
             set_timeout(
                 context->socket,
-                max<int>(connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND, 0));
+                max<int>(connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND,
+                         0));
         }
         // Check to see if we received a UDP_CONNECTION_ATTEMPT
         UDPPacket client_packet;
@@ -1487,11 +1489,11 @@ int create_udp_client_context(UDPContext* context, const char* destination, int 
         } else {
             // Bound between [0, CONNECTION_ATTEMPT_INTERVAL_MS]
             // Don't accidentally call with -1, or it'll block forever
-            set_timeout(
-                context->socket,
-                min(max<int>(connection_timeout_ms - get_timer(&client_creation_timer) * MS_IN_SECOND,
-                        0),
-                    CONNECTION_ATTEMPT_INTERVAL_MS));
+            set_timeout(context->socket,
+                        min(max<int>(connection_timeout_ms -
+                                         get_timer(&client_creation_timer) * MS_IN_SECOND,
+                                     0),
+                            CONNECTION_ATTEMPT_INTERVAL_MS));
         }
         // Check to see if we received a UDP_CONNECTION_CONFIRMATION
         UDPPacket server_response;
@@ -1813,7 +1815,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
                  i < packet->udp_bitarray_nack_data.numBits; i++) {
                 if (bit_array_test_bit(bit_arr, i)) {
                     nack_id.packet_index = i;
-                    if (fifo_queue_enqueue_item((QueueContext *)context->nack_queue, &nack_id) < 0) {
+                    if (fifo_queue_enqueue_item((QueueContext*)context->nack_queue, &nack_id) < 0) {
                         LOG_ERROR("Failed to enqueue NACK request");
                     }
                 }
