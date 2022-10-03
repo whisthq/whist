@@ -1,4 +1,5 @@
 import { getTabId } from "./session"
+import { cloneAsObject } from "./utils"
 
 // TODO: copy position and positionError to allow stringify
 
@@ -8,7 +9,7 @@ const geolocationSuccessCallback = (metaTagName: string, tabId: number) => {
         type: "GEOLOCATION_REQUEST_COMPLETED",
         value: {
           success: true,
-          response: defaultsDeep({coords: {}}, position),
+          response: cloneAsObject(position),
           metaTagName: metaTagName,
           tabId: tabId
         },
@@ -19,7 +20,7 @@ const geolocationSuccessCallback = (metaTagName: string, tabId: number) => {
         type: "GEOLOCATION_REQUEST_COMPLETED",
         value: {
           success: true,
-          response: defaultsDeep({coords: {}}, position),
+          response: cloneAsObject(position),
           metaTagName: metaTagName,
           tabId: tabId
         },
@@ -34,7 +35,7 @@ const geolocationErrorCallback = (metaTagName: string, tabId: number) => {
         type: "GEOLOCATION_REQUEST_COMPLETED",
         value: {
           success: false,
-          response: defaultsDeep({}, positionError),
+          response: cloneAsObject(positionError),
           metaTagName: metaTagName,
           tabId: tabId
         },
@@ -45,7 +46,7 @@ const geolocationErrorCallback = (metaTagName: string, tabId: number) => {
         type: "GEOLOCATION_REQUEST_COMPLETED",
         value: {
           success: false,
-          response: defaultsDeep({}, positionError),
+          response: cloneAsObject(positionError),
           metaTagName: metaTagName,
           tabId: tabId
         },
