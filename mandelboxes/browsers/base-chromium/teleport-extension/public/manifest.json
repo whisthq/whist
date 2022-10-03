@@ -43,7 +43,7 @@
       "resources": [
         "js/userAgent.js",
         "js/geolocation.js",
-        "js/language.js",
+        "js/language.js"
       ],
       "matches": ["<all_urls>"]
     }
