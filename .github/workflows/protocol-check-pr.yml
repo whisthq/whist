@@ -180,6 +180,7 @@ jobs:
         working-directory: protocol
         run: |
           # Build the protocol and its test suite, note that ASan doesn't support detect_leaks on macOS clang
+          # We turn off any mimalloc linking because ASan doesn't support custom allocators either
           cmake \
             -S . \
             -B build \
