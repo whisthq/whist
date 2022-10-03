@@ -272,9 +272,10 @@ Globals
 */
 
 // TODO: Remove bad globals
+extern "C" {
 extern unsigned short port_mappings[USHRT_MAX + 1];
 int override_bitrate;
-
+}
 /*
 ============================
 Private Functions
