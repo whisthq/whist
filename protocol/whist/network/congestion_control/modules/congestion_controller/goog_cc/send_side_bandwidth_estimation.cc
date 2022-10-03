@@ -46,8 +46,14 @@ constexpr TimeDelta kRtcEventLogPeriod = TimeDelta::Millis(5000);
 // Expecting that RTCP feedback is sent uniformly within [0.5, 1.5]s intervals.
 constexpr TimeDelta kMaxRtcpFeedbackInterval = TimeDelta::Millis(5000);
 
+#if ENABLE_WHIST_CHANGE
+constexpr float kDefaultLowLossThreshold = 0.06f;
+constexpr float kDefaultHighLossThreshold = 0.13f;
+#else
 constexpr float kDefaultLowLossThreshold = 0.02f;
 constexpr float kDefaultHighLossThreshold = 0.1f;
+#endif
+
 constexpr DataRate kDefaultBitrateThreshold = DataRate::Zero();
 
 struct UmaRampUpMetric {
