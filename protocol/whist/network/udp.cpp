@@ -1490,10 +1490,11 @@ int create_udp_client_context(UDPContext* context, const char* destination, int 
         } else {
             // Bound between [0, CONNECTION_ATTEMPT_INTERVAL_MS]
             // Don't accidentally call with -1, or it'll block forever
-            set_timeout(context->socket,
-                        min(max<int>(connection_timeout_ms -
-                                         get_timer(&client_creation_timer) * MS_IN_SECOND,
-                                     0),
+            set_timeout(
+                context->socket,
+                min<double>(max<double>(connection_timeout_ms -
+                                            get_timer(&client_creation_timer) * MS_IN_SECOND,
+                                        0),
                             CONNECTION_ATTEMPT_INTERVAL_MS));
         }
         // Check to see if we received a UDP_CONNECTION_CONFIRMATION
