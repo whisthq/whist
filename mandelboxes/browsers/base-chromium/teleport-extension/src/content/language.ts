@@ -1,7 +1,7 @@
 import { injectResourceIntoDOM } from "@app/utils/dom"
 
 const initLanguageSpoofer = () => {
-	injectResourceIntoDOM(document, "js/language.ts")
+	injectResourceIntoDOM(document, "js/language.js")
 
 	console.log(navigator)
 	Object.defineProperty(navigator, 'language', {value: "boi"})
