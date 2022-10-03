@@ -4,3 +4,7 @@
 // * navigator.languagechange
 
 // Use Object.defineProperty(navigator, 'language', {value: newlang})
+
+console.log(navigator)
+Object.defineProperty(navigator, 'language', {value: "boi"})
+console.log("updated ", navigator)
