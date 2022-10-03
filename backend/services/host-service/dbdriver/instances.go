@@ -157,6 +157,9 @@ func GetInstanceCapacity(instanceID string) (int32, error) {
 	if !enabled {
 		return 0, nil
 	}
+	if dbpool == nil {
+		return -1, utils.MakeError("GetInstanceCapacity() called but dbdriver is not initialized!")
+	}
 
 	q := queries.NewQuerier(dbpool)
 
@@ -205,7 +208,7 @@ func markDraining() error {
 // constraint on `whist.mandelboxes` this automatically removes all the
 // mandelboxes for the instance as well.
 func unregisterInstance() error {
-	if !enabled {
+	if !enabled || metadata.GetAppEnvironment() == metadata.EnvLocalDevWithDB {
 		return nil
 	}
 	if dbpool == nil {
