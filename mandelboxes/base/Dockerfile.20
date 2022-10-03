@@ -720,6 +720,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/* /deb
 
+# Set the SHELL option -o pipefail before RUN with a pipe in
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 # Unified post-apt installation steps
 RUN \
     ### Systemd Configuration
