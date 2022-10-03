@@ -3,6 +3,3 @@ tags
 
 # Build
 build/
-
-# Setup files
-docker-compose.yml

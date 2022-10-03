@@ -75,9 +75,6 @@ LOCAL_CONFIG_URL="http://localhost:8082/v1/metadata"
 echo "Pulling config database schema..."
 DEV_CONFIG_DATABASE=$(heroku config:get HEROKU_POSTGRESQL_MAROON_URL -a whist-dev-scaling-service)
 
-# Now get the docker-compose file
-curl https://raw.githubusercontent.com/hasura/graphql-engine/stable/install-manifests/docker-compose/docker-compose.yaml -o docker-compose.yml
-
 # Start Hasura and Postgres databases.
 docker-compose up -d
 
@@ -89,7 +86,7 @@ wait
 echo "Setting up local databases..."
 pg_dump --no-owner --no-privileges --schema-only "$DEV_CONFIG_DATABASE" > config_schema.sql
 psql "$LOCAL_CONFIG_PGSTRING" < config_schema.sql
-psql "$LOCAL_WHIST_PGSTRING" < ../../database/schema.sql
+psql "$LOCAL_WHIST_PGSTRING" < ../database/schema.sql
 
 echo "Adding databases to Hasura servers..."
 add_database_hasura "$LOCAL_WHIST_URL" "$DOCKER_WHIST_PGSTRING"
@@ -113,6 +110,6 @@ rm config_schema.sql
 green="\e[0;92m"
 reset="\e[0m"
 
-echo -e "${green}Your machine is ready to run the backend services! You can run `make run_host_service_localdevwithdb` or `make run_scaling_service_localdevwithdb` now to start developing."
+echo -e "${green}Your machine is ready to run the backend services! You can run make run_host_service_localdevwithdb or make run_scaling_service_localdevwithdb now to start developing."
 echo "Make sure to visit http://localhost:8080 and http://localhost:8082 to track the tables/relationships in the Hasura console."
 echo -e "In the future, simply run docker-compose up and the Hasura servers will be ready to use.${reset}"
