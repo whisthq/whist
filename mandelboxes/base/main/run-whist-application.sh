@@ -32,12 +32,12 @@ export TZ=$TZ # TZ variable automatically adjusts the timezone (https://www.gnu.
 export INITIAL_URL=$INITIAL_URL
 export USER_AGENT=$USER_AGENT
 export KIOSK_MODE=$KIOSK_MODE
-export LONGITUDE=$LONGITUDE
-export LATITUDE=$LATITUDE
+# export LONGITUDE=$LONGITUDE
+# export LATITUDE=$LATITUDE
 # Set the locale (the line below exports all the locale environment variables)
-export ${USER_LOCALE?}
-export LANGUAGE=$SYSTEM_LANGUAGES
-export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
+# export ${USER_LOCALE?}
+# export LANGUAGE=$SYSTEM_LANGUAGES
+# export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
 export CLIENT_OS=$CLIENT_OS
 
 # Explicitly export the fonts path, so that the
