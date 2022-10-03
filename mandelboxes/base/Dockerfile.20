@@ -564,72 +564,7 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     vim \
     nano \
     tzdata \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-#########################
-# Permissions
-#########################
-
-# Mount cgroup from host (Is this needed?)
-VOLUME [ "/sys/fs/cgroup" ]
-
-RUN \
-    # Create whist user with dynamic, random password and do NOT add to sudo group
-    useradd --create-home whist \
-    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
-    && echo whist:"${password}" | chpasswd \
-    # Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
-    && echo "Set disable_coredump false" >> /etc/sudo.conf \
-    # Set appropriate user permissions and create /whist/ Directory and Subdirectories in /usr/share
-    && chown -vR whist:whist /home/whist \
-    && chown root:root /run/user \
-    && mkdir -p /usr/share/whist/private \
-    # Set /usr/share/whist to root-only
-    && chgrp root -R /usr/share/whist \
-    && chown root:root /usr/share/whist \
-    && chmod 600 -R /usr/share/whist
-
-#########################
-# Hardware Acceleration
-# (This stage runs only if a GPU is present)
-#########################
-
-FROM whist-base-pre-graphics as whist-base-nvidia
-
-# Install the Nvidia GRID Driver and libraries for (limited) hardware acceleration
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    libglvnd0 \
-    vainfo \
-    vdpauinfo \
-    mesa-vdpau-drivers \
-    libvdpau-va-gl1 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-COPY --from=nvidia-grid-driver /dist /
-ENV GPU true
-
-#########################
-# Non-GPU environment setup
-# (Runs only if running on non-GPU host)
-#########################
-
-FROM whist-base-pre-graphics as whist-base-dummy
-ENV GPU false
-
-#########################
-# Display
-#########################
-
-# Pull from either the stage with installed Nvidia drivers (whist-base-nvidia)
-# or the stage with only dummy drivers (whist-base-dummy) based on whether
-# the host has a GPU or not.
-FROM whist-base-${DisplayDriver} as whist-base
-
-# Install dependencies
-RUN apt-get update && apt-get install --no-install-recommends -y \
+    ### Display
     libxdamage-dev \
     xclip \
     x11-xserver-utils \
@@ -789,8 +724,42 @@ RUN \
     ### Configure Default Application
     && ln -sf "$(which xeyes)" /usr/bin/whist-application
 
-# Install NVIDIA GRID driver
+#########################
+# Hardware Acceleration
+# (This stage runs only if a GPU is present)
+#########################
+
+FROM whist-base-pre-graphics as whist-base-nvidia
+
+# Install the Nvidia GRID Driver and libraries for (limited) hardware acceleration
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libglvnd0 \
+    vainfo \
+    vdpauinfo \
+    mesa-vdpau-drivers \
+    libvdpau-va-gl1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 COPY --from=nvidia-grid-driver /dist /
+ENV GPU true
+
+#########################
+# Non-GPU environment setup
+# (Runs only if running on non-GPU host)
+#########################
+
+FROM whist-base-pre-graphics as whist-base-dummy
+ENV GPU false
+
+#########################
+# Display
+#########################
+
+# Pull from either the stage with installed Nvidia drivers (whist-base-nvidia)
+# or the stage with only dummy drivers (whist-base-dummy) based on whether
+# the host has a GPU or not.
+FROM whist-base-${DisplayDriver} as whist-base
 
 #########################
 # Startup
