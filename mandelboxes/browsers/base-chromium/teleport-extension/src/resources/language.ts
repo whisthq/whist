@@ -1,4 +1,3 @@
-var navigator = window.navigator
 // This element is created in the content script and should
 //     exist by the time this resource script is run.
 const metaLanguage = document.documentElement.querySelector(
