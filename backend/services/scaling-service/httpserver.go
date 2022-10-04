@@ -17,6 +17,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"io"
@@ -28,6 +29,7 @@ import (
 	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/assign"
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -44,6 +46,10 @@ const HostServicePort uint16 = 4678
 // mandelboxAssignHandler is the http handler for any requests to the `/assign` endpoint. It authenticates
 // the request, verifies the type, and parses the body. After that it sends it to the server events channel.
 func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<- algos.ScalingEvent) {
+	// TODO: use a parent context for http server and extend to requests
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Verify that we got a POST request
 	err := verifyRequestType(w, r, http.MethodPost)
 	if err != nil {
@@ -65,14 +71,19 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 		reqdata.UserID = types.UserID(claims.Subject)
 	}
 
-	// Once we have authenticated and validated the request send it to the scaling
-	// algorithm for processing. Mandelbox assign is region-agnostic so we don't need
-	// to specify a region on the event. The event handler will select the default region automatically.
+	err = assign.MandelboxAssign(ctx, &reqdata)
+	if err != nil {
+		logger.Error(err)
+		http.Error(w, "", http.StatusInternalServerError)
+	}
+
+	// After the assign request, we want to verify capacity.
 	events <- algos.ScalingEvent{
 		ID:   uuid.NewString(),
 		Type: "SERVER_MANDELBOX_ASSIGN_EVENT",
 		Data: &reqdata,
 	}
+
 	res := <-reqdata.ResultChan
 	assignResult := res.Result.(httputils.MandelboxAssignRequestResult)
 
