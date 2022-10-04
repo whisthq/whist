@@ -1,3 +1,7 @@
+import {
+  ContentScriptMessage,
+  ContentScriptMessageType,
+} from "@app/constants/ipc"
 import { injectResourceIntoDOM } from "@app/utils/dom"
 
 const initLanguageSpoofer = () => {
@@ -6,7 +10,10 @@ const initLanguageSpoofer = () => {
     // NOTE: there is a potential race condition here. Since chrome.storage.session.get
     //     is asynchronous, this meta tag may not be created before the navigator.language/languages
     //     is called for the first time.
-    chrome.storage.session.get(["language", "languages"], (language, languages) => {
+    chrome.storage.session.get(["language", "languages"], (addedItems: any) => {
+        const language = addedItems.language
+        const languages = addedItems.languages
+
         const metaLanguage = document.createElement("meta")
         metaLanguage.name = `browser-language`
         metaLanguage.content = JSON.stringify({
