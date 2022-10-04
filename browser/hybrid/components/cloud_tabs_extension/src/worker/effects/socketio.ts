@@ -4,11 +4,11 @@ import { withLatestFrom, filter } from "rxjs/operators"
 import find from "lodash.find"
 
 import {
-  initSettingsSent,
   socket,
   socketConnected,
   socketDisconnected,
 } from "@app/worker/events/socketio"
+import { initSettingsSent } from "@app/worker/events/settings"
 import { tabRemoved, tabUpdated, tabZoomed } from "@app/worker/events/tabs"
 import {
   webUiNavigate,

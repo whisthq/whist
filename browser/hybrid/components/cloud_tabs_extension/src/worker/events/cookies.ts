@@ -1,5 +1,5 @@
 import { fromEventPattern, fromEvent } from "rxjs"
-import { filter, map, switchMap } from "rxjs/operators"
+import { filter, map, switchMap, share } from "rxjs/operators"
 import { Socket } from "socket.io-client"
 import find from "lodash.find"
 import isEqual from "lodash.isequal"
@@ -41,6 +41,8 @@ const clientCookieRemoved = fromEventPattern<chrome.cookies.CookieChangeInfo>(
 const serverCookieAdded = socket.pipe(
   switchMap((s: Socket) => fromEvent(s, "client-add-cookie"))
 )
+
+console.log("cookies ", socket)
 
 const serverCookiesSynced = socket.pipe(
   switchMap((s: Socket) => fromEvent(s, "cookie-sync-complete"))

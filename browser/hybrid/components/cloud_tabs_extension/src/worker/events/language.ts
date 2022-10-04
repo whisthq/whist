@@ -5,9 +5,10 @@ import { Socket } from "socket.io-client"
 
 import { socket, socketConnected } from "@app/worker/events/socketio"
 
+console.log("language ", socket)
+
 const languagesInitialized = socket
     .pipe(switchMap((s: Socket) => fromEvent(s, "languages-initialized")))
-    .pipe(share())
 
 const languagesChanged = fromEventPattern(
     (handler: NodeEventHandler) => window.addEventListener('languagechange', handler),
