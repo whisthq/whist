@@ -15,12 +15,6 @@ import (
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
-var (
-	testInstances   []subscriptions.Instance
-	testImages      []subscriptions.Image
-	testMandelboxes []subscriptions.Mandelbox
-)
-
 var defaultRegions []string = []string{"us-east-1", "us-west-1"}
 
 var envs = []metadata.AppEnvironment{
@@ -169,7 +163,7 @@ func TestMandelboxAssign(t *testing.T) {
 				go func() {
 					defer wg.Done()
 
-					err := MandelboxAssign(context, testAssignRequest)
+					err := MandelboxAssign(context, testAssignRequest, testDBClient, testGraphQLClient)
 					errorChan <- err
 				}()
 
@@ -318,7 +312,7 @@ func TestMandelboxLimit(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := MandelboxAssign(context, testAssignRequest)
+			err := MandelboxAssign(context, testAssignRequest, testDBClient, testGraphQLClient)
 			errorChan <- err
 		}()
 

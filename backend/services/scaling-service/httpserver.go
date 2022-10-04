@@ -30,6 +30,7 @@ import (
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/assign"
+	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -71,7 +72,16 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 		reqdata.UserID = types.UserID(claims.Subject)
 	}
 
-	err = assign.MandelboxAssign(ctx, &reqdata)
+	useConfigDB := false
+
+	grapQLClient := &subscriptions.GraphQLClient{}
+	err = grapQLClient.Initialize(useConfigDB)
+	if err != nil {
+		logger.Errorf("failed to setup GraphQL client: %s", err)
+		http.Error(w, "", http.StatusInternalServerError)
+	}
+
+	err = assign.MandelboxAssign(ctx, &reqdata, &dbclient.DBClient{}, grapQLClient)
 	if err != nil {
 		logger.Error(err)
 		http.Error(w, "", http.StatusInternalServerError)
