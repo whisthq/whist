@@ -28,11 +28,6 @@ import { Storage } from "@app/constants/storage"
 
 import { PopupMessage, PopupMessageType } from "@app/@types/messaging"
 
-initSettingsSent
-  .subscribe((_: any) => {
-    whistState.sentInitSettings = true
-  })
-
 merge(
   // Don't start creating cloud tabs until the init settings have been sent
   initSettingsSent,

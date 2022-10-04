@@ -1,4 +1,4 @@
-import { fromEvent, of, merge } from "rxjs"
+import { merge, share } from "rxjs"
 
 import { serverCookiesSynced } from "@app/worker/events/cookies"
 import { languagesInitialized } from "@app/worker/events/language"
@@ -8,6 +8,6 @@ import { languagesInitialized } from "@app/worker/events/language"
 const initSettingsSent = merge(
   serverCookiesSynced,
   languagesInitialized,
-)
+).pipe(share())
 
 export { initSettingsSent }

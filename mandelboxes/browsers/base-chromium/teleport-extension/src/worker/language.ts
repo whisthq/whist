@@ -7,6 +7,7 @@ import { Socket } from "socket.io-client"
 
 const initLanguageInitHandler = (socket: Socket) => {
   socket.on("init-languages", ([language, languages]: [string, [string]]) => {
+    console.log("init-languages")
     chrome.storage.session.set({
       language: language,
       languages: languages,
@@ -17,6 +18,7 @@ const initLanguageInitHandler = (socket: Socket) => {
 
 const initLanguageChangeHandler = (socket: Socket) => {
   socket.on("language-changed", ([language, languages]: [string, [string]]) => {
+    console.log("language-changed")
     chrome.storage.session.set({
       language: language,
       languages: languages,
