@@ -1,10 +1,49 @@
 package dbclient
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/hasura/go-graphql-client"
 )
+
+// The timestamptz2 type is an alias for the Time type from the standard library
+// time package. Graphql query variables that are timestamps should be instances
+// of the timestamptz2 type. For example:
+//
+//	var c graphql.Client
+//	var q struct { ... }
+//
+//	v := map[string]interface{}{
+//	    "now": timestamptz2(time.Now()),
+//	}
+//
+//	_ := client.Query(context.TODO(), &q, v)
+//
+// This type serves two purposes:
+//
+//  1. It allows us to provide a custom implementation of the Marshaler
+//     interface from the json package. The graphql client encodes query
+//     variables as JSON before it passes them to the graphql server. Specifying
+//     a custom implementation of the Marshaler interface for the timestamptz2
+//     type allows us to ensure that timestamp variables are serialized
+//     correctly.
+//  2. It specifies the name of the variable's graphql type. In particular,
+//     timestamptz. Had we not implemented the GraphQLType interface from the
+//     github.com/hasura/go-graphql-client package, the graphql type name would
+//     have matched the Go type name, i.e. timestamptz2.
+type timestamptz2 time.Time
+
+// MarshalJSON implements the Marshaler interface from the standard library
+// encoding/json package. It marshals a timestamptz into a JSON string
+// containing a timestamp formatted according to the ISO 8601 standard.
+func (t timestamptz2) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"%s"`, time.Time(t).Format(time.RFC3339))), nil
+}
+
+func (t timestamptz2) GetGraphQLType() string {
+	return "timestamptz"
+}
 
 // The following types are not idiomatic go, but are necessary so that Hasura
 // can properly recognize mutation inputs and enum types.
