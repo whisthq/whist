@@ -25,6 +25,10 @@ namespace WhistClient {
 // integration such as passing of streaming data between Chrome and WhistClient.
 RTC_EXPORT void InitializeWhistClient();
 
+// Destroy and clean up WhistClient. Call this at the end of the process to
+// signal the protocol to shut down and clean up.
+RTC_EXPORT void DestroyWhistClient();
+
 RTC_EXPORT extern const WhistClient::VirtualInterface* whist_virtual_interface;
 
 // Using separate U and V allows for casting flexibility, since args
