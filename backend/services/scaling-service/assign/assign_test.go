@@ -169,7 +169,7 @@ func TestMandelboxAssign(t *testing.T) {
 				go func() {
 					defer wg.Done()
 
-					err := MandelboxAssign(context, testAssignRequest, defaultRegions[0])
+					err := MandelboxAssign(context, testAssignRequest)
 					errorChan <- err
 				}()
 
@@ -318,7 +318,7 @@ func TestMandelboxLimit(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := MandelboxAssign(context, testAssignRequest, defaultRegions[0])
+			err := MandelboxAssign(context, testAssignRequest)
 			errorChan <- err
 		}()
 

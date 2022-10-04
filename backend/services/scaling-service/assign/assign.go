@@ -20,6 +20,8 @@ import (
 	hashicorp "github.com/hashicorp/go-version"
 )
 
+// setupClients will create a db client and a graphql client that can be used
+// to interact with the database
 func setupClients() (dbclient.WhistDBClient, subscriptions.WhistGraphQLClient) {
 	useConfigDB := false
 	graphQLClient := &subscriptions.GraphQLClient{}
@@ -36,20 +38,11 @@ func setupClients() (dbclient.WhistDBClient, subscriptions.WhistGraphQLClient) {
 
 // MandelboxAssign is the action responsible for assigning an instance to a user,
 // and scaling as necessary to satisfy demand.
-func MandelboxAssign(ctx context.Context, mandelboxRequest *httputils.MandelboxAssignRequest, region string) error {
-	contextFields := []interface{}{
-		zap.String("scaling_region", region),
-	}
+func MandelboxAssign(ctx context.Context, mandelboxRequest *httputils.MandelboxAssignRequest) error {
+	contextFields := []interface{}{}
+
 	logger.Infow("Starting mandelbox assign action.", contextFields)
 	defer logger.Infow("Finished mandelbox assign action.", contextFields)
-
-	// We want to verify if we have the desired capacity after assigning a mandelbox
-	// defer func() {
-	// 	err := s.VerifyCapacity(scalingCtx, event)
-	// 	if err != nil {
-	// 		logger.Errorf("error verifying capacity when assigning mandelbox: %s", err)
-	// 	}
-	// }()
 
 	// This is necessary so that the request is always closed
 	// when encountering an error in the scaling action.
@@ -135,19 +128,6 @@ func MandelboxAssign(ctx context.Context, mandelboxRequest *httputils.MandelboxA
 		return err
 	}
 
-	// TODO: set different cloud provider when doing multi-cloud
-	latestImage, err := db.QueryLatestImage(ctx, graphQLClient, "AWS", region)
-	if err != nil {
-		return err
-	}
-
-	// This condition is to accomodate the workflow for developers of the Whist frontend
-	// to test their changes without needing to update the development database with
-	// commit_hashes on their local machines.
-	if metadata.IsLocalEnv() || mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
-		mandelboxRequest.CommitHash = string(latestImage.ClientSHA)
-	}
-
 	var (
 		instanceFound          bool
 		instanceProximityIndex int
@@ -169,6 +149,13 @@ func MandelboxAssign(ctx context.Context, mandelboxRequest *httputils.MandelboxA
 
 		logger.Infow(utils.Sprintf("Trying to find instance in region %s, with commit hash %s and image %s",
 			region, mandelboxRequest.CommitHash, regionImage.ImageID), assignContext)
+
+		// This condition is to accomodate the workflow for developers of the Whist frontend
+		// to test their changes without needing to update the development database with
+		// commit_hashes on their local machines.
+		if metadata.IsLocalEnv() || mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
+			mandelboxRequest.CommitHash = string(regionImage.ClientSHA)
+		}
 
 		instanceResult, err := db.QueryInstanceWithCapacity(ctx, graphQLClient, region)
 		if err != nil {
