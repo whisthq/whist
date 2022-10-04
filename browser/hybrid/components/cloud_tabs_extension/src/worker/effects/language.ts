@@ -7,11 +7,13 @@ import { socket, socketConnected } from "@app/worker/events/socketio"
 import { whistState } from "@app/worker/utils/state"
 
 socketConnected.subscribe((socket: Socket) => {
+  console.log("send init-languages")
   socket.emit("init-languages", navigator.language, navigator.languages)
 })
 
 languagesChanged
   .pipe(withLatestFrom(socket))
   .subscribe(([, socket]: [any, Socket]) => {
+    console.log("language-changed")
     socket.emit("language-changed", navigator.language, navigator.languages)
   })

@@ -11,8 +11,7 @@ const initLanguageInitHandler = (socket: Socket) => {
     chrome.storage.session.set({
       language: language,
       languages: languages,
-    })
-    socket.emit("languages-initialized")
+    }, () => socket.emit("languages-initialized"))
   })
 }
 
