@@ -326,31 +326,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						scalingCancel()
 					}()
 				}
-			case serverEvent := <-s.ServerEventChan:
-				switch serverEvent.Type {
-				case "SERVER_MANDELBOX_ASSIGN_EVENT":
-					goroutineTracker.Add(1)
-					go func() {
-						defer goroutineTracker.Done()
-						serverEvent.Region = s.Region
-
-						// Create context for scaling operation
-						scalingCtx, scalingCancel := context.WithCancel(context.Background())
-
-						err := s.MandelboxAssign(scalingCtx, serverEvent)
-						if err != nil {
-							contextFields := []interface{}{
-								zap.String("id", serverEvent.ID),
-								zap.Any("type", serverEvent.Type),
-								zap.String("data", utils.Sprintf("%v", serverEvent.Data)),
-								zap.String("region", serverEvent.Region),
-							}
-							logger.Errorw(utils.Sprintf("error running mandelbox assign action: %s", err), contextFields)
-						}
-						// Cancel context once the operation is done
-						scalingCancel()
-					}()
-				}
 			case <-globalCtx.Done():
 				logger.Info("Global context has been cancelled. Exiting from default scaling algorithm event loop...")
 				goroutineTracker.Wait()
