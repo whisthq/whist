@@ -8,6 +8,7 @@ import { initFileSyncHandler } from "./downloads"
 import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
 import { initLocationHandler } from "./geolocation"
+import { initLanguageInitHandler, initLanguageChangeHandler } from "./language"
 import {
   initTabState,
   initSocketioConnection,
@@ -40,6 +41,10 @@ initCursorLockHandler(nativeHostPort)
 
 // Send and receive geolocation actions
 initLocationHandler(socket)
+
+// Send and receive language actions
+initLanguageInitHandler(socket)
+initLanguageChangeHandler(socket)
 
 // Listen to the client for tab actions
 initActivateTabListener(socket)
