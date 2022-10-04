@@ -20,25 +20,9 @@ import (
 	hashicorp "github.com/hashicorp/go-version"
 )
 
-// setupClients will create a db client and a graphql client that can be used
-// to interact with the database
-func setupClients() (dbclient.WhistDBClient, subscriptions.WhistGraphQLClient) {
-	useConfigDB := false
-	graphQLClient := &subscriptions.GraphQLClient{}
-	err := graphQLClient.Initialize(useConfigDB)
-	if err != nil {
-		logger.Errorf("failed to setup config GraphQL client: %s", err)
-		return nil, nil
-	}
-
-	db := &dbclient.DBClient{}
-
-	return db, graphQLClient
-}
-
 // MandelboxAssign is the action responsible for assigning an instance to a user,
 // and scaling as necessary to satisfy demand.
-func MandelboxAssign(ctx context.Context, mandelboxRequest *httputils.MandelboxAssignRequest) error {
+func MandelboxAssign(ctx context.Context, mandelboxRequest *httputils.MandelboxAssignRequest, db dbclient.WhistDBClient, graphQLClient subscriptions.WhistGraphQLClient) error {
 	contextFields := []interface{}{}
 
 	logger.Infow("Starting mandelbox assign action.", contextFields)
@@ -54,8 +38,6 @@ func MandelboxAssign(ctx context.Context, mandelboxRequest *httputils.MandelboxA
 			}, nil)
 		}
 	}()
-
-	db, graphQLClient := setupClients()
 
 	// Note: we receive the email from the client, so its value should
 	// not be trusted for anything else other than logging since
