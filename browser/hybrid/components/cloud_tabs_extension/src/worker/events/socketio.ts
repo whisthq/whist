@@ -9,6 +9,8 @@ import {
   withLatestFrom,
 } from "rxjs/operators"
 
+import { serverCookiesSynced } from "@app/worker/events/cookies"
+import { languagesInitialized } from "@app/worker/events/language"
 import { mandelboxSuccess } from "@app/worker/events/mandelbox"
 import { hostSuccess } from "@app/worker/events/host"
 import { io, Socket } from "socket.io-client"
@@ -53,7 +55,14 @@ const socketReconnectFailed = merge(socket, socketConnected).pipe(
   )
 )
 
+// All events that reflect tasks that need to have been completed before we
+//     begin creating cloud tabs
+const initSettingsSent = merge(
+  serverCookiesSynced,
+  languagesInitialized,
+)
+
 // I'm not sure why this fixes things but it does
 socket.subscribe()
 
-export { socket, socketConnected, socketDisconnected, socketReconnectFailed }
+export { socket, socketConnected, socketDisconnected, socketReconnectFailed, initSettingsSent }

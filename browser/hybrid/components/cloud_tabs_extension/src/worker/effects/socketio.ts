@@ -4,11 +4,11 @@ import { withLatestFrom, filter } from "rxjs/operators"
 import find from "lodash.find"
 
 import {
+  initSettingsSent,
   socket,
   socketConnected,
   socketDisconnected,
 } from "@app/worker/events/socketio"
-import { serverCookiesSynced } from "@app/worker/events/cookies"
 import { tabRemoved, tabUpdated, tabZoomed } from "@app/worker/events/tabs"
 import {
   webUiNavigate,
@@ -28,13 +28,19 @@ import { Storage } from "@app/constants/storage"
 
 import { PopupMessage, PopupMessageType } from "@app/@types/messaging"
 
+initSettingsSent
+  .subscribe((_: any) => {
+    whistState.sentInitSettings = true
+  })
+
 merge(
-  serverCookiesSynced,
+  // Don't start creating cloud tabs until the init settings have been sent
+  initSettingsSent,
   stateDidChange("waitingCloudTabs").pipe(
     withLatestFrom(socket),
     filter(
       ([change, socket]) =>
-        change?.applyData?.name === "push" && socket.connected
+        change?.applyData?.name === "push" && socket.connected && whistState.sentInitSettings
     )
   )
 )
@@ -128,7 +134,7 @@ socketDisconnected.subscribe((socket: Socket) => {
   )
 })
 
-socketConnected.subscribe(() => {
+socketConnected.subscribe((socket: Socket) => {
   ;(chrome as any).whist.broadcastWhistMessage(
     JSON.stringify({
       type: "SOCKET_CONNECTED",

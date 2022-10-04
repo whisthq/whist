@@ -1,10 +1,43 @@
-// Need to override anything to do with language (events fired on langauge change, etc.)
-// * navigator.language
-// * navigator.languages
-// * navigator.languagechange
+var navigator = window.navigator
+// This element is created in the content script and should
+//     exist by the time this resource script is run.
+const metaLanguage = document.documentElement.querySelector(
+    `meta[name="browser-language"]`
+) as HTMLMetaElement
 
-// Use Object.defineProperty(navigator, 'language', {value: newlang})
+// Override navigator.language
+Object.defineProperty(navigator, "language", {
+    get: () => {
+        if (metaLanguage) {
+            const languageInfo = JSON.parse(metaLanguage.content)
+            return languageInfo.language
+        }
 
-console.log(navigator)
-Object.defineProperty(navigator, 'language', {value: "boi"})
-console.log("updated resources ", navigator)
+        // Default to "en-US" if could not get actual language
+        return "en-US"
+    }
+})
+
+// Override navigator.languages
+Object.defineProperty(navigator, "languages", {
+    get: () => {
+        if (metaLanguage) {
+            const languageInfo = JSON.parse(metaLanguage.content)
+            return languageInfo.languages
+        }
+
+        // Default to ["en-US"] if could not get actual language
+        return ["en-US"]
+    }
+})
+
+// Override window.languagechange event
+const languageChangeEvent = new Event('languagechange')
+const metaLanguageObserver = new MutationObserver((mutationList, observer) => {
+    window.dispatchEvent(languageChangeEvent)
+})
+metaLanguageObserver.observe(metaLanguage, {
+    attributes: true,
+    attributeFilter: [ "content" ]
+})
+
