@@ -15,6 +15,12 @@ import (
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
+var (
+	testInstances   []subscriptions.Instance
+	testImages      []subscriptions.Image
+	testMandelboxes []subscriptions.Mandelbox
+)
+
 var defaultRegions []string = []string{"us-east-1", "us-west-1"}
 
 var envs = []metadata.AppEnvironment{
@@ -35,16 +41,16 @@ func TestMandelboxAssign(t *testing.T) {
 		clientSHA, want  string
 		shouldBeAssigned bool
 	}{
-		{"happy path", instanceCapacity["g4dn.2xlarge"], defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true},             // Happy path, sufficient capacity and matching commit hash
-		{"commit hash mismatch", instanceCapacity["g4dn.2xlarge"], defaultRegions, "outdated-sha", COMMIT_HASH_MISMATCH, false}, // Commit mismatch, sufficient capacity but different commit hashes
-		{"no capacity", 0, defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, NO_INSTANCE_AVAILABLE, false},                       // No capacity, but matching commit hash
-		{"some unavailable regions", instanceCapacity["g4dn.2xlarge"], []string{
+		{"happy path", 2, defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true},                      // Happy path, sufficient capacity and matching commit hash
+		{"commit hash mismatch", 2, defaultRegions, "outdated-sha", COMMIT_HASH_MISMATCH, false},          // Commit mismatch, sufficient capacity but different commit hashes
+		{"no capacity", 0, defaultRegions, CLIENT_COMMIT_HASH_DEV_OVERRIDE, NO_INSTANCE_AVAILABLE, false}, // No capacity, but matching commit hash
+		{"some unavailable regions", 2, []string{
 			"unavailable-region-1",
 			"us-west-1",
 			"unavailable-region-2",
 			"us-east-1",
 		}, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true}, // Some unavailable regions
-		{"only unavailable regions", instanceCapacity["g4dn.2xlarge"], []string{
+		{"only unavailable regions", 2, []string{
 			"unavailable-region-1",
 			"unavailable-region-2",
 			"unavailable-region-3",
@@ -151,18 +157,19 @@ func TestMandelboxAssign(t *testing.T) {
 				wg := &sync.WaitGroup{}
 				errorChan := make(chan error, 1)
 
-				frontendVersion = &subscriptions.FrontendVersion{
+				frontendVersion := subscriptions.FrontendVersion{
 					ID:    1,
 					Major: 3,
 					Minor: 0,
 					Micro: 0,
 				}
+				config.SetFrontendVersion(frontendVersion)
 
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
 
-					err := testAlgorithm.MandelboxAssign(context, ScalingEvent{Data: testAssignRequest})
+					err := MandelboxAssign(context, testAssignRequest, defaultRegions[0])
 					errorChan <- err
 				}()
 
@@ -220,7 +227,7 @@ func TestMandelboxLimit(t *testing.T) {
 			Region:            "us-east-1",
 			IPAddress:         "1.1.1.1/24",
 			ClientSHA:         "test-sha",
-			RemainingCapacity: instanceCapacity["g4dn.xlarge"],
+			RemainingCapacity: 1,
 		},
 		{
 			ID:                "test-assign-instance-2",
@@ -231,7 +238,7 @@ func TestMandelboxLimit(t *testing.T) {
 			Region:            "us-east-1",
 			IPAddress:         "1.1.1.1/24",
 			ClientSHA:         "test-sha",
-			RemainingCapacity: instanceCapacity["g4dn.xlarge"],
+			RemainingCapacity: 1,
 		},
 		{
 			ID:                "test-assign-instance-3",
@@ -242,7 +249,7 @@ func TestMandelboxLimit(t *testing.T) {
 			Region:            "us-east-1",
 			IPAddress:         "1.1.1.1/24",
 			ClientSHA:         "test-sha",
-			RemainingCapacity: instanceCapacity["g4dn.xlarge"],
+			RemainingCapacity: 1,
 		},
 	}
 
@@ -296,12 +303,13 @@ func TestMandelboxLimit(t *testing.T) {
 	}
 	testAssignRequest.CreateResultChan()
 
-	frontendVersion = &subscriptions.FrontendVersion{
+	frontendVersion := subscriptions.FrontendVersion{
 		ID:    1,
 		Major: 3,
 		Minor: 0,
 		Micro: 0,
 	}
+	config.SetFrontendVersion(frontendVersion)
 
 	wg := &sync.WaitGroup{}
 	errorChan := make(chan error, 1)
@@ -310,7 +318,7 @@ func TestMandelboxLimit(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := testAlgorithm.MandelboxAssign(context, ScalingEvent{Data: testAssignRequest})
+			err := MandelboxAssign(context, testAssignRequest, defaultRegions[0])
 			errorChan <- err
 		}()
 

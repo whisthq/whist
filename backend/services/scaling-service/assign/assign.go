@@ -234,11 +234,8 @@ func MandelboxAssign(ctx context.Context, mandelboxRequest *httputils.MandelboxA
 		isOutdatedFrontend bool
 	)
 
-	// Get the version we keep locally for comparing the incoming request value.
-	frontendVersion := getFrontendVersion()
-
 	// Parse the version with the `hashicorp/go-version` package so we can compare.
-	parsedFrontendVersion, err = hashicorp.NewVersion(frontendVersion)
+	parsedFrontendVersion, err = hashicorp.NewVersion(config.GetFrontendVersion())
 	if err != nil {
 		logger.Errorf("failed parsing frontend version from scaling algorithm config: %s", err)
 	}
