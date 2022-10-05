@@ -516,10 +516,6 @@ void deallocate_region(void* region) {
 
     RegionHeader* p = TO_REGION_HEADER(region);
 
-#if USING_MLOCK
-    munlock(p, p->size);
-#endif
-
 #if OS_IS(OS_WIN32)
     if (VirtualFree(p, 0, MEM_RELEASE) == 0) {
         LOG_FATAL("VirtualFree failed! Error %x", GetLastError());

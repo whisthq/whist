@@ -8,27 +8,15 @@ extern "C" {
 #include <mach/mach.h>
 #include <mach/vm_map.h>
 #include <sys/mman.h>
+#include <string.h>
 }
 
 // malloc_zone override
 // save the members just in case
 static size_t page_size;
-static malloc_zone_t* original_zone;
-static size_t (*system_size)(malloc_zone_t* zone, const void* ptr);
-static void* (*system_malloc)(malloc_zone_t* zone, size_t size);
-static void* (*system_calloc)(malloc_zone_t* zone, size_t num_items, size_t size);
-static void* (*system_valloc)(malloc_zone_t* zone, size_t size);
-static void (*system_free)(malloc_zone_t* zone, void* ptr);
-static void* (*system_realloc)(malloc_zone_t* zone, void* ptr, size_t size);
-static void (*system_destroy)(malloc_zone_t* zone);
-static unsigned (*system_batch_malloc)(malloc_zone_t* zone, size_t size, void** results,
-                                       unsigned num_requested);
-static void (*system_batch_free)(malloc_zone_t* zone, void** to_be_freed, unsigned num_to_be_freed);
-static void* (*system_memalign)(malloc_zone_t* zone, size_t alignment, size_t size);
-static void (*system_free_definite_size)(malloc_zone_t* zone, void* ptr, size_t size);
-static size_t (*system_pressure_relief)(malloc_zone_t* zone, size_t goal);
 
 // Our malloc_zone members; these are copied from mimalloc's override file
+// https://github.com/microsoft/mimalloc/blob/master/src/alloc-override-osx.c
 
 static size_t whist_size(malloc_zone_t* zone, const void* p) {
     UNUSED(zone);
@@ -202,13 +190,27 @@ static inline malloc_zone_t* whist_get_default_zone(void) {
 // Helper function for locking statics
 
 // documentation notes: the source code for mach/etc are in https://github.com/apple/darwin-xnu/.
+// mach_vm_region(vm_map_t map,
+// mach_vm_address_t *address,
+// mach_vm_size_t *size,
+// vm_region_flavor_t flavor,
+// vm_region_info_t info,
+// mach_msg_type_number_t *cnt,
+// mach_port_t *object_name)
+// this displays information about the VM Region for virtual memory address address for task map
+// there are two "flavors", but we only need the basic one (and in fact the extended flavor takes a
+// lot longer to run) output is: - address: starting address for the region
+// - size: size of the region
+// - info : returned info struct (we don't use this at all)
+// - count: the # of entries of structs corresponding to the flavor (we don't use this either)
+// - obj_name: some other output, also unused
 static void mlock_statics() {
     // TODO: better way of mlock'ing static segments
     static mach_vm_address_t max_addr = (mach_vm_address_t)0x20000000000;
     task_t t = mach_task_self();
 
     mach_vm_address_t addr = 1;
-    kern_return_t rc;
+    kern_return_t rc;  // return value for mach_vm_region
     vm_region_basic_info_data_t info;
     mach_vm_address_t prev_addr = 0;
     mach_vm_size_t size, prev_size;
@@ -217,8 +219,8 @@ static void mlock_statics() {
     mach_msg_type_number_t count;
 
     int done = 0;
-    WhistTimer mlock_timer;
-    static unsigned long long total_mlocked_size = 0;
+    // starting from address 1, use mach_vm_region to obtain the address and size of the next region
+    // repeat until we've mlock'ed all static memory
     while (!done) {
         count = VM_REGION_BASIC_INFO_COUNT_64;
 
@@ -226,14 +228,20 @@ static void mlock_statics() {
                             &obj_name);
         if (rc) {
             // indicates that we've given an invalid address.
-            LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
+            LOG_ERROR("mach_vm_region_failed, %s", mach_error_string(rc));
             max_addr = addr;
             done = 1;
         } else {
+            // check for overflow; all VM regions are distinct, so this should not error out until
+            // we have reached the end of the memory we want to mlock
             if ((prev_addr == 0 || addr >= prev_addr + prev_size) && addr <= max_addr) {
                 // LOG_INFO("mlock'ed %p size %llx", (void*)addr, size);
                 // update region list data and mlock
-                mlock((void*)addr, size);
+                int ret = mlock((void*)addr, size);
+                if (ret == -1) {
+                    LOG_MESSAGE_RATE_LIMITED(0.1, 1, ERROR, "mlock failed with error %s",
+                                             strerror(errno));
+                }
                 prev_addr = addr;
                 prev_size = size;
                 // repeatedly call mach_vm_region
