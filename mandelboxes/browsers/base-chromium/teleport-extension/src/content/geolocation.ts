@@ -15,7 +15,6 @@ const initLocationSpoofer = () => {
           if (addedNode.nodeName === "META") {
             var metaTag = addedNode as HTMLMetaElement
             if (metaTag.name.search(/.*-geolocation/) > -1) {
-              console.log("metatag with name ", metaTag)
               const geolocationContent = JSON.parse(metaTag.content)
               chrome.runtime.sendMessage(<ContentScriptMessage>{
                 type: ContentScriptMessageType.GEOLOCATION_REQUEST,

@@ -1,19 +1,8 @@
 import { getTabId } from "./session"
 import { cloneAsObject } from "./utils"
 
-// TODO: copy position and positionError to allow stringify
-
 const geolocationSuccessCallback = (metaTagName: string, tabId: number) => {
   return (position: GeolocationPosition) => {
-    console.log("success ", position, JSON.stringify({
-        type: "GEOLOCATION_REQUEST_COMPLETED",
-        value: {
-          success: true,
-          response: cloneAsObject(position),
-          metaTagName: metaTagName,
-          tabId: tabId
-        },
-      }))
     // Send message back to server with position
     ;(chrome as any).whist.broadcastWhistMessage(
       JSON.stringify({
@@ -31,15 +20,6 @@ const geolocationSuccessCallback = (metaTagName: string, tabId: number) => {
 
 const geolocationErrorCallback = (metaTagName: string, tabId: number) => {
   return (positionError: GeolocationPositionError) => {
-    console.log("error ", positionError, JSON.stringify({
-        type: "GEOLOCATION_REQUEST_COMPLETED",
-        value: {
-          success: false,
-          response: cloneAsObject(positionError),
-          metaTagName: metaTagName,
-          tabId: tabId
-        },
-      }))
     // Send message back to server with failure
     ;(chrome as any).whist.broadcastWhistMessage(
       JSON.stringify({

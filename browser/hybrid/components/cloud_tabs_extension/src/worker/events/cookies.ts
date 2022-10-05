@@ -42,8 +42,6 @@ const serverCookieAdded = socket.pipe(
   switchMap((s: Socket) => fromEvent(s, "client-add-cookie"))
 )
 
-console.log("cookies ", socket)
-
 const serverCookiesSynced = socket.pipe(
   switchMap((s: Socket) => fromEvent(s, "cookie-sync-complete"))
 )

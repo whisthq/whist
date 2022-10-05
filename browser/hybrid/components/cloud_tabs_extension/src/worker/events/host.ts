@@ -81,7 +81,7 @@ const hostInfo = mandelboxSuccess.pipe(
         jwt_access_token: auth.accessToken ?? "",
         mandelbox_id: mandelbox.mandelboxID,
         json_data: JSON.stringify({
-          kiosk_mode: false,
+          kiosk_mode: true,
           restore_last_session: false,
           load_extension: true,
           ...jsonData,
