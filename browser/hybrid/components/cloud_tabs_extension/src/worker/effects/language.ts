@@ -15,4 +15,3 @@ languagesChanged
   .subscribe(([, socket]: [any, Socket]) => {
     socket.emit("language-changed", navigator.language, navigator.languages)
   })
-  

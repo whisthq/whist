@@ -35,4 +35,3 @@ geolocationRequestCompleted
       socket.emit("geolocation-request-completed", success, response, metaTagName, tabId)
     }
   )
-  
