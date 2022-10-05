@@ -105,4 +105,19 @@ action("build_whist_client") {
       target_cpu,
     ]
   }
+
+  if (is_win) {
+    outputs = [
+      "$root_out_dir/avcodec-59.dll",
+      "$root_out_dir/avdevice-59.dll",
+      "$root_out_dir/avfilter-8.dll",
+      "$root_out_dir/avformat-59.dll",
+      "$root_out_dir/avutil-57.dll",
+      "$root_out_dir/swresample-4.dll",
+      "$root_out_dir/swscale-6.dll",
+      "$root_out_dir/libcrypto-1_1-x64.dll",
+      "$root_out_dir/sentry.dll",
+      "$root_out_dir/WhistClient.dll",
+    ]
+  }
 }

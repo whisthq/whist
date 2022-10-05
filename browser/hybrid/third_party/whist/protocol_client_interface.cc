@@ -35,6 +35,12 @@
 #define LIB_FILENAME "libWhistClient.so"
 #endif
 
+#if BUILDFLAG(IS_WIN)
+#define LOG_FILE_NAME L"whist_protocol_client.log"
+#else
+#define LOG_FILE_NAME "whist_protocol_client.log"
+#endif
+
 typedef const WhistClient::VirtualInterface* (*VirtualInterfaceCreator)(void);
 const WhistClient::VirtualInterface* whist_virtual_interface = NULL;
 static base::Lock whist_virtual_interface_lock;
@@ -116,7 +122,7 @@ void InitializeWhistClient() {
   // Pipe protocol logs to a .log file
   base::FilePath path;
   base::PathService::Get(chrome::DIR_USER_DATA, &path);
-  path = path.Append("whist_protocol_client.log");
+  path = path.Append(LOG_FILE_NAME);
   whist_logs_out.open(path.AsUTF8Unsafe().c_str());
 
   WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line) {
