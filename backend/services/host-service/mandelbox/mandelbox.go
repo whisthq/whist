@@ -179,6 +179,8 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 		var mandelboxCloseErr *multierror.Error
 
+		// Don't try to mark mandelbox as dying if the status is empty. This indicates that
+		// the mandelbox wasn't created successfully in the spinup process.
 		if mandelbox.GetStatus() != "" {
 		   if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusDying); err != nil {
 		      mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
@@ -223,6 +225,8 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		mandelbox.cleanResourceMappingDir()
 		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.GetID())
 
+		// Don't try to remove mandelbox if the status is empty. This indicates that
+		// the mandelbox wasn't created successfully in the spinup process.
 		if mandelbox.GetStatus() != "" {
 			if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
 			   mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
