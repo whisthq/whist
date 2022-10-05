@@ -27,7 +27,7 @@ const build = (argv) => {
   helpers.buildTailwind()
 
   execCommand(
-    `webpack --config webpack.config.js --env webpackMode=development ${
+    `webpack --config webpack.config.js ${
       argv.output_dir ? `--env targetDir=${argv.output_dir}` : ""
     }`
   )
