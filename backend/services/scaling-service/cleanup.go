@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
@@ -14,6 +15,61 @@ import (
 )
 
 var db dbclient.DBClient
+
+// CleanRegion starts the unresponsive instance cleanup thread for a particular
+// region and returns a function that can be used to stop it. You should call
+// CleanRegion once per region, but it doesn't really make sense to call it
+// more than once per region.
+//
+// The stop function blocks until all in-progress cleaning operations have
+// completed. Consider calling this method in its own goroutine like so:
+//
+//	var cleaner *Cleaner
+//	var wg sync.WaitGroup
+//
+//	wg.Add(1)
+//
+//	go func() {
+//	    defer wg.Done()
+//	    cleaner.Stop()
+//	}()
+//
+//	wg.Wait()
+func CleanRegion(client subscriptions.WhistGraphQLClient, h hosts.HostHandler) func() {
+	stop := make(chan struct{})
+	ticker := time.NewTicker(time.Minute)
+	var wg sync.WaitGroup
+
+	// Don't bother adding this goroutine to the cleaner's wait group. It will
+	// finish as soon as the stop channel is closed.
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				wg.Add(1)
+
+				go func() {
+					defer wg.Done()
+
+					// TODO: Make the deadline more configurable.
+					deadline := time.Now().Add(5 * time.Minute)
+					ctx, cancel := context.WithDeadline(context.Background(), deadline)
+					defer cancel()
+
+					do(ctx, client, h)
+				}()
+			case <-stop:
+				return
+			}
+		}
+	}()
+
+	return func() {
+		ticker.Stop()
+		close(stop)
+		wg.Wait()
+	}
+}
 
 // do marks all unresponsive instances as TERMINATING in the database before
 // subsequently terminating them and finally removing them from the database
