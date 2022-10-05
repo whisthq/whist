@@ -30,13 +30,16 @@ Object.defineProperty(navigator, "languages", {
     }
 })
 
-// Override window.languagechange event
-const languageChangeEvent = new Event('languagechange')
-const metaLanguageObserver = new MutationObserver((mutationList, observer) => {
-    window.dispatchEvent(languageChangeEvent)
-})
-metaLanguageObserver.observe(metaLanguage, {
-    attributes: true,
-    attributeFilter: [ "content" ]
-})
-
+if (metaLanguage) {
+    // Override window.languagechange event
+    const languageChangeEvent = new Event('languagechange')
+    const metaLanguageObserver = new MutationObserver((mutationList, observer) => {
+        window.dispatchEvent(languageChangeEvent)
+    })
+    metaLanguageObserver.observe(metaLanguage, {
+        attributes: true,
+        attributeFilter: [ "content" ]
+    })
+} else {
+    console.log("RACE CONDITION IN SETTING LANGUAGE")
+}

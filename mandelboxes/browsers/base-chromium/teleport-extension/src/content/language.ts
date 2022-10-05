@@ -10,7 +10,7 @@ const initLanguageSpoofer = () => {
     // NOTE: there is a potential race condition here. Since chrome.storage.session.get
     //     is asynchronous, this meta tag may not be created before the navigator.language/languages
     //     is called for the first time.
-    chrome.storage.session.get(["language", "languages"], (addedItems: any) => {
+    chrome.storage.local.get(["language", "languages"], (addedItems: any) => {
         console.log(addedItems)
         const language = addedItems.language
         const languages = addedItems.languages
