@@ -2,6 +2,7 @@
 
 #include "chrome/common/url_constants.h"
 
+#include "chrome/browser/ui/views/tabs/tab.h"
 #include "src/brave/chromium_src/chrome/browser/ui/views/tabs/tab.cc"
 
 bool Tab::IsCloudTab() const {
