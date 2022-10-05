@@ -12,7 +12,6 @@ const initLanguageSpoofer = () => {
     //     is called for the first time. We ignore the race condition for now because storage get seems
     //     to be fast enough that it isn't a problem.
     chrome.storage.local.get(["language", "languages"], (addedItems: any) => {
-        console.log(addedItems)
         const language = addedItems.language
         const languages = addedItems.languages
 

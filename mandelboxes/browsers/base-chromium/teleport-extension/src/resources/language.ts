@@ -37,7 +37,6 @@ if (metaLanguage) {
     // Override window.languagechange event
     const languageChangeEvent = new Event('languagechange')
     const metaLanguageObserver = new MutationObserver((mutationList, observer) => {
-        console.log("metaLanguage changed")
         window.dispatchEvent(languageChangeEvent)
     })
     metaLanguageObserver.observe(metaLanguage, {

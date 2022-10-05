@@ -32,7 +32,7 @@ geolocationRequestCompleted
       [boolean, any, string, number],
       Socket
     ]) => {
-      console.log(success, response, metaTagName, tabId)
       socket.emit("geolocation-request-completed", success, response, metaTagName, tabId)
     }
   )
+  
