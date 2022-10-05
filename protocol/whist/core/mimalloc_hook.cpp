@@ -261,6 +261,7 @@ static void mlock_statics() {
 extern malloc_zone_t* malloc_default_purgeable_zone(void) __attribute__((weak_import));
 
 void init_whist_malloc_hook() {
+    mi_option_set(mi_option_reset_delay, 1000);
     LOG_INFO("mlocking statics");
     mlock_statics();
     LOG_INFO("Initializing custom malloc");
