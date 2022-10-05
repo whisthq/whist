@@ -18,7 +18,7 @@ static size_t page_size;
 // Our malloc_zone members; these are copied from mimalloc's override file
 // https://github.com/microsoft/mimalloc/blob/master/src/alloc-override-osx.c
 
-static size_t whist_size(malloc_zone_t* zone, const void* p) {
+static size_t new_size(malloc_zone_t* zone, const void* p) {
     UNUSED(zone);
     if (!mi_is_in_heap_region(p)) {
         return 0;
@@ -26,67 +26,67 @@ static size_t whist_size(malloc_zone_t* zone, const void* p) {
     return mi_usable_size(p);
 }
 
-static void* whist_malloc(malloc_zone_t* zone, size_t size) {
+static void* new_malloc(malloc_zone_t* zone, size_t size) {
     UNUSED(zone);
     return mi_malloc(size);
 }
 
-static void* whist_calloc(malloc_zone_t* zone, size_t count, size_t size) {
+static void* new_calloc(malloc_zone_t* zone, size_t count, size_t size) {
     UNUSED(zone);
     return mi_calloc(count, size);
 }
 
-static void* whist_valloc(malloc_zone_t* zone, size_t size) {
+static void* new_valloc(malloc_zone_t* zone, size_t size) {
     UNUSED(zone);
     return mi_malloc_aligned(size, page_size);
 }
 
-static void whist_free(malloc_zone_t* zone, void* p) {
+static void new_free(malloc_zone_t* zone, void* p) {
     UNUSED(zone);
     mi_cfree(p);
 }
 
-static void* whist_realloc(malloc_zone_t* zone, void* p, size_t newsize) {
+static void* new_realloc(malloc_zone_t* zone, void* p, size_t newsize) {
     UNUSED(zone);
     return mi_realloc(p, newsize);
 }
 
-static void* whist_memalign(malloc_zone_t* zone, size_t alignment, size_t size) {
+static void* new_memalign(malloc_zone_t* zone, size_t alignment, size_t size) {
     UNUSED(zone);
     return mi_malloc_aligned(size, alignment);
 }
 
-static void whist_destroy(malloc_zone_t* zone) { UNUSED(zone); }
+static void new_destroy(malloc_zone_t* zone) { UNUSED(zone); }
 
-static unsigned whist_batch_malloc(malloc_zone_t* zone, size_t size, void** ps, unsigned count) {
+static unsigned new_batch_malloc(malloc_zone_t* zone, size_t size, void** ps, unsigned count) {
     size_t i;
     for (i = 0; i < count; i++) {
-        ps[i] = whist_malloc(zone, size);
+        ps[i] = new_malloc(zone, size);
         if (ps[i] == NULL) break;
     }
     return i;
 }
 
-static void whist_batch_free(malloc_zone_t* zone, void** ps, unsigned count) {
+static void new_batch_free(malloc_zone_t* zone, void** ps, unsigned count) {
     for (size_t i = 0; i < count; i++) {
-        whist_free(zone, ps[i]);
+        new_free(zone, ps[i]);
         ps[i] = NULL;
     }
 }
 
-static size_t whist_pressure_relief(malloc_zone_t* zone, size_t size) {
+static size_t new_pressure_relief(malloc_zone_t* zone, size_t size) {
     UNUSED(zone);
     UNUSED(size);
     mi_collect(false);
     return 0;
 }
 
-static void whist_free_definite_size(malloc_zone_t* zone, void* p, size_t size) {
+static void new_free_definite_size(malloc_zone_t* zone, void* p, size_t size) {
     UNUSED(size);
-    whist_free(zone, p);
+    new_free(zone, p);
 }
 
-static boolean_t whist_claimed_address(malloc_zone_t* zone, void* p) {
+static boolean_t new_claimed_address(malloc_zone_t* zone, void* p) {
     UNUSED(zone);
     return mi_is_in_heap_region(p);
 }
@@ -143,7 +143,7 @@ static boolean_t intro_zone_locked(malloc_zone_t* zone) {
     return false;
 }
 
-static malloc_introspection_t whist_introspect = {
+static malloc_introspection_t new_introspect = {
     .enumerator = &intro_enumerator,
     .good_size = &intro_good_size,
     .check = &intro_check,
@@ -155,26 +155,26 @@ static malloc_introspection_t whist_introspect = {
     .zone_locked = &intro_zone_locked,
 };
 
-static malloc_zone_t whist_malloc_zone = {
-    .size = &whist_size,
-    .malloc = &whist_malloc,
-    .calloc = &whist_calloc,
-    .valloc = &whist_valloc,
-    .free = &whist_free,
-    .realloc = &whist_realloc,
-    .destroy = &whist_destroy,
-    .zone_name = "whist_mimalloc",
-    .batch_malloc = &whist_batch_malloc,
-    .batch_free = &whist_batch_free,
-    .introspect = &whist_introspect,
+static malloc_zone_t new_malloc_zone = {
+    .size = &new_size,
+    .malloc = &new_malloc,
+    .calloc = &new_calloc,
+    .valloc = &new_valloc,
+    .free = &new_free,
+    .realloc = &new_realloc,
+    .destroy = &new_destroy,
+    .zone_name = "new_mimalloc",
+    .batch_malloc = &new_batch_malloc,
+    .batch_free = &new_batch_free,
+    .introspect = &new_introspect,
     .version = 10,
-    .memalign = &whist_memalign,
-    .free_definite_size = &whist_free_definite_size,
-    .pressure_relief = &whist_pressure_relief,
-    .claimed_address = &whist_claimed_address,
+    .memalign = &new_memalign,
+    .free_definite_size = &new_free_definite_size,
+    .pressure_relief = &new_pressure_relief,
+    .claimed_address = &new_claimed_address,
 };
 
-static inline malloc_zone_t* whist_get_default_zone(void) {
+static inline malloc_zone_t* new_get_default_zone(void) {
     // The first returned zone is the real default
     malloc_zone_t** zones = NULL;
     unsigned count = 0;
@@ -276,13 +276,13 @@ void init_whist_malloc_hook() {
 
     // Register our zone.
     // thomcc: I think this is still needed to put us in the zone list.
-    malloc_zone_register(&whist_malloc_zone);
+    malloc_zone_register(&new_malloc_zone);
     // Unregister the default zone, this makes our zone the new default
     // as that was the last registered.
-    malloc_zone_t* default_zone = whist_get_default_zone();
+    malloc_zone_t* default_zone = new_get_default_zone();
     // thomcc: Unsure if the next test is *always* false or just false in the
     // cases I've tried. I'm also unsure if the code inside is needed. at all
-    if (default_zone != &whist_malloc_zone) {
+    if (default_zone != &new_malloc_zone) {
         malloc_zone_unregister(default_zone);
 
         // Reregister the default zone so free and realloc in that zone keep working.
