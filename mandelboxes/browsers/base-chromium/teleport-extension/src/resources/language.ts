@@ -30,16 +30,18 @@ Object.defineProperty(navigator, "languages", {
     }
 })
 
+// NOTE: the only reason metaLanguage would be undefined is if the race condition 
+//     noted in content/language.ts manifests. We are relying on this race condition
+//     not being a problem, but still want to handle the case where it is a problem.
 if (metaLanguage) {
     // Override window.languagechange event
     const languageChangeEvent = new Event('languagechange')
     const metaLanguageObserver = new MutationObserver((mutationList, observer) => {
+        console.log("metaLanguage changed")
         window.dispatchEvent(languageChangeEvent)
     })
     metaLanguageObserver.observe(metaLanguage, {
         attributes: true,
         attributeFilter: [ "content" ]
     })
-} else {
-    console.log("RACE CONDITION IN SETTING LANGUAGE")
 }

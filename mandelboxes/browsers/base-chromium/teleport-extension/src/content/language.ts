@@ -9,7 +9,8 @@ const initLanguageSpoofer = () => {
 
     // NOTE: there is a potential race condition here. Since chrome.storage.session.get
     //     is asynchronous, this meta tag may not be created before the navigator.language/languages
-    //     is called for the first time.
+    //     is called for the first time. We ignore the race condition for now because storage get seems
+    //     to be fast enough that it isn't a problem.
     chrome.storage.local.get(["language", "languages"], (addedItems: any) => {
         console.log(addedItems)
         const language = addedItems.language
@@ -24,9 +25,6 @@ const initLanguageSpoofer = () => {
         document.documentElement.appendChild(metaLanguage)
 
         // Listen for LANGUAGE_UPDATE message and update corresponding meta tag
-        // NOTE: while this could be implemented with a listener on
-        //     chrome.storage.onChanged, the implementation becomes
-        //     more complicated and so we use the ContentScriptyMessage instead.
         chrome.runtime.onMessage.addListener(async (msg: ContentScriptMessage) => {
             if (msg.type !== ContentScriptMessageType.LANGUAGE_UPDATE) return
 
