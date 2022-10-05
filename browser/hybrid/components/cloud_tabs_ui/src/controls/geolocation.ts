@@ -52,6 +52,7 @@ const intializeGeolocationRequestHandler = () => {
             geolocationErrorCallback(serverMetaTagName, parsed.value.id),
             parsed.value.options
           )
+          break;
 
         case 'watchPosition':
           const watchHandle = navigator.geolocation.watchPosition(
@@ -72,6 +73,7 @@ const intializeGeolocationRequestHandler = () => {
               navigator.geolocation.clearWatch(watchHandle)
             }
           })
+          break;
       }
     }
   })
