@@ -65,19 +65,27 @@ func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ ma
 		log.Printf("a")
 		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistFrontendVersions")
 		entry := subscriptions.WhistFrontendVersion{
+<<<<<<< HEAD
 			ID: 1,
 >>>>>>> fd3f006a3 (Add test for frontend version)
+=======
+			ID:    1,
+>>>>>>> 8da5f4a29 (Linting)
 			Major: 1,
 			Minor: 0,
 			Micro: 0,
 		}
 		config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
 <<<<<<< HEAD
+<<<<<<< HEAD
 			unsafe.Pointer(&entry)).Elem()))
 
 	default:
 =======
 				unsafe.Pointer(&entry)).Elem()))
+=======
+			unsafe.Pointer(&entry)).Elem()))
+>>>>>>> 8da5f4a29 (Linting)
 
 	default:
 		log.Printf("b")
@@ -172,11 +180,7 @@ func TestGetMandelboxLimit(t *testing.T) {
 // frontend version retrieved from the configuration database.
 func TestGetFrontendVersion(t *testing.T) {
 	var tests = []struct {
-<<<<<<< HEAD
 		env     metadata.AppEnvironment
-=======
-		env   metadata.AppEnvironment
->>>>>>> fd3f006a3 (Add test for frontend version)
 		version string
 	}{
 		{metadata.EnvDev, "1.0.0-dev-rc.0"},
