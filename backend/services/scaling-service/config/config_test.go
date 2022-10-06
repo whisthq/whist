@@ -5,6 +5,7 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -37,6 +38,7 @@ func (*testClient) Mutate(_ context.Context, _ subscriptions.GraphQLQuery, _ map
 func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ map[string]interface{}) error {
 	regions, err := json.Marshal(t.regions)
 
+	log.Printf("Query type %T", q)
 	if err != nil {
 		return err
 	}
@@ -55,17 +57,31 @@ func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ ma
 	case *struct {
 		WhistFrontendVersions []subscriptions.WhistFrontendVersion "graphql:\"desktop_app_version(where: {id: {_eq: $id}})\""
 	}:
+<<<<<<< HEAD
 		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistFrontendVersions")
 		entry := subscriptions.WhistFrontendVersion{
 			ID:    1,
+=======
+		log.Printf("a")
+		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistFrontendVersions")
+		entry := subscriptions.WhistFrontendVersion{
+			ID: 1,
+>>>>>>> fd3f006a3 (Add test for frontend version)
 			Major: 1,
 			Minor: 0,
 			Micro: 0,
 		}
 		config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
+<<<<<<< HEAD
 			unsafe.Pointer(&entry)).Elem()))
 
 	default:
+=======
+				unsafe.Pointer(&entry)).Elem()))
+
+	default:
+		log.Printf("b")
+>>>>>>> fd3f006a3 (Add test for frontend version)
 		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistConfigs")
 		for _, entry := range configTable {
 			config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
@@ -156,7 +172,11 @@ func TestGetMandelboxLimit(t *testing.T) {
 // frontend version retrieved from the configuration database.
 func TestGetFrontendVersion(t *testing.T) {
 	var tests = []struct {
+<<<<<<< HEAD
 		env     metadata.AppEnvironment
+=======
+		env   metadata.AppEnvironment
+>>>>>>> fd3f006a3 (Add test for frontend version)
 		version string
 	}{
 		{metadata.EnvDev, "1.0.0-dev-rc.0"},
