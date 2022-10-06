@@ -37,6 +37,7 @@ services:
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       ## uncomment next line to set an admin secret
       # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+      HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
   graphql-config-engine:
     image: hasura/graphql-engine
     ports:
@@ -56,6 +57,7 @@ services:
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       ## uncomment next line to set an admin secret
       # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+      HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
 volumes:
   db_data:
   db_data_config:
