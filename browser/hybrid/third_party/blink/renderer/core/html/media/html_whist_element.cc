@@ -196,6 +196,10 @@ HTMLWhistElement::HTMLWhistElement(Document& document)
     WhistElementSequencedTask((HTMLWhistElement*)ctx, &HTMLWhistElement::UpdateCursorType, String(cursor_type), relative_mouse_mode);
   });
 
+  WHIST_VIRTUAL_INTERFACE_CALL(events.set_on_whist_log_callback, whist_window_id_, [](void* ctx, unsigned int level, const char* line) {
+    ((HTMLWhistElement*)ctx)->DispatchEvent(*WhistStringEvent::Create(whist_event_type_names::kLogevent, String(line)));
+  });
+
   WHIST_VIRTUAL_INTERFACE_CALL(events.set_get_modifier_key_state, []() -> int {
     int modifier_flags = 0;
 #ifdef _WIN32

@@ -128,16 +128,6 @@ void InitializeWhistClient() {
   // Initialize whist, so that connections can be made from javascript later
   WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
 
-  // Pipe protocol logs to a .log file
-  base::FilePath path;
-  base::PathService::Get(chrome::DIR_USER_DATA, &path);
-  path = path.Append(LOG_FILE_NAME);
-  whist_logs_out.open(path.AsUTF8Unsafe().c_str());
-
-  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line) {
-    whist_logs_out << line;
-  });
-
   // Note: This atexit doesn't seem to trigger because of the way Chromium
   // exit()s renderer processes instead of allowing them to gracefully exit.
   // We register it anyways for the sake of completeness.
