@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"encoding/json"
+	"strings"
 	"sync"
 	"time"
 
@@ -77,7 +78,12 @@ func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 		}).WithLog(logger.Debug).
 		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
 		OnError(func(sc *graphql.SubscriptionClient, err error) error {
-			logger.Errorf("Error received from Hasura client: %s", err)
+			if strings.Contains(err.Error(), "use of closed network connection") {
+				logger.Warning(err)
+				return nil
+			}
+
+			logger.Errorf("error received from Hasura client: %s", err)
 			return err
 		}).
 		WithRetryTimeout(5 * time.Minute)
