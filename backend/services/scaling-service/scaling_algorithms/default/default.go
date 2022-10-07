@@ -134,7 +134,7 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 
 	var (
 		configs map[string]string
-		err error
+		err     error
 	)
 
 	switch metadata.GetAppEnvironmentLowercase() {
