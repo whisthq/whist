@@ -5,7 +5,9 @@ import (
 
 	"github.com/google/uuid"
 	graphql "github.com/hasura/go-graphql-client"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/types"
+	"github.com/whisthq/whist/backend/services/utils"
 )
 
 // Types used for GraphQL queries/subscriptions
@@ -276,4 +278,19 @@ func ToFrontendVersion(dbVersion WhistFrontendVersion) FrontendVersion {
 		StagingCommitHash: string(dbVersion.StagingCommitHash),
 		ProdCommitHash:    string(dbVersion.ProdCommitHash),
 	}
+}
+
+// Make the FrontendVersion type implement the Stringer interface
+func (fv FrontendVersion) String() string {
+	var version string
+	switch metadata.GetAppEnvironment() {
+	case metadata.EnvDev:
+		version = utils.Sprintf("%v.%v.%v-dev-rc.%v", fv.Major, fv.Minor, fv.Micro, fv.DevRC)
+	case metadata.EnvStaging:
+		version = utils.Sprintf("%v.%v.%v-staging-rc.%v", fv.Major, fv.Minor, fv.Micro, fv.StagingRC)
+	default:
+		version = utils.Sprintf("%v.%v.%v", fv.Major, fv.Minor, fv.Micro)
+	}
+
+	return version
 }

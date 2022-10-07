@@ -26,6 +26,10 @@ type serviceConfig struct {
 	// mandelboxLimitPerUser is the maximum number of active mandelboxes a
 	// user can have.
 	mandelboxLimitPerUser int32
+
+	// frontendVersion represents the current version of the frontend
+	// (e.g. "2.6.13").
+	frontendVersion string
 }
 
 // config is a singleton that stores service-global configuration values.
@@ -62,4 +66,24 @@ func GetMandelboxLimitPerUser() int32 {
 	defer rw.RUnlock()
 
 	return config.mandelboxLimitPerUser
+}
+
+// GetFrontendVersion returns the current version number of the frontend as
+// reported by the config database.
+func GetFrontendVersion() string {
+	rw.RLock()
+	defer rw.RUnlock()
+
+	return config.frontendVersion
+}
+
+// setFrontendVersion sets the frontend version we track locally. It does not update the value in the config database,
+// only the configuration variable defined in this file shared between scaling algorithms. This function is only used
+// when starting the scaling algorithm, and when the CI has updated the config database.
+func SetFrontendVersion(newVersion subscriptions.FrontendVersion) {
+	rw.RLock()
+	defer rw.RUnlock()
+
+	version := newVersion.String()
+	config.frontendVersion = version
 }
