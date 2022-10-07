@@ -1,12 +1,9 @@
 package scaling_algorithms
 
 import (
-	"sync"
 	"time"
 
 	"github.com/whisthq/whist/backend/services/constants"
-	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
