@@ -77,6 +77,7 @@ func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ ma
 	case reflect.TypeOf(subscriptions.QueryStagingConfigurations):
 		fallthrough
 	case reflect.TypeOf(subscriptions.QueryProdConfigurations):
+
 		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistConfigs")
 
 		for _, entry := range configTable {
