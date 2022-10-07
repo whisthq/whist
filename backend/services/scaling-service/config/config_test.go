@@ -57,39 +57,17 @@ func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ ma
 	case *struct {
 		WhistFrontendVersions []subscriptions.WhistFrontendVersion "graphql:\"desktop_app_version(where: {id: {_eq: $id}})\""
 	}:
-<<<<<<< HEAD
 		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistFrontendVersions")
 		entry := subscriptions.WhistFrontendVersion{
 			ID:    1,
-=======
-		log.Printf("a")
-		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistFrontendVersions")
-		entry := subscriptions.WhistFrontendVersion{
-<<<<<<< HEAD
-			ID: 1,
->>>>>>> fd3f006a3 (Add test for frontend version)
-=======
-			ID:    1,
->>>>>>> 8da5f4a29 (Linting)
 			Major: 1,
 			Minor: 0,
 			Micro: 0,
 		}
 		config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
-<<<<<<< HEAD
-<<<<<<< HEAD
 			unsafe.Pointer(&entry)).Elem()))
 
 	default:
-=======
-				unsafe.Pointer(&entry)).Elem()))
-=======
-			unsafe.Pointer(&entry)).Elem()))
->>>>>>> 8da5f4a29 (Linting)
-
-	default:
-		log.Printf("b")
->>>>>>> fd3f006a3 (Add test for frontend version)
 		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistConfigs")
 		for _, entry := range configTable {
 			config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
