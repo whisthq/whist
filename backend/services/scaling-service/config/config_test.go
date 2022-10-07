@@ -5,7 +5,6 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -38,7 +37,6 @@ func (*testClient) Mutate(_ context.Context, _ subscriptions.GraphQLQuery, _ map
 func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ map[string]interface{}) error {
 	regions, err := json.Marshal(t.regions)
 
-	log.Printf("Query type %T", q)
 	if err != nil {
 		return err
 	}
