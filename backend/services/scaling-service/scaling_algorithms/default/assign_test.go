@@ -151,12 +151,13 @@ func TestMandelboxAssign(t *testing.T) {
 				wg := &sync.WaitGroup{}
 				errorChan := make(chan error, 1)
 
-				frontendVersion = &subscriptions.FrontendVersion{
+				frontendVersion := subscriptions.FrontendVersion{
 					ID:    1,
 					Major: 3,
 					Minor: 0,
 					Micro: 0,
 				}
+				config.SetFrontendVersion(frontendVersion)
 
 				wg.Add(1)
 				go func() {
@@ -296,12 +297,13 @@ func TestMandelboxLimit(t *testing.T) {
 	}
 	testAssignRequest.CreateResultChan()
 
-	frontendVersion = &subscriptions.FrontendVersion{
+	frontendVersion := subscriptions.FrontendVersion{
 		ID:    1,
 		Major: 3,
 		Minor: 0,
 		Micro: 0,
 	}
+	config.SetFrontendVersion(frontendVersion)
 
 	wg := &sync.WaitGroup{}
 	errorChan := make(chan error, 1)

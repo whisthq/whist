@@ -24,11 +24,6 @@ var (
 	desiredFreeMandelboxesPerRegion = map[string]int{
 		"us-east-1": 2,
 	}
-	// frontendVersion represents the current version of the frontend
-	// (e.g. "2.6.13").
-	frontendVersion *subscriptions.FrontendVersion
-	// A lock to update the version once it gets switched on the database
-	versionLock = &sync.Mutex{}
 )
 
 const (
@@ -103,42 +98,4 @@ func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]
 		capacityMap[instanceType] = min
 	}
 	return capacityMap
-}
-
-// getFrontendVersion returns the current version of the frontend, which is initially
-// populated from the config database. This value is used by the scaling algorithm to
-// determine if the incoming requests come from an outdated frontend, and is part of
-// common configuration values shared by the scaling algorithms. Its necessary to grab
-// a lock because multiple scaling algorithms read and update it.
-func getFrontendVersion() string {
-	versionLock.Lock()
-	defer versionLock.Unlock()
-
-	var version string
-
-	if frontendVersion == nil {
-		return ""
-	}
-
-	switch metadata.GetAppEnvironment() {
-	case metadata.EnvDev:
-		version = utils.Sprintf("%v.%v.%v-dev-rc.%v", frontendVersion.Major, frontendVersion.Minor, frontendVersion.Micro, frontendVersion.DevRC)
-	case metadata.EnvStaging:
-		version = utils.Sprintf("%v.%v.%v-staging-rc.%v", frontendVersion.Major, frontendVersion.Minor, frontendVersion.Micro, frontendVersion.StagingRC)
-	default:
-		version = utils.Sprintf("%v.%v.%v", frontendVersion.Major, frontendVersion.Minor, frontendVersion.Micro)
-	}
-
-	return version
-}
-
-// setFrontendVersion sets the frontend version we track locally. It does not update the value in the config database,
-// only the configuration variable defined in this file shared between scaling algorithms. This function is only used
-// when starting the scaling algorithm, and when the CI has updated the config database. Its necessary to grab a lock
-// because multiple scaling algorithms read and update it.
-func setFrontendVersion(newVersion subscriptions.FrontendVersion) {
-	versionLock.Lock()
-	defer versionLock.Unlock()
-
-	frontendVersion = &newVersion
 }
