@@ -145,7 +145,6 @@ flags+=("--flag-switches-end")
 # if [[ -n "$USER_AGENT" ]]; then
 #   flags+=("--user-agent=$USER_AGENT")
 # fi
-flags+=("--user-agent=$USER_AGENT")
 
 # # Start the server-side extension if the client requests it
 # if [[ "$LOAD_EXTENSION" == true ]]; then
