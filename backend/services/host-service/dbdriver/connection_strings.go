@@ -8,7 +8,7 @@ import (
 
 // Whist database connection strings
 
-const localDevDatabaseURL = "user=uap4ch2emueqo9 host=localhost port=9999 dbname=d9rf2k3vd6hvbm"
+const localDevDatabaseURL = "user=postgres host=localhost port=5432 dbname=postgres password=whistpass"
 
 func getWhistDBConnString() (string, error) {
 	if metadata.IsLocalEnv() {
