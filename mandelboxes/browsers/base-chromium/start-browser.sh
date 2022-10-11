@@ -73,7 +73,7 @@ function commit_preferences_jq() {
 }
 
 # Set the browser language
-add_preferences_jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}'
+# add_preferences_jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}'
 
 # Notes on Chromium flags:
 #
