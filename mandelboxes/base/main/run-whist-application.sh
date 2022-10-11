@@ -25,7 +25,7 @@ echo $$ > $WHIST_APPLICATION_PID_FILE
 block-while-file-exists.sh $WHIST_APPLICATION_PID_FILE >&1
 
 # Pass JSON transport settings as environment variables
-export DARK_MODE=$DARK_MODE
+# export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 export LOAD_EXTENSION=$LOAD_EXTENSION
 export TZ=$TZ # TZ variable automatically adjusts the timezone (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
