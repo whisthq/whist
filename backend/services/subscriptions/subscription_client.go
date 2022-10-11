@@ -78,6 +78,11 @@ func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 		}).WithLog(logger.Debug).
 		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
 		OnError(func(sc *graphql.SubscriptionClient, err error) error {
+			// When the client returns a "use of closed network connection" error, only log it
+			// as a warning. This error is caused by the client closing the underlying websocket
+			// connection before the subscription disconnects. Additionally, it only happens when
+			// removing the subscriptions and terminating the client, so it is not a serious error.
+			// See: https://github.com/whisthq/whist/pull/7433
 			if strings.Contains(err.Error(), "use of closed network connection") {
 				logger.Warning(err)
 				return nil
