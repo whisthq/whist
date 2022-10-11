@@ -42,7 +42,7 @@ EOF
 # $1: Postgres connection string
 wait_database_ready() {
   cmds="\q"
-  while ! (psql "$1" <<< $cmds) &> /dev/null
+  while ! (docker run --rm --network=services_default -i postgres psql "$1" <<< $cmds) &> /dev/null
   do
     echo "Connection failed. Retrying in 2 seconds..."
     sleep 2
@@ -60,8 +60,8 @@ if [[ $* =~ [:space:]*--down[:space:]* ]]; then
 fi
 
 # PostgreSQL strings used for connecting to the databse on the host machine.
-LOCAL_WHIST_PGSTRING="postgres://postgres:whistpass@localhost:5432/postgres"
-LOCAL_CONFIG_PGSTRING="postgres://postgres:whistpass@localhost:9999/postgres"
+LOCAL_WHIST_PGSTRING="postgresql://postgres:whistpass@postgres/postgres"
+LOCAL_CONFIG_PGSTRING="postgresql://postgres:whistpass@postgres-config/postgres"
 
 # PostgreSQL strings used for connecting to the database inside the Docker network.
 DOCKER_WHIST_PGSTRING="postgres://postgres:whistpass@postgres:5432/postgres"
@@ -84,16 +84,16 @@ wait_database_ready "$LOCAL_CONFIG_PGSTRING" &
 wait
 
 echo "Setting up local databases..."
-pg_dump --no-owner --no-privileges --schema-only "$DEV_CONFIG_DATABASE" > config_schema.sql
-psql "$LOCAL_CONFIG_PGSTRING" < config_schema.sql
-psql "$LOCAL_WHIST_PGSTRING" < ../database/schema.sql
+docker run --rm postgres pg_dump --no-owner --no-privileges --schema-only "$DEV_CONFIG_DATABASE" > config_schema.sql
+docker run --rm --network=services_default -i postgres psql "$LOCAL_CONFIG_PGSTRING" < config_schema.sql
+docker run --rm --network=services_default -i postgres psql "$LOCAL_WHIST_PGSTRING" < ../database/schema.sql
 
 echo "Adding databases to Hasura servers..."
 add_database_hasura "$LOCAL_WHIST_URL" "$DOCKER_WHIST_PGSTRING"
 add_database_hasura "$LOCAL_CONFIG_URL" "$DOCKER_CONFIG_PGSTRING"
 
 echo "Populating config database..."
-psql "$LOCAL_CONFIG_PGSTRING" <<EOF
+docker run --rm --network=services_default -i postgres psql "$LOCAL_CONFIG_PGSTRING" <<EOF
 \x
 INSERT INTO dev VALUES
     ('DESIRED_FREE_MANDELBOXES_US_EAST_1', '2'),
