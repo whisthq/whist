@@ -168,6 +168,10 @@ class HTMLWhistElement::WheelEventListener : public NativeEventListener {
   Member<HTMLWhistElement> element_;
 };
 
+void HTMLWhistElement::DispatchLogEvent(String message) {
+  DispatchEvent(*WhistStringEvent::Create(whist_event_type_names::kLogevent, String(message)));
+}
+
 HTMLWhistElement::HTMLWhistElement(Document& document)
     : HTMLVideoElement(html_names::kWhistTag, document),
       sequenced_task_runner_(base::SequencedTaskRunnerHandle::Get()),
@@ -197,7 +201,8 @@ HTMLWhistElement::HTMLWhistElement(Document& document)
   });
 
   WHIST_VIRTUAL_INTERFACE_CALL(events.set_on_whist_log_callback, whist_window_id_, [](void* ctx, unsigned int level, const char* line) {
-    ((HTMLWhistElement*)ctx)->DispatchEvent(*WhistStringEvent::Create(whist_event_type_names::kLogevent, String(line)));
+    // Log events my only be submitted on the main sequence, so we need to post a task to the main sequence
+    WhistElementSequencedTask((HTMLWhistElement*)ctx, &HTMLWhistElement::DispatchLogEvent, String(line));
   });
 
   WHIST_VIRTUAL_INTERFACE_CALL(events.set_get_modifier_key_state, []() -> int {
