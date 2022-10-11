@@ -206,7 +206,7 @@ static inline malloc_zone_t* new_get_default_zone(void) {
 // - obj_name: some other output, also unused
 static void mlock_statics() {
     // TODO: better way of mlock'ing static segments
-    static mach_vm_address_t max_addr = (mach_vm_address_t)0x20000000000;
+    static mach_vm_address_t max_addr = (mach_vm_address_t)0x200000000;
     task_t t = mach_task_self();
 
     mach_vm_address_t addr = 1;
@@ -235,12 +235,11 @@ static void mlock_statics() {
             // check for overflow; all VM regions are distinct, so this should not error out until
             // we have reached the end of the memory we want to mlock
             if ((prev_addr == 0 || addr >= prev_addr + prev_size) && addr <= max_addr) {
-                // LOG_INFO("mlock'ed %p size %llx", (void*)addr, size);
                 // update region list data and mlock
                 int ret = mlock((void*)addr, size);
                 if (ret == -1) {
-                    LOG_MESSAGE_RATE_LIMITED(0.1, 1, ERROR, "mlock failed with error %s",
-                                             strerror(errno));
+                    LOG_INFO("mlock at addr %p size %llu failed with error %s",
+                                             (void*)addr, size, strerror(errno));
                 }
                 prev_addr = addr;
                 prev_size = size;
@@ -261,7 +260,8 @@ static void mlock_statics() {
 extern malloc_zone_t* malloc_default_purgeable_zone(void) __attribute__((weak_import));
 
 void init_whist_malloc_hook() {
-    mi_option_set(mi_option_page_reset, 0);
+    // this makes it so that resets and unresets happen once a second instead of once every 100ms, the default
+    mi_option_set(mi_option_reset_delay, 1000);
     LOG_INFO("mlocking statics");
     mlock_statics();
     LOG_INFO("Initializing custom malloc");
