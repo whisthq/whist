@@ -81,6 +81,11 @@ func (host *AWSHost) Initialize(region string) error {
 	return nil
 }
 
+// GetRegion is part of the HostHandler interface.
+func (h *AWSHost) GetRegion() string {
+	return h.Region
+}
+
 // MakeInstances is a simple method that calls the RunInstances function from the ec2 client.
 func (host *AWSHost) MakeInstances(c context.Context, input *ec2.RunInstancesInput) (*ec2.RunInstancesOutput, error) {
 	return host.EC2.RunInstances(c, input)

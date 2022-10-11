@@ -195,6 +195,10 @@ func (db *mockDBClient) UpdateMandelbox(_ context.Context, _ subscriptions.Whist
 // mockHostHandler is used to test all interactions with cloud providers
 type mockHostHandler struct{}
 
+func (h *mockHostHandler) GetRegion() string {
+	return "blah"
+}
+
 func (mh *mockHostHandler) Initialize(region string) error {
 	return nil
 }
