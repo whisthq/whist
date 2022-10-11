@@ -130,6 +130,8 @@ flags=(
 #   features="$features,WebUIDarkMode"
 #   flags+=("--force-dark-mode")
 # fi
+features="$features,WebUIDarkMode"
+flags+=("--force-dark-mode")
 
 # if [[ "$RESTORE_LAST_SESSION" == true ]]; then
 #   flags+=("--restore-last-session")

@@ -26,17 +26,17 @@ block-while-file-exists.sh $WHIST_APPLICATION_PID_FILE >&1
 
 # Pass JSON transport settings as environment variables
 # export DARK_MODE=$DARK_MODE
-export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
-export LOAD_EXTENSION=$LOAD_EXTENSION
+# export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
+# export LOAD_EXTENSION=$LOAD_EXTENSION
 export TZ=$TZ # TZ variable automatically adjusts the timezone (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
-export INITIAL_URL=$INITIAL_URL
-export USER_AGENT=$USER_AGENT
-export KIOSK_MODE=$KIOSK_MODE
+# export INITIAL_URL=$INITIAL_URL
+# export USER_AGENT=$USER_AGENT
+# export KIOSK_MODE=$KIOSK_MODE
 # export LONGITUDE=$LONGITUDE
 # export LATITUDE=$LATITUDE
 # Set the locale (the line below exports all the locale environment variables)
 # export ${USER_LOCALE?}
-# export LANGUAGE=$SYSTEM_LANGUAGES
+export LANGUAGE=$SYSTEM_LANGUAGES
 # export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
 export CLIENT_OS=$CLIENT_OS
 
