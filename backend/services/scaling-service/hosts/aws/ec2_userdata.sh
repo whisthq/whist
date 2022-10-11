@@ -110,7 +110,7 @@ else
 fi
 
 # Pull Docker images and warmup entire disk in parallel.
-run_with_timeout 120 retry_docker_pull &
+run_with_timeout 240 retry_docker_pull &
 # Based on initialization commands in https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
 # Changes:
 #   - changed blocksize to 1M from 128k because optimal dd blocksize is 1M according to above link

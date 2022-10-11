@@ -178,8 +178,15 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		<-ctx.Done()
 
 		var mandelboxCloseErr *multierror.Error
-		if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusDying); err != nil {
-			mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
+
+		// Don't try to mark mandelbox as dying if the status is empty. This indicates that
+		// the mandelbox wasn't created successfully in the spinup process.
+		if mandelbox.GetStatus() != "" {
+			if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusDying); err != nil {
+				mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
+			}
+		} else {
+			logger.Infof("Not marking mandelbox as DYING since it doesn't exist in database")
 		}
 
 		untrackMandelbox(mandelbox)
@@ -218,8 +225,14 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		mandelbox.cleanResourceMappingDir()
 		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.GetID())
 
-		if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
-			mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
+		// Don't try to remove mandelbox if the status is empty. This indicates that
+		// the mandelbox wasn't created successfully in the spinup process.
+		if mandelbox.GetStatus() != "" {
+			if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
+				mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
+			}
+		} else {
+			logger.Infof("Not removing mandelbox from database since it doesn't exist")
 		}
 
 		logger.Infof("Cleaned up after Mandelbox %s", mandelbox.GetID())
