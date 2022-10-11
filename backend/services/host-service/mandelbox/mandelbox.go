@@ -314,8 +314,8 @@ func (mandelbox *mandelboxData) GetSessionID() types.SessionID {
 
 // SetSessionID sets the ID of the session running on the mandelbox.
 func (mandelbox *mandelboxData) SetSessionID(session types.SessionID) {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
+	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
 	mandelbox.sessionID = session
 }
 
@@ -329,8 +329,8 @@ func (mandelbox *mandelboxData) GetStatus() dbdriver.MandelboxStatus {
 // SetConnectedStatus sets the mandelbox status and changes the time
 // the mandelbox was updated.
 func (mandelbox *mandelboxData) SetStatus(status dbdriver.MandelboxStatus) {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
+	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
 	mandelbox.status = status
 	mandelbox.updatedAt = time.Now()
 }
