@@ -238,8 +238,8 @@ static void mlock_statics() {
                 // update region list data and mlock
                 int ret = mlock((void*)addr, size);
                 if (ret == -1) {
-                    LOG_INFO("mlock at addr %p size %llu failed with error %s",
-                                             (void*)addr, size, strerror(errno));
+                    LOG_INFO("mlock at addr %p size %llu failed with error %s", (void*)addr, size,
+                             strerror(errno));
                 }
                 prev_addr = addr;
                 prev_size = size;
@@ -260,7 +260,8 @@ static void mlock_statics() {
 extern malloc_zone_t* malloc_default_purgeable_zone(void) __attribute__((weak_import));
 
 void init_whist_malloc_hook() {
-    // this makes it so that resets and unresets happen once a second instead of once every 100ms, the default
+    // this makes it so that resets and unresets happen once a second instead of once every 100ms,
+    // the default
     mi_option_set(mi_option_reset_delay, 1000);
     LOG_INFO("mlocking statics");
     mlock_statics();
