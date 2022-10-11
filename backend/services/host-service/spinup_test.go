@@ -165,6 +165,10 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	if metadata.IsRunningInCI() {
 		userID = "localdev_host_service_CI"
 	} else {
+		err := metadata.GenerateCloudMetadataRetriever()
+		if err != nil {
+			t.Fatalf("failed to generate cloud metadata retriever: %s", err)
+		}
 		instanceID = metadata.CloudMetadata.GetInstanceID()
 		userID = types.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceID))
 	}
