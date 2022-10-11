@@ -20,46 +20,35 @@ set -Eeuo pipefail
 
 # default values for the JSON transport settings from the client
 DARK_MODE=false
-RESTORE_LAST_SESSION=true
-LOAD_EXTENSION=false
-DESIRED_TIMEZONE=Etc/UTC
-INITIAL_KEY_REPEAT=68 # default value on macOS, options are 120, 94, 68, 35, 25, 15
-KEY_REPEAT=6 # default value on macOS, options are 120, 90, 60, 30, 12, 6, 2
-INITIAL_URL=""
-USER_AGENT=""
-LATITUDE=""
-LONGITUDE=""
-USER_LOCALE=""
-SYSTEM_LANGUAGES="en_US"
-BROWSER_LANGUAGES="en-US,en"
-KIOSK_MODE=false
-CLIENT_OS=""
+#RESTORE_LAST_SESSION=true # unused
+#LOAD_EXTENSION=false # make a development flag
+DESIRED_TIMEZONE=Etc/UTC # needs to be set on system
+INITIAL_KEY_REPEAT=68 # default value on macOS, options are 120, 94, 68, 35, 25, 15 # needs to be set on system
+KEY_REPEAT=6 # default value on macOS, options are 120, 90, 60, 30, 12, 6, 2 # needs to be set on system
+#INITIAL_URL="" # unused
+#USER_AGENT="" # already set by extension
+SYSTEM_LANGUAGES="en_US" # needs to be set on system
+#KIOSK_MODE=false # always should be on kiosk - make a development flag
+#CLIENT_OS="" # set to mac for now
 
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq -rc 'has("dark_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
     DARK_MODE="$(jq -rc '.dark_mode' < $WHIST_JSON_FILE)"
   fi
-  if [ "$( jq -rc 'has("restore_last_session")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    RESTORE_LAST_SESSION="$(jq -rc '.restore_last_session' < $WHIST_JSON_FILE)"
-  fi
-  if [ "$( jq -rc 'has("load_extension")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    LOAD_EXTENSION="$(jq -rc '.load_extension' < $WHIST_JSON_FILE)"
-  fi
+  # if [ "$( jq -rc 'has("restore_last_session")' < $WHIST_JSON_FILE )" == "true"  ]; then
+  #   RESTORE_LAST_SESSION="$(jq -rc '.restore_last_session' < $WHIST_JSON_FILE)"
+  # fi
+  # if [ "$( jq -rc 'has("load_extension")' < $WHIST_JSON_FILE )" == "true"  ]; then
+  #   LOAD_EXTENSION="$(jq -rc '.load_extension' < $WHIST_JSON_FILE)"
+  # fi
   if [ "$( jq -rc 'has("desired_timezone")' < $WHIST_JSON_FILE )" == "true"  ]; then
     DESIRED_TIMEZONE="$(jq -rc '.desired_timezone' < $WHIST_JSON_FILE)"
     # Set the system-wide timezone
     timedatectl set-timezone "$DESIRED_TIMEZONE"
   fi
-  if [ "$( jq -rc 'has("user_locale")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    USER_LOCALE="$(jq -rc '.user_locale | to_entries[] | "\(.key)=\(.value)"' < $WHIST_JSON_FILE)"
-    USER_LOCALE="${USER_LOCALE//$'\n'/ }"
-  fi
   if [ "$( jq -rc 'has("system_languages")' < $WHIST_JSON_FILE )" == "true"  ]; then
     SYSTEM_LANGUAGES="$(jq -rc '.system_languages' < $WHIST_JSON_FILE)"
-  fi
-  if [ "$( jq -rc 'has("browser_languages")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    BROWSER_LANGUAGES="$(jq -rc '.browser_languages' < $WHIST_JSON_FILE)"
   fi
   if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
@@ -69,20 +58,14 @@ if [[ -f $WHIST_JSON_FILE ]]; then
       xset r rate "$INITIAL_KEY_REPEAT" "$KEY_REPEAT"
     fi
   fi
-  if [ "$( jq -rc 'has("initial_url")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    INITIAL_URL="$(jq -rc '.initial_url' < $WHIST_JSON_FILE)"
-  fi
-  if [ "$( jq -rc 'has("user_agent")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    USER_AGENT="$(jq -rc '.user_agent' < $WHIST_JSON_FILE)"
-  fi
-  if [ "$( jq -rc 'has("kiosk_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    KIOSK_MODE="$(jq -rc '.kiosk_mode' < $WHIST_JSON_FILE)"
-  fi
-  # if [ "$( jq -rc 'has("latitude")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #   LATITUDE="$(jq -rc '.latitude' < $WHIST_JSON_FILE)"
+  # if [ "$( jq -rc 'has("initial_url")' < $WHIST_JSON_FILE )" == "true"  ]; then
+  #   INITIAL_URL="$(jq -rc '.initial_url' < $WHIST_JSON_FILE)"
   # fi
-  # if [ "$( jq -rc 'has("longitude")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #   LONGITUDE="$(jq -rc '.longitude' < $WHIST_JSON_FILE)"
+  # if [ "$( jq -rc 'has("user_agent")' < $WHIST_JSON_FILE )" == "true"  ]; then
+  #   USER_AGENT="$(jq -rc '.user_agent' < $WHIST_JSON_FILE)"
+  # fi
+  # if [ "$( jq -rc 'has("kiosk_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
+  #   KIOSK_MODE="$(jq -rc '.kiosk_mode' < $WHIST_JSON_FILE)"
   # fi
   if [ "$( jq -rc 'has("client_os")' < $WHIST_JSON_FILE )" == "true"  ]; then
     CLIENT_OS="$(jq -rc '.client_os' < $WHIST_JSON_FILE)"
@@ -158,20 +141,16 @@ done
 # in order to automatically adjust the timezone at the lower layers
 export TZ=$DESIRED_TIMEZONE
 export DARK_MODE=$DARK_MODE
-export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
-export LOAD_EXTENSION=$LOAD_EXTENSION
-export INITIAL_URL=$INITIAL_URL
-export USER_AGENT="$USER_AGENT"
-export KIOSK_MODE=$KIOSK_MODE
-export LONGITUDE=$LONGITUDE
-export LATITUDE=$LATITUDE
+# export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
+# export LOAD_EXTENSION=$LOAD_EXTENSION
+# export INITIAL_URL=$INITIAL_URL
+# export USER_AGENT="$USER_AGENT"
+# export KIOSK_MODE=$KIOSK_MODE
 export SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
-export USER_LOCALE=$USER_LOCALE
 export SYSTEM_LANGUAGES=$SYSTEM_LANGUAGES
-export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
 export CLIENT_OS=$CLIENT_OS
 
-exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,LOAD_EXTENSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,SYSTEM_LANGUAGES,BROWSER_LANGUAGES,CLIENT_OS -c \
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,LOAD_EXTENSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,SYSTEM_LANGUAGES,CLIENT_OS -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
