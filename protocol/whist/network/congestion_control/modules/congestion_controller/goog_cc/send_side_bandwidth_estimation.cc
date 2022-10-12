@@ -48,7 +48,7 @@ constexpr TimeDelta kMaxRtcpFeedbackInterval = TimeDelta::Millis(5000);
 
 #if ENABLE_WHIST_CHANGE
 constexpr float kDefaultLowLossThreshold = 0.06f;
-constexpr float kDefaultHighLossThreshold = 0.13f;
+constexpr float kDefaultHighLossThreshold = 0.10f;
 #else
 constexpr float kDefaultLowLossThreshold = 0.02f;
 constexpr float kDefaultHighLossThreshold = 0.1f;
