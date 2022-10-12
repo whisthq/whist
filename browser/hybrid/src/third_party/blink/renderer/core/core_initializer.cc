@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2022 Whist Technologies Inc. All rights reserved.
+ */
+
 #include "third_party/blink/renderer/core/whist_event_type_names.h"
 // Prevent our redefines from modifying headers. We want them to only
 // insert our new code into the core_initializer.cc implementation, not
