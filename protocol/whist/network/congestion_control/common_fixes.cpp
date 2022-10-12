@@ -3,7 +3,8 @@
 #include "common_fixes.h"
 #include <sstream>
 
-bool g_in_slow_increase=0;
+
+CCSharedState cc_shared_state;
 
 namespace webrtc {
 

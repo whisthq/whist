@@ -293,10 +293,10 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
   BWE_TEST_LOGGING_PLOT(1, "threshold", now_ms, threshold_);
   whist_plotter_insert_sample("modified_trend", now_ms/1000.0, modified_trend +100);
 #if ENABLE_WHIST_CHANGE
-  double small_threshold= threshold_ - kWhistClampMin  + 2.f;
+  double small_threshold= threshold_ - cc_shared_state.kWhistClampMin  + 2.f;
   RTC_CHECK( small_threshold > 0);
   //printf("<%f %f>\n",modified_trend, small_threshold);
-  if (threshold_ == kWhistClampMin && modified_trend > small_threshold && g_in_slow_increase) {
+  if (threshold_ == cc_shared_state.kWhistClampMin && modified_trend > small_threshold && cc_shared_state.g_in_slow_increase) {
     if (small_time_over_using_ == -1) {
       small_time_over_using_ = ts_delta / 2;
     } else {
@@ -378,7 +378,7 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   int64_t time_delta_ms = std::min(now_ms - last_update_ms_, kMaxTimeDeltaMs);
   threshold_ += k * (fabs(modified_trend) - threshold_) * time_delta_ms;
 #ifdef ENABLE_WHIST_CHANGE
-  threshold_ = rtc::SafeClamp(threshold_, kWhistClampMin, 600.f);
+  threshold_ = rtc::SafeClamp(threshold_, cc_shared_state.kWhistClampMin, 600.f);
 #else
   threshold_ = rtc::SafeClamp(threshold_, 6.f, 600.f);
 #endif

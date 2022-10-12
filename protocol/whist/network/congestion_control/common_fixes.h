@@ -17,11 +17,17 @@ extern "C"
 #include "whist/utils/clock.h"
 }
 
-extern bool g_in_slow_increase;
-const double kWhistClampMin= 5.f;
-const double g_startup_duration=6;
+struct CCSharedState
+{
+    bool g_in_slow_increase= false;
+    const double kWhistClampMin= 5.f;
+    const double g_startup_duration=6;
+    const double g_increase_ratio=0.12;
 
-const double g_increase_ratio=0.12;
+};
+
+extern CCSharedState cc_shared_state;
+
 
 #define ENABLE_WHIST_CHANGE true
 namespace webrtc

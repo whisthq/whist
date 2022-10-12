@@ -554,7 +554,7 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
       //   108kbps.
 #if ENABLE_WHIST_CHANGE
       DataRate new_bitrate = DataRate::BitsPerSec(
-          min_bitrate_history_.front().second.bps() * (1.f +g_increase_ratio) + 0.5);
+          min_bitrate_history_.front().second.bps() * (1.f + cc_shared_state.g_increase_ratio) + 0.5);
 #else
       DataRate new_bitrate = DataRate::BitsPerSec(
           min_bitrate_history_.front().second.bps() * 1.08 + 0.5);
