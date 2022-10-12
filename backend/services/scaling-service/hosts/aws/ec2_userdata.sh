@@ -82,8 +82,8 @@ if [ "$EPHEMERAL_DEVICE_PATH" != "null" ]; then
 
   # Partition ephemeral storage
   parted "$EPHEMERAL_DEVICE_PATH" --script mklabel gpt
-  parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 2048s 12GiB
-  parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 12GiB 100%
+  parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 2048s 32GiB
+  parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 32GiB 100%
 
   # Create an ext4 filesystem for docker using ephemeral
   mkfs -t ext4 "${EPHEMERAL_DEVICE_PATH}p1"
