@@ -69,7 +69,7 @@ jobs:
 
       - name: Set deploy environment
         id: set-deploy-environment
-        if: ${{ github.event_name == 'push' || github.event_name == 'schedule' || contains(fromJSON('["", "dev", "staging", "prod"]'), github.event.inputs.target) }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'schedule' || contains(fromJSON('["", "dev", "staging", "prod"]'), inputs.target) }}
         uses: ./.github/actions/set-environment
         with:
           # Deploy the git ref corresponding to the event that
@@ -77,7 +77,7 @@ jobs:
           # workflow was a manual workflow_dispatch event. In such a
           # case, the branch specified by the target input should be
           # deployed.
-          ref: ${{ github.event.inputs.target || github.ref }}
+          ref: ${{ inputs.target || github.ref }}
 
       - name: Set backend services URL based on Git Branch (prod, staging, dev)
         id: set-backend-services-urls
@@ -124,7 +124,7 @@ jobs:
             [[ "$branch" =~ dev|staging|prod ]]
             dry_run="false"
           else
-            dry_run="${{ github.event.inputs.dry-run }}"
+            dry_run="${{ inputs.dry-run }}"
 
             # If we're trying to perform a real deployment, but the
             # current configuration is not deployable, abort.

@@ -211,7 +211,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		mandelbox.tty = 0
 
 		// CI does not have GPUs
-		if !metadata.IsRunningInCI() {
+		if !metadata.IsRunningInCI() && metadata.IsGPU() {
 			if err := gpus.Free(mandelbox.gpuIndex, mandelbox.GetID()); err != nil {
 				mandelboxCloseErr = multierror.Append(mandelboxCloseErr, utils.MakeError("error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.GetID(), err))
 			} else {
