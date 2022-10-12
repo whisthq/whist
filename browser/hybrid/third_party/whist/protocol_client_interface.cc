@@ -44,6 +44,7 @@
 typedef const WhistClient::VirtualInterface* (*VirtualInterfaceCreator)(void);
 const WhistClient::VirtualInterface* whist_virtual_interface = NULL;
 static base::Lock whist_virtual_interface_lock;
+static base::NativeLibrary whist_client_library = NULL;
 
 // These must be static; can't be on the stack since the protocol thread will always expect them
 // to be around.
@@ -91,6 +92,15 @@ static base::NativeLibrary LoadWhistClientLibrary() {
 }
 static std::ofstream whist_logs_out;
 
+static void DestroyWhistClient() {
+  base::AutoLock whist_client_auto_lock(whist_virtual_interface_lock);
+  if (whist_virtual_interface == NULL) return;
+  WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.destroy);
+  whist_virtual_interface = NULL;
+  whist_logs_out.close();
+  base::UnloadNativeLibrary(whist_client_library);
+}
+
 void InitializeWhistClient() {
   base::AutoLock whist_client_auto_lock(whist_virtual_interface_lock);
 
@@ -98,7 +108,7 @@ void InitializeWhistClient() {
     return;
   }
 
-  base::NativeLibrary whist_client_library = LoadWhistClientLibrary();
+  whist_client_library = LoadWhistClientLibrary();
   if (!whist_client_library) {
     return;
   }
@@ -117,7 +127,6 @@ void InitializeWhistClient() {
 
   // Initialize whist, so that connections can be made from javascript later
   WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
-  // TODO: lifecycle.destroy sometime? If necessary?
 
   // Pipe protocol logs to a .log file
   base::FilePath path;
@@ -128,4 +137,10 @@ void InitializeWhistClient() {
   WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line) {
     whist_logs_out << line;
   });
+
+  // Note: This atexit doesn't seem to trigger because of the way Chromium
+  // exit()s renderer processes instead of allowing them to gracefully exit.
+  // We register it anyways for the sake of completeness.
+  atexit(DestroyWhistClient);
 }
+

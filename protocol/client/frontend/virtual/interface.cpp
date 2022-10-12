@@ -86,11 +86,13 @@ static int vi_api_initialize(int argc, const char* argv[]) {
 }
 
 static void vi_api_destroy() {
-    // Verify that the protocol isn't alive
-    FATAL_ASSERT(protocol_alive == false);
-    // Kill the whist main thread by hitting the semaphore while protocl is marked-as-dead
+    // Set the protocol to not alive
+    protocol_alive = false;
+    // Kill the whist main thread by hitting the semaphore while protocol is marked-as-dead
     whist_post_semaphore(connection_semaphore);
     whist_main_thread.join();
+    fifo_queue_destroy(events_queue);
+    // TODO: Are there other resources to clean up here?
 }
 
 static bool vi_api_connect() {
