@@ -23,6 +23,7 @@ Includes
 #include "dbus.h"
 #include "whist/debug/plotter.h"
 #include "whist/utils/clock.h"
+#include "gpu_commands.h"
 
 /*
 ============================
@@ -458,6 +459,10 @@ int main(int argc, char* argv[]) {
 
     WhistThread sync_tcp_packets_thread = whist_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &server_state);
+
+    WhistThread gpu_command_receiver_thread = whist_create_thread(
+        multithreaded_gpu_command_receiver, "multithreaded_gpu_command_receiver", &server_state);
+
     LOG_INFO("Sending video, audio, and D-Bus handler...");
 
     WhistTimer totaltime;

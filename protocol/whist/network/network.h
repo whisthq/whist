@@ -160,6 +160,8 @@ Constants
 #define MAX_PAYLOAD_SIZE 1285
 #define VIDEO_NACKBUFFER_SIZE 25
 #define AUDIO_NACKBUFFER_SIZE 100
+// TODO : Set it to a theoretically correct max value.
+#define GPU_NACKBUFFER_SIZE VIDEO_NACKBUFFER_SIZE
 
 /*
 ============================

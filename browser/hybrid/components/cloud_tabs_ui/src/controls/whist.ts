@@ -3,13 +3,28 @@ import { state } from "../shared/state"
 
 let whistParameters: string | null = null
 
+const GPUCommandStreaming = async () => {
+  return await new Promise(resolve =>
+    (chrome as any).whist.isGPUCommandStreaming((enabled: boolean) => {
+      resolve(enabled)
+    })
+  )
+}
+
 const initializeWhistTagHandler = () => {
-  ;(chrome as any).whist.onMessage.addListener((message: string) => {
+  const whistTag: any = document.querySelector("whist")
+
+  ;(chrome as any).whist.onMessage.addListener(async (message: string) => {
     const parsed = JSON.parse(message)
 
     if (parsed.type === "MANDELBOX_INFO") {
       // Keep the whist element in-focus
       whistParameters = JSON.stringify(parsed.value)
+      const gpu_streaming = await GPUCommandStreaming()
+      if (gpu_streaming) {
+        whistTag.focus()
+        whistTag.whistConnect(whistParameters)
+      }
     }
   })
 }
@@ -46,11 +61,13 @@ const initializeRequestMandelbox = () => {
 const initializeWhistFreezeAllHandler = () => {
   const whistTag: any = document.querySelector("whist")
 
-  ;(chrome as any).whist.onMessage.addListener((message: string) => {
+  ;(chrome as any).whist.onMessage.addListener(async (message: string) => {
     const parsed = JSON.parse(message)
 
     if (parsed.type == "CHANGE_FOCUSED_TAB" && parsed.value.id === getTabId()) {
-      if (whistParameters !== null && !whistTag.isWhistConnected()) {
+      const gpu_streaming = await GPUCommandStreaming()
+      if (whistParameters !== null && !whistTag.isWhistConnected() &&
+          !gpu_streaming) {
         whistTag.focus()
         whistTag.whistConnect(whistParameters)
       }
@@ -100,6 +117,7 @@ const initializeWhistSpotlightHandler = () => {
 }
 
 export {
+  GPUCommandStreaming,
   initializeWhistTagHandler,
   initializeRequestMandelbox,
   // initializeWhistFreezeHandler,

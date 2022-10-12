@@ -11,6 +11,7 @@ add_executable(WhistServer
         handle_client_message.c
         network.c
         dbus.c
+        gpu_commands.c
         )
 
 set_target_properties(WhistServer PROPERTIES

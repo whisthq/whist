@@ -23,6 +23,7 @@ typedef void (*VideoFrameCallback)(int window_id, void* frame_ref);
 typedef int (*GetModifierKeyState)(void);
 typedef void (*OnWhistError)(WhistError error);
 typedef void (*OnWhistLog)(void* ctx, unsigned int level, const char* line);
+typedef void (*OnGpuCommandCallback)(void* opaque, void* buffer, int size);
 
 typedef struct VirtualInterface {
     struct {
@@ -66,6 +67,9 @@ typedef struct VirtualInterface {
         void* (*malloc)(size_t size);
         void (*free)(void* ptr);
     } utils;
+    struct {
+        void (*set_on_gpu_command_callback)(void* opaque, OnGpuCommandCallback cb);
+    } gpu;
 } VirtualInterface;
 
 #ifndef EXPORT_API

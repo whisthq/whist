@@ -26,6 +26,8 @@ Defines
 */
 
 struct WhistRenderer {
+    WhistFrontend* frontend;
+
     VideoContext* video_context;
     AudioContext* audio_context;
 
@@ -83,6 +85,7 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
     WhistRenderer* whist_renderer = (WhistRenderer*)safe_malloc(sizeof(WhistRenderer));
     memset(whist_renderer, 0, sizeof(WhistRenderer));
 
+    whist_renderer->frontend = frontend;
     // Initialize audio and video systems
     whist_renderer->audio_context = init_audio(frontend);
     whist_renderer->video_context = init_video(frontend, initial_width, initial_height);
@@ -112,6 +115,9 @@ bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type,
         case PACKET_AUDIO: {
             return audio_ready_for_frame(renderer->audio_context, num_buffered_frames);
         }
+        case PACKET_GPU: {
+            return true;
+        }
         default: {
             LOG_FATAL("Unknown packet type! %d", (int)packet_type);
         }
@@ -119,7 +125,7 @@ bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type,
 }
 
 void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packet_type,
-                            void* frame) {
+                            void* frame, int size) {
     WhistTimer statistics_timer;
 
     // Pass the receive packet into the video or audio context
@@ -134,6 +140,10 @@ void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packe
             TIME_RUN(receive_audio(whist_renderer->audio_context, (AudioFrame*)frame),
                      AUDIO_RECEIVE_TIME, statistics_timer);
             whist_post_semaphore(whist_renderer->audio_semaphore);
+            break;
+        }
+        case PACKET_GPU: {
+            whist_frontend_send_gpu_command(whist_renderer->frontend, frame, size);
             break;
         }
         default: {

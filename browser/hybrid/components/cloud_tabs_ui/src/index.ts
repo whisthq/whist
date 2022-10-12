@@ -13,6 +13,7 @@ import {
   initializeWhistFreezeAllHandler,
   initializeWhistSpotlightHandler,
   initializeRequestMandelbox,
+  GPUCommandStreaming,
 } from "./controls/whist"
 import { initializePageRefreshHandler } from "./controls/refresh"
 import { initializeMouseEnterHandler } from "./controls/mouse"
@@ -23,10 +24,13 @@ import {
 } from "./ui/notifications"
 import { initializeLoadingScreen } from "./ui/loading"
 
-window.onload = () => {
+window.onload = async () => {
   initializeSessionStorage()
-  createStartNotification()
-  createDisconnectNotification()
+  const gpu_streaming = await GPUCommandStreaming()
+  if (!gpu_streaming) {
+    createStartNotification()
+    createDisconnectNotification()
+  }
 
   initializeGetTabId().then(() => {
     initializeURLUpdater()
@@ -37,7 +41,9 @@ window.onload = () => {
     initializeMouseEnterHandler()
   })
 
-  initializeLoadingScreen()
+  if (!gpu_streaming) {
+    initializeLoadingScreen()
+  }
   initializeWhistTagHandler()
   initializeWhistFreezeAllHandler()
   initializeWhistSpotlightHandler()

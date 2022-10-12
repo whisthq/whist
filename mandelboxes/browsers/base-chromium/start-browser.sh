@@ -156,6 +156,15 @@ if [[ "$KIOSK_MODE" == true ]]; then
   flags+=("--kiosk")
 fi
 
+ENABLE_GPU_COMMAND_STREAMING=$1
+echo "ENABLE_GPU_COMMAND_STREAMING is set to $ENABLE_GPU_COMMAND_STREAMING"
+
+if [ $ENABLE_GPU_COMMAND_STREAMING == 1 ]; then
+  flags+=("--enable-logging") # This is just required for debugging.
+  flags+=("--no-sandbox")
+  flags+=("--enable-gpu-command-streaming")
+fi
+
 # Passing the initial url from JSON transport as a parameter to the browser launch command. If the url is not
 # empty, the browser will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.

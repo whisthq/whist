@@ -194,6 +194,8 @@ int client_connect_socket(WhistServerState *state, Client *client,
                              PACKET_HEADER_SIZE + LARGEST_VIDEOFRAME_SIZE, VIDEO_NACKBUFFER_SIZE);
     udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO,
                              PACKET_HEADER_SIZE + LARGEST_AUDIOFRAME_SIZE, AUDIO_NACKBUFFER_SIZE);
+    udp_register_nack_buffer(&client->udp_context, PACKET_GPU,
+                             PACKET_HEADER_SIZE + LARGEST_GPUFRAME_SIZE, GPU_NACKBUFFER_SIZE);
 
     // NOTE: The server-side create_udp_socket_context call will finish immediately after the
     // handshake, But the UDP Client will be waiting until it gets a response. Thus, this TCP socket

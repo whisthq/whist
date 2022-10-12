@@ -22,6 +22,7 @@ static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 
 extern QueueContext* events_queue;
 extern void* callback_context;
+extern void* gpu_context;
 extern OnFileUploadCallback on_file_upload;
 extern OnCursorChangeCallback on_cursor_change;
 extern OnFileDownloadStart on_file_download_start;
@@ -30,6 +31,7 @@ extern OnFileDownloadComplete on_file_download_complete;
 extern OnNotificationCallback on_notification_callback_ptr;
 extern GetModifierKeyState get_modifier_key_state;
 extern OnWhistError on_whist_error;
+extern OnGpuCommandCallback on_gpu_command;
 
 static bool update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
@@ -248,6 +250,14 @@ const char* virtual_get_chosen_file(WhistFrontend* frontend) {
         return on_file_upload(callback_context);
     } else {
         return NULL;
+    }
+}
+
+void virtual_send_gpu_command(WhistFrontend* frontend, void *buffer, int size) {
+    if (on_gpu_command != NULL) {
+        return on_gpu_command(gpu_context, buffer, size);
+    } else {
+        return;
     }
 }
 

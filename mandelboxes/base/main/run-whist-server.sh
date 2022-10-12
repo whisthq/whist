@@ -126,30 +126,39 @@ APPLICATION_ERR_FILENAME=whist_application-err.log
 ln -s $WHIST_USER_LOGS_FOLDER/$APPLICATION_OUT_FILENAME $WHIST_LOGS_FOLDER/$APPLICATION_OUT_FILENAME
 ln -s $WHIST_USER_LOGS_FOLDER/$APPLICATION_ERR_FILENAME $WHIST_LOGS_FOLDER/$APPLICATION_ERR_FILENAME
 
-# Start the application that this mandelbox runs.
-/usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
-whist_application_runuser_pid=$!
+ENABLE_GPU_COMMAND_STREAMING=0
 
-echo "Whist application runuser pid: $whist_application_runuser_pid"
+start_browser() {
+  # Start the application that this mandelbox runs.
+  /usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh $ENABLE_GPU_COMMAND_STREAMING" &
+  whist_application_runuser_pid=$!
 
-# Wait for run-whist-application.sh to write PID to file
-block-until-file-exists.sh $WHIST_APPLICATION_PID_FILE >&1
-whist_application_pid=$(cat $WHIST_APPLICATION_PID_FILE)
-rm $WHIST_APPLICATION_PID_FILE
+  echo "Whist application runuser pid: $whist_application_runuser_pid"
 
-echo "Whist application pid: $whist_application_pid"
+  # Wait for run-whist-application.sh to write PID to file
+  block-until-file-exists.sh $WHIST_APPLICATION_PID_FILE >&1
+  whist_application_pid=$(cat $WHIST_APPLICATION_PID_FILE)
+  rm $WHIST_APPLICATION_PID_FILE
 
-echo "Now sleeping until there are X clients..."
+  echo "Whist application pid: $whist_application_pid"
+}
 
-# Wait until the application has created its display before launching WhistServer.
-# This prevents a black no input window from appearing when a user connects.
-until [ $(xlsclients -display :10 | wc -l) != 0 ]
-do
-  sleep 0.1
-done
+# Start the browser before WhistServer only when GPU command streaming is disabled
+if [ $ENABLE_GPU_COMMAND_STREAMING == 0 ]; then
+  echo "Starting the browser before WhistServer"
 
-echo "Done sleeping until there are X clients..."
-echo "done" > $WHIST_MAPPINGS_DIR/done_sleeping_until_X_clients
+  start_browser
+  echo "Now sleeping until there are X clients..."
+  # Wait until the application has created its display before launching WhistServer.
+  # This prevents a black no input window from appearing when a user connects.
+  until [ $(xlsclients -display :10 | wc -l) != 0 ]
+  do
+    sleep 0.1
+  done
+  echo "Done sleeping until there are X clients..."
+  echo "done" > $WHIST_MAPPINGS_DIR/done_sleeping_until_X_clients
+fi
+
 sync # Necessary so that even if the container exits very soon the host service sees the file written.
 
 # Send in identifier
@@ -157,6 +166,11 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 /usr/share/whist/WhistServer $OPTIONS > $PROTOCOL_OUT_FILENAME 2>$PROTOCOL_ERR_FILENAME &
 whist_server_pid=$!
+
+if [ $ENABLE_GPU_COMMAND_STREAMING == 1 ]; then
+  echo "Starting the browser after WhistServer"
+  start_browser
+fi
 
 # Wait for either whist-application or WhistServer to exit (both backgrounded processes).
 
