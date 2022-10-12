@@ -94,7 +94,7 @@ func getMandelboxLimit(db map[string]string, mandelboxLimit *int32) error {
 // a lock because multiple scaling algorithms read and update it.
 func getFrontendVersion(dbVersion subscriptions.FrontendVersion, version *string) {
 	if dbVersion == (subscriptions.FrontendVersion{}) {
-		*version = "1.0.0"
+		*version = "0.0.0"
 		logger.Warningf("Got an empty frontend version, falling back to %s", version)
 	}
 
