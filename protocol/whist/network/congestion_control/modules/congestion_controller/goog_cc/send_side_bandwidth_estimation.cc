@@ -575,10 +575,20 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
             (at_time - time_last_decrease_) >=
                 (kBweDecreaseInterval + last_round_trip_time_)) {
           time_last_decrease_ = at_time;
-
           // Reduce rate:
           //   newRate = rate * (1 - 0.5*lossRate);
           //   where packetLoss = 256*lossRate;
+#if ENABLE_WHIST_CHANGE
+          if(cc_shared_state.ack_bitrate!=-1)
+          {
+            DataRate new_bitrate = DataRate::BitsPerSec(
+                (cc_shared_state.ack_bitrate *
+                static_cast<double>(512 - last_fraction_loss_)) /
+                512.0);
+            has_decreased_since_last_fraction_loss_ = true;
+            UpdateTargetBitrate(new_bitrate, at_time);
+          } 
+#endif
           DataRate new_bitrate = DataRate::BitsPerSec(
               (current_target_.bps() *
                static_cast<double>(512 - last_fraction_loss_)) /

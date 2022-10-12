@@ -372,8 +372,27 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
     last_update_ms_ = now_ms;
     return;
   }
-
-  const double k = fabs(modified_trend) < threshold_ ? k_down_ : k_up_;
+#ifdef ENABLE_WHIST_CHANGE
+  double k_down;
+  if(cc_shared_state.current_bitrate_ratio>0.7)
+  {
+     k_down= 0.039/10;
+  }
+  else if(cc_shared_state.current_bitrate_ratio > 0.6)
+  {
+    k_down =0.039/30;
+  }
+  else if(cc_shared_state.current_bitrate_ratio > 0.5)
+  {
+    k_down =0.039/50;
+  }
+  else {
+    k_down=0.039/100;
+  }
+  const double k = fabs(modified_trend) < threshold_ ? k_down : k_up_;
+#else
+  const double k = fabs(modified_trend) < threshold_ ? k_down : k_up_;
+#endif
   const int64_t kMaxTimeDeltaMs = 100;
   int64_t time_delta_ms = std::min(now_ms - last_update_ms_, kMaxTimeDeltaMs);
   threshold_ += k * (fabs(modified_trend) - threshold_) * time_delta_ms;
