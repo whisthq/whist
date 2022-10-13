@@ -292,7 +292,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
   {
     // prevent from accidently enter slow increase state in the first few seconds
     RTC_CHECK(cc_shared_state.first_process_time.IsFinite());
-    if(at_time- cc_shared_state.first_process_time < TimeDelta::Seconds(cc_shared_state.g_startup_duration)){
+    if(at_time- cc_shared_state.first_process_time < TimeDelta::Seconds(cc_shared_state.k_startup_duration)){
       //printf("<<<force reset!!!!!!!!!!!!!>>>\n");
       link_capacity_.Reset();
     }
@@ -436,9 +436,9 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
     Timestamp last_time,
     DataRate current_bitrate) const {
 #if ENABLE_WHIST_CHANGE
-  cc_shared_state.g_in_slow_increase=0;
+  cc_shared_state.in_slow_increase=0;
   //use more aggressive increase ratio
-  double alpha = 1 + cc_shared_state.g_increase_ratio;
+  double alpha = 1 + cc_shared_state.k_increase_ratio;
 #else
   double alpha = 1.08;
 #endif
@@ -454,7 +454,7 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
 DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
                                                Timestamp last_time) const {
 #if ENABLE_WHIST_CHANGE
-  cc_shared_state.g_in_slow_increase= (link_capacity_.est_cnt_ >=3? 1:0);
+  cc_shared_state.in_slow_increase= (link_capacity_.est_cnt_ >=3? 1:0);
 #endif
   double time_period_seconds = (at_time - last_time).seconds<double>();
   double data_rate_increase_bps =
@@ -465,10 +465,10 @@ DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
     RTC_CHECK(link_capacity_.est_cnt_>0);
     if(link_capacity_.est_cnt_ ==1)
     {
-       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(cc_shared_state.g_increase_ratio/2)*current_bitrate_.bps() * time_period_seconds);
+       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(cc_shared_state.k_increase_ratio/2)*current_bitrate_.bps() * time_period_seconds);
     }
     else if(link_capacity_.est_cnt_ ==2) {
-       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(cc_shared_state.g_increase_ratio/4)*current_bitrate_.bps() * time_period_seconds);
+       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(cc_shared_state.k_increase_ratio/4)*current_bitrate_.bps() * time_period_seconds);
     }
     else {
        data_rate_increase_bps = std::max<double> (data_rate_increase_bps,0.015*current_bitrate_.bps() * time_period_seconds);

@@ -218,10 +218,10 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         double adjusted_rtt_ms = rtt_ms;
         send_side_bwd->UpdateRtt(webrtc::TimeDelta::Millis(rtt_ms), current_time);
 
-        if(current_time-first_ts > webrtc::TimeDelta::Seconds( cc_shared_state.g_startup_duration))
+        if(current_time-first_ts > webrtc::TimeDelta::Seconds( cc_shared_state.k_startup_duration))
         {
            rtt_stat.insert( input.current_time_ms/1000, input.rtt_ms.value());
-           if(current_time-first_ts >webrtc::TimeDelta::Seconds( cc_shared_state.g_startup_duration + rtt_window_size/2))
+           if(current_time-first_ts >webrtc::TimeDelta::Seconds( cc_shared_state.k_startup_duration + rtt_window_size/2))
            {
               double window_rtt = rtt_stat.get_i_percentage_max( 90);
               whist_plotter_insert_sample("window_rtt", get_timestamp_sec(), window_rtt);
