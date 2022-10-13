@@ -238,7 +238,6 @@ common_steps () {
   # Set runtime based on GPU presence
   if [[ "$GPU" == "true" ]]; then
     sudo cp docker-daemon-config/nvidia-daemon.json /etc/docker/daemon.json
-    echo "export GPU=true" >> "$HOME"/.bashrc
   else
     sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
   fi

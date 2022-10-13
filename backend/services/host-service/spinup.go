@@ -167,6 +167,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 
 	// Add additional env variables if host is using GPU
 	if metadata.IsGPU() {
+		logger.Infof("Using GPU env vars for container.")
 		envs = append(envs, utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"))
 		envs = append(envs, "NVIDIA_DRIVER_CAPABILITIES=all")
 	}
