@@ -9,6 +9,7 @@ import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
 import { initLocationHandler } from "./geolocation"
 import { initLanguageInitHandler, initLanguageChangeHandler } from "./language"
+import { initPreferencesInitHandler, initDarkModeChangeHandler } from "./preferences"
 import {
   initTabState,
   initSocketioConnection,
@@ -45,6 +46,10 @@ initLocationHandler(socket)
 // Send and receive language actions
 initLanguageInitHandler(socket)
 initLanguageChangeHandler(socket)
+
+// Send and receive preferences actions
+initPreferencesInitHandler(socket)
+initDarkModeChangeHandler(socket)
 
 // Listen to the client for tab actions
 initActivateTabListener(socket)
