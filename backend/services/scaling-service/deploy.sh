@@ -22,10 +22,10 @@ MONOREPO_COMMIT_HASH=${3}
 MIGRA_EXIT_CODE=${4}
 SQL_DIFF_STRING=${5}
 
+SERVICES_DIR="./backend/services"
 SCALING_SERVICE_DIR="./backend/services/scaling-service"
-DEPLOY_DIR="$SCALING_SERVICE_DIR/deploy"
+DEPLOY_DIR="$SERVICES_DIR/deploy"
 IMAGE_FILE="$DEPLOY_DIR/images.json"
-PROCFILE="$DEPLOY_DIR/Procfile"
 
 ####################################################
 # Deploy Scaling Service
@@ -36,14 +36,10 @@ PROCFILE="$DEPLOY_DIR/Procfile"
 # push the changes.
 # Args: none
 deploy_scaling_service() {
-  # Copy the binary to the scaling-service deploy directory. This is necessary because we will use it as standalone repo.
-  mkdir -p "$DEPLOY_DIR" && cp ./backend/services/build/scaling-service "$DEPLOY_DIR"
+  mkdir -p "$DEPLOY_DIR" && cp "$SERVICES_DIR" "$DEPLOY_DIR"
 
   # Write region image map to var file so the Procfile can read it.
   echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
-
-  # Write Procfile
-  echo -e "web: ./scaling-service" > "$PROCFILE"
 
   # Populate the deploy/ directory
   mv "$DEPLOY_DIR" ..
@@ -53,10 +49,9 @@ deploy_scaling_service() {
   git add .
   git commit -m "scaling-service deploy for $MONOREPO_COMMIT_HASH"
 
-  # Create null buildpack, see: https://elements.heroku.com/buildpacks/ryandotsmith/null-buildpack, this is
-  # necessary since Heroku requires a buildpack for every app
-  heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME" &> /dev/null || true
-
+  # Set stack to container so Heroku builds the Dockerfile
+  heroku stack:set container
+  
   # Push deploy directory to Heroku. Heroku is very bad, and will often fail to accept the deploy with:
   # error: RPC failed; HTTP 504 curl 22 The requested URL returned error: 504
   # To get around this, we simply try to push the deploy until it succeeds, up to 5 retries.
