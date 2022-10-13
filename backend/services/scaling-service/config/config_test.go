@@ -5,6 +5,7 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -51,10 +52,14 @@ func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ ma
 
 	var config reflect.Value
 
-	switch q.(type) {
-	case *struct {
-		WhistFrontendVersions []subscriptions.WhistFrontendVersion "graphql:\"desktop_app_version(where: {id: {_eq: $id}})\""
-	}:
+	// If reflect.ValueOf(q) is a Pointer, reflect.Indirect() will dereference it,
+	// otherwise it will return reflect.ValueOf(q). We do this instead of
+	// reflect.TypeOf(q).Elem() just in case reflect.TypeOf(q) is not a Pointer.
+	// In that case, Elem() would panic.
+	ty := reflect.Indirect(reflect.ValueOf(q)).Type()
+
+	switch ty {
+	case reflect.TypeOf(subscriptions.QueryFrontendVersion):
 		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistFrontendVersions")
 		entry := subscriptions.WhistFrontendVersion{
 			ID:    1,
@@ -65,12 +70,21 @@ func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ ma
 		config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
 			unsafe.Pointer(&entry)).Elem()))
 
-	default:
+		// Use different cases with fallthrough statements rather than using a
+		// single case to avoid having one super long line.
+	case reflect.TypeOf(subscriptions.QueryDevConfigurations):
+		fallthrough
+	case reflect.TypeOf(subscriptions.QueryStagingConfigurations):
+		fallthrough
+	case reflect.TypeOf(subscriptions.QueryProdConfigurations):
 		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistConfigs")
+
 		for _, entry := range configTable {
 			config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
 				unsafe.Pointer(&entry)).Elem()))
 		}
+	default:
+		return fmt.Errorf("Not implemented: %v", ty)
 	}
 
 	return nil
