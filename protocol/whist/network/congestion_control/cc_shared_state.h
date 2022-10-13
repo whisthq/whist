@@ -5,6 +5,8 @@
 #include "api/units/data_rate.h"
 struct CCSharedState
 {
+
+    const double k_smaller_clamp_min= 1.f;
     const double k_clamp_min= 5.f;
     const double k_startup_duration=6;
     const double k_increase_ratio=0.12;

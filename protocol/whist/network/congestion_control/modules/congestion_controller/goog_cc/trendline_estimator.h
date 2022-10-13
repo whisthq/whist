@@ -120,6 +120,7 @@ class TrendlineEstimator : public DelayIncreaseDetectorInterface {
   int overuse_counter_;
 
 #if ENABLE_WHIST_CHANGE
+  double threshold_smaller_=12.5;
   double small_time_over_using_=-1;
   int small_overuse_counter_=0;
   BandwidthUsage small_hypothesis_;

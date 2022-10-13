@@ -294,17 +294,17 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
   BWE_TEST_LOGGING_PLOT(1, "threshold", now_ms, threshold_);
   whist_plotter_insert_sample("modified_trend", now_ms/1000.0, modified_trend +100);
 #if ENABLE_WHIST_CHANGE
-  double small_threshold= threshold_ - cc_shared_state.k_clamp_min  + 2.f;
-  RTC_CHECK( small_threshold > 0);
+  //RTC_CHECK( small_threshold > 0);
   //printf("<%f %f>\n",modified_trend, small_threshold);
-  if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > small_threshold && cc_shared_state.in_slow_increase) {
+  RTC_CHECK(threshold_smaller_ >0);
+  if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ && cc_shared_state.in_slow_increase) {
     if (small_time_over_using_ == -1) {
       small_time_over_using_ = ts_delta / 2;
     } else {
       small_time_over_using_ += ts_delta;
     }
     small_overuse_counter_++;
-    if (small_time_over_using_ > 800 && small_overuse_counter_ > 80) {
+    if (small_time_over_using_ > 600 && small_overuse_counter_ > 50) {
       if (trend >= prev_trend_ ) {
         small_time_over_using_ = 0;
         small_overuse_counter_ = 0;
@@ -313,7 +313,11 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
         whist_plotter_insert_sample("small_threshold_overusing", get_timestamp_sec(), 160);
       }
     }
-  } else {
+  } else if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ - 0.1f && cc_shared_state.in_slow_increase ) {
+      //nop
+  }
+  else
+  {
     small_hypothesis_ = BandwidthUsage::kBwNormal;
     small_time_over_using_ = -1;
     small_overuse_counter_ = 0;
@@ -373,36 +377,43 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
     last_update_ms_ = now_ms;
     return;
   }
+
 #ifdef ENABLE_WHIST_CHANGE
-  double k_down;
+  double k_down_elastic;
   // adjust k_down according to current bitrate
   if(cc_shared_state.current_bitrate_ratio>0.7)
   {
-     k_down= 0.039/10;
+     k_down_elastic= 0.039/10;
   }
   else if(cc_shared_state.current_bitrate_ratio > 0.6)
   {
-    k_down =0.039/30;
+    k_down_elastic =0.039/30;
   }
   else if(cc_shared_state.current_bitrate_ratio > 0.5)
   {
-    k_down =0.039/50;
+    k_down_elastic =0.039/50;
   }
   else {
-    k_down=0.039/100;
+    k_down_elastic=0.039/100;
   }
-  const double k = fabs(modified_trend) < threshold_ ? k_down : k_up_;
+  const double k = fabs(modified_trend) < threshold_ ? k_down_elastic : k_up_;
 #else
-  const double k = fabs(modified_trend) < threshold_ ? k_down : k_up_;
+  const double k = fabs(modified_trend) < threshold_ ? k_down_ : k_up_;
 #endif
+
   const int64_t kMaxTimeDeltaMs = 100;
   int64_t time_delta_ms = std::min(now_ms - last_update_ms_, kMaxTimeDeltaMs);
   threshold_ += k * (fabs(modified_trend) - threshold_) * time_delta_ms;
 #ifdef ENABLE_WHIST_CHANGE
   threshold_ = rtc::SafeClamp(threshold_, cc_shared_state.k_clamp_min, 600.f);
+
+  const double k2 = fabs(modified_trend) < threshold_smaller_ ? k_down_elastic : k_up_;
+  threshold_smaller_ += k2 * (fabs(modified_trend) - threshold_smaller_) * time_delta_ms;
+  threshold_smaller_ = rtc::SafeClamp(threshold_smaller_, cc_shared_state.k_smaller_clamp_min, 600.f);
 #else
   threshold_ = rtc::SafeClamp(threshold_, 6.f, 600.f);
 #endif
+  whist_plotter_insert_sample("threshold_smaller", now_ms/1000.0, threshold_smaller_ +100);
   whist_plotter_insert_sample("threshold", now_ms/1000.0, threshold_ +100);
   whist_plotter_insert_sample("-threshold", now_ms/1000.0, -threshold_ +100);
   last_update_ms_ = now_ms;
