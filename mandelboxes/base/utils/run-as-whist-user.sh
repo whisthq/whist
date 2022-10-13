@@ -29,7 +29,7 @@ KEY_REPEAT=6 # default value on macOS, options are 120, 90, 60, 30, 12, 6, 2 # n
 #USER_AGENT="" # already set by extension
 SYSTEM_LANGUAGES="en_US" # needs to be set on system
 #KIOSK_MODE=false # always should be on kiosk - make a development flag
-#CLIENT_OS="" # set to mac for now
+CLIENT_OS="darwin" # set to mac for now
 
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 if [[ -f $WHIST_JSON_FILE ]]; then
@@ -67,9 +67,9 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   # if [ "$( jq -rc 'has("kiosk_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
   #   KIOSK_MODE="$(jq -rc '.kiosk_mode' < $WHIST_JSON_FILE)"
   # fi
-  if [ "$( jq -rc 'has("client_os")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    CLIENT_OS="$(jq -rc '.client_os' < $WHIST_JSON_FILE)"
-  fi
+  #if [ "$( jq -rc 'has("client_os")' < $WHIST_JSON_FILE )" == "true"  ]; then
+  #  CLIENT_OS="$(jq -rc '.client_os' < $WHIST_JSON_FILE)"
+  #fi
 fi
 
 # Most keys on macOS do not repeat, but all keys repeat on Linux. We turn off key repeat on certain Linux keys
