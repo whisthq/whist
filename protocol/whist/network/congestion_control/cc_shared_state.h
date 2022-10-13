@@ -1,6 +1,8 @@
 #pragma once
 
+#include <optional>
 #include "api/units/timestamp.h"
+#include "api/units/data_rate.h"
 struct CCSharedState
 {
     const double k_clamp_min= 5.f;
@@ -9,10 +11,10 @@ struct CCSharedState
 
     bool in_slow_increase= false;
 
-    double max_bitrate=-1;
+    webrtc::DataRate max_bitrate= webrtc::DataRate::MinusInfinity();
     double current_bitrate_ratio=1;
 
-    double ack_bitrate= -1;
+    std::optional<webrtc::DataRate> ack_bitrate;
     webrtc::Timestamp first_process_time=webrtc::Timestamp::MinusInfinity();
 
 };

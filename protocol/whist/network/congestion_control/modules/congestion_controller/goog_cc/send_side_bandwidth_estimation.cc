@@ -585,10 +585,10 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
 #if ENABLE_WHIST_CHANGE
           // decrease according to incoming rate
           // to avoid get locked in constant congestion state
-          if(cc_shared_state.ack_bitrate!=-1)
+          if(cc_shared_state.ack_bitrate.has_value())
           {
             DataRate new_bitrate = DataRate::BitsPerSec(
-                (cc_shared_state.ack_bitrate *
+                (cc_shared_state.ack_bitrate.value().bps() *
                 static_cast<double>(512 - last_fraction_loss_)) /
                 512.0);
             has_decreased_since_last_fraction_loss_ = true;
