@@ -97,6 +97,11 @@ class CORE_EXPORT HTMLWhistElement final
     LocalFrame* FrameOrNull() const override;
     ChromeClient* GetChromeClient() const;
 
+    // This function emits a JS log event. We use this
+    // member function for task sequencing purposes, as
+    // type inference is not smart enough to keep up.
+    void DispatchLogEvent(String message);
+
     // PopupOpeningObserver implementation.
     void WillOpenPopup() override;
 

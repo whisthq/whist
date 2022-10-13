@@ -24,6 +24,7 @@ struct WhistWindowInformation {
     OnCursorChangeCallback on_cursor_change_callback_ptr;
     VideoFrameCallback video_frame_callback_ptr;
     OnFileUploadCallback on_file_upload_callback_ptr;
+    OnWhistLog on_whist_log_callback_ptr;
     bool playing;
 };
 static std::mutex whist_window_mutex;
@@ -65,6 +66,20 @@ static int vi_api_initialize(int argc, const char* argv[]) {
     if (events_queue == NULL) {
         events_queue = fifo_queue_create(sizeof(WhistFrontendEvent), MAX_EVENTS_QUEUED);
     }
+    // Set the log callback
+    whist_log_set_external_logger_callback(+[](unsigned int level, const char* line) -> void {
+        std::lock_guard<std::mutex> guard(whist_window_mutex);
+        // Go through the windows,
+        for (auto const& [window_id, window_info] : whist_windows) {
+            // If one of them accepts a log callback,
+            if (window_info.on_whist_log_callback_ptr) {
+                // Give the log to that one
+                window_info.on_whist_log_callback_ptr(window_info.ctx, level, line);
+                // And only one of them
+                break;
+            }
+        }
+    });
     // Main whist loop
     whist_main_thread = std::thread([=]() -> void {
         while (true) {
@@ -119,7 +134,7 @@ static bool vi_api_is_connected() { return protocol_alive; }
 
 static void vi_api_disconnect() {
     // TODO: Actually force a disconnect when this happens
-    LOG_ERROR("Forceful disconnect!");
+    LOG_ERROR("Forceful disconnect not implemented yet!");
     protocol_alive = false;
 }
 
@@ -268,6 +283,11 @@ static void vi_api_set_get_modifier_key_state(GetModifierKeyState cb) {
 
 static void vi_api_set_on_whist_error_callback(OnWhistError cb) { on_whist_error = cb; }
 
+static void vi_api_set_on_whist_log_callback(int window_id, OnWhistLog cb) {
+    std::lock_guard<std::mutex> guard(whist_window_mutex);
+    whist_windows[window_id].on_whist_log_callback_ptr = cb;
+}
+
 static int vi_api_create_window() {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // Use serial window IDs, so that each window gets a unique ID
@@ -313,10 +333,6 @@ static const VirtualInterface vi = {
             .register_context = vi_api_register_context,
             .destroy_window = vi_api_destroy_window,
         },
-    .logging =
-        {
-            .set_callback = whist_log_set_external_logger_callback,
-        },
     .video =
         {
             .get_frame_ref = vi_api_get_frame_ref,
@@ -333,6 +349,7 @@ static const VirtualInterface vi = {
             .send = vi_api_send_event,
             .set_get_modifier_key_state = vi_api_set_get_modifier_key_state,
             .set_on_whist_error_callback = vi_api_set_on_whist_error_callback,
+            .set_on_whist_log_callback = vi_api_set_on_whist_log_callback,
         },
     .file =
         {

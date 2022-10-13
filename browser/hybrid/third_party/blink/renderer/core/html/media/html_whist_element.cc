@@ -2,7 +2,7 @@
  * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Apple Inc. All rights
  * reserved.
  *
- * Copyright (c) 2022 Whist Technologies Inc. All rights reserved.
+ * Copyright (C) 2022 Whist Technologies Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -168,6 +168,10 @@ class HTMLWhistElement::WheelEventListener : public NativeEventListener {
   Member<HTMLWhistElement> element_;
 };
 
+void HTMLWhistElement::DispatchLogEvent(String message) {
+  DispatchEvent(*WhistStringEvent::Create(whist_event_type_names::kLogevent, String(message)));
+}
+
 HTMLWhistElement::HTMLWhistElement(Document& document)
     : HTMLVideoElement(html_names::kWhistTag, document),
       sequenced_task_runner_(base::SequencedTaskRunnerHandle::Get()),
@@ -194,6 +198,11 @@ HTMLWhistElement::HTMLWhistElement(Document& document)
 
   WHIST_VIRTUAL_INTERFACE_CALL(video.set_on_cursor_change_callback, whist_window_id_, [](void* ctx, const char* cursor_type, bool relative_mouse_mode) {
     WhistElementSequencedTask((HTMLWhistElement*)ctx, &HTMLWhistElement::UpdateCursorType, String(cursor_type), relative_mouse_mode);
+  });
+
+  WHIST_VIRTUAL_INTERFACE_CALL(events.set_on_whist_log_callback, whist_window_id_, [](void* ctx, unsigned int level, const char* line) {
+    // Log events my only be submitted on the main sequence, so we need to post a task to the main sequence
+    WhistElementSequencedTask((HTMLWhistElement*)ctx, &HTMLWhistElement::DispatchLogEvent, String(line));
   });
 
   WHIST_VIRTUAL_INTERFACE_CALL(events.set_get_modifier_key_state, []() -> int {

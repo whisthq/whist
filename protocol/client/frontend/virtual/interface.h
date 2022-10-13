@@ -22,6 +22,7 @@ typedef void (*OnNotificationCallback)(const WhistNotification* notif);
 typedef void (*VideoFrameCallback)(int window_id, void* frame_ref);
 typedef int (*GetModifierKeyState)(void);
 typedef void (*OnWhistError)(WhistError error);
+typedef void (*OnWhistLog)(void* ctx, unsigned int level, const char* line);
 
 typedef struct VirtualInterface {
     struct {
@@ -37,9 +38,6 @@ typedef struct VirtualInterface {
         void (*destroy_window)(int window_id);
     } lifecycle;
     struct {
-        void (*set_callback)(void (*cb)(unsigned int level, const char* line));
-    } logging;
-    struct {
         void* (*get_frame_ref)(void);
         void* (*get_handle_from_frame_ref)(void* frame_ref);
         void (*get_frame_ref_yuv_data)(void* frame_ref, uint8_t*** data, int** linesize, int* width,
@@ -54,6 +52,7 @@ typedef struct VirtualInterface {
         void (*send)(const WhistFrontendEvent* event);
         void (*set_get_modifier_key_state)(GetModifierKeyState cb);
         void (*set_on_whist_error_callback)(OnWhistError cb);
+        void (*set_on_whist_log_callback)(int window_id, OnWhistLog cb);
     } events;
     struct {
         void (*set_on_file_upload_callback)(int window_id, OnFileUploadCallback cb);
