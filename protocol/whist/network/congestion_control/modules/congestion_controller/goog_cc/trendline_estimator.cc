@@ -20,6 +20,7 @@
 #include "api/network_state_predictor.h"
 //#include "modules/remote_bitrate_estimator/test/bwe_test_logging.h"
 #include "common_fixes.h"
+#include "cc_shared_state.h"
 #include "rtc_base/checks.h"
 //#include "rtc_base/experiments/struct_parameters_parser.h"
 //#include "rtc_base/logging.h"

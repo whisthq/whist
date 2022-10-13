@@ -22,6 +22,7 @@
 #include "api/units/data_rate.h"
 #include "api/units/time_delta.h"
 #include "common_fixes.h"
+#include "cc_shared_state.h"
 #include "modules/remote_bitrate_estimator/include/bwe_defines.h"
 //#include "modules/remote_bitrate_estimator/overuse_detector.h"
 #include "rtc_base/checks.h"
@@ -290,10 +291,8 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
   if(ENABLE_WHIST_CHANGE)
   {
     // prevent from accidently enter slow increase state in the first few seconds
-    if (!first_process_time.IsFinite()){
-      first_process_time= at_time;
-    }
-    if(at_time-first_process_time < TimeDelta::Seconds(cc_shared_state.g_startup_duration)){
+    RTC_CHECK(cc_shared_state.first_process_time.IsFinite());
+    if(at_time- cc_shared_state.first_process_time < TimeDelta::Seconds(cc_shared_state.g_startup_duration)){
       //printf("<<<force reset!!!!!!!!!!!!!>>>\n");
       link_capacity_.Reset();
     }

@@ -13,6 +13,7 @@ extern "C"
 #include "api/units/time_delta.h"
 #include "api/units/timestamp.h"
 #include "common_fixes.h"
+#include "cc_shared_state.h"
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -192,6 +193,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       if(first_time)
       {
          RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value() && input.start_bitrate.has_value());
+         cc_shared_state.first_process_time= current_time;
          std::optional<webrtc::DataRate> start_rate;
          //printf("<<%f>>\n", input.start_bitrate.value());
          start_rate=webrtc::DataRate::BitsPerSec(input.start_bitrate.value());

@@ -17,6 +17,7 @@
 #include <string>
 
 #include "common_fixes.h"
+#include "cc_shared_state.h"
 //#include "absl/strings/match.h"
 #include "api/field_trials_view.h"
 #include "api/network_state_predictor.h"

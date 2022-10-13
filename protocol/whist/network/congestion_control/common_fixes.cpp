@@ -3,9 +3,6 @@
 #include "common_fixes.h"
 #include <sstream>
 
-
-CCSharedState cc_shared_state;
-
 namespace webrtc {
 
 std::string ToString(TimeDelta value) {

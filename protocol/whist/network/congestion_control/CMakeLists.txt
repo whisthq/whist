@@ -18,6 +18,7 @@ set(COMMON_FILES
         api/transport/field_trial_based_config.cc
         api/field_trials.cc
         common_fixes.cpp
+        cc_shared_state.cpp
         rtc_base/experiments/struct_parameters_parser.cc
         rtc_base/experiments/field_trial_units.cc
         rtc_base/experiments/field_trial_parser.cc
