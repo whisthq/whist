@@ -98,9 +98,9 @@ func getFrontendVersion(dbVersion subscriptions.FrontendVersion, version *string
 		logger.Warningf("Got an empty frontend version, falling back to %s", version)
 	}
 
-	logger.Infof("Frontend version: %v", *version)
-
 	*version = dbVersion.String()
+
+	logger.Infof("Frontend version: %v", *version)
 }
 
 // initialize populates the configuration singleton with values from the
