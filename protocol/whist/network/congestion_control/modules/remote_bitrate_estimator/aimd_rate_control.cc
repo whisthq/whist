@@ -289,10 +289,10 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
 
   if(ENABLE_WHIST_CHANGE)
   {
+    // prevent from accidently enter slow increase state in the first few seconds
     if (!first_process_time.IsFinite()){
       first_process_time= at_time;
     }
-    //printf("%f %f\n",at_time.ms()*1.0, time_first_throughput_estimate_.ms()*1.0);
     if(at_time-first_process_time < TimeDelta::Seconds(cc_shared_state.g_startup_duration)){
       //printf("<<<force reset!!!!!!!!!!!!!>>>\n");
       link_capacity_.Reset();
@@ -334,8 +334,8 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
         if (increase_to_network_estimate_ && network_estimate_ &&
             network_estimate_->link_capacity_upper.IsFinite()) {
           increased_bitrate = increase_limit;
-#if ENABLE_WHIST_CHANGE
-        } else if (link_capacity_.has_estimate() /*&& link_capacity_.est_cnt_>1*/) {
+#if ENABLE_WHIST_CHANGE && 0
+        } else if (link_capacity_.has_estimate() && link_capacity_.est_cnt_>1) {
 #else
         } else if (link_capacity_.has_estimate()) {
 #endif
@@ -372,6 +372,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
         if (link_capacity_.has_estimate()) {
           decreased_bitrate = beta_ * link_capacity_.estimate();
 #if ENABLE_WHIST_CHANGE && 0
+          // restrict consecutive decrease
           if(at_time - time_last_bitrate_decrease_ <TimeDelta::Micros(1000))
               decreased_bitrate = 0.95 * link_capacity_.estimate();
 #endif
@@ -437,6 +438,7 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
     DataRate current_bitrate) const {
 #if ENABLE_WHIST_CHANGE
   cc_shared_state.g_in_slow_increase=0;
+  //use more aggressive increase ratio
   double alpha = 1 + cc_shared_state.g_increase_ratio;
 #else
   double alpha = 1.08;
@@ -459,6 +461,7 @@ DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
   double data_rate_increase_bps =
       GetNearMaxIncreaseRateBpsPerSecond() * time_period_seconds;
   if(ENABLE_WHIST_CHANGE){
+    //gradually use smaller increase depending on the the number of estimation
     RTC_CHECK(link_capacity_.has_estimate());
     RTC_CHECK(link_capacity_.est_cnt_>0);
     if(link_capacity_.est_cnt_ ==1)

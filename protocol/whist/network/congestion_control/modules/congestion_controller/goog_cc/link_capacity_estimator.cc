@@ -20,6 +20,7 @@ LinkCapacityEstimator::LinkCapacityEstimator() {}
 
 DataRate LinkCapacityEstimator::UpperBound() const {
   if (ENABLE_WHIST_CHANGE && estimate_kbps_.has_value()){
+      // the default bound is too hard to trigger
       return DataRate::KilobitsPerSec(estimate_kbps_.value() +
                                       4 * deviation_estimate_kbps());
   }
@@ -31,6 +32,7 @@ DataRate LinkCapacityEstimator::UpperBound() const {
 
 DataRate LinkCapacityEstimator::LowerBound() const {
   if (ENABLE_WHIST_CHANGE && estimate_kbps_.has_value()){
+    // the default bound is too hard to trigger
     return DataRate::KilobitsPerSec(
         std::max(0.0, estimate_kbps_.value() - 4 * deviation_estimate_kbps()));
   }

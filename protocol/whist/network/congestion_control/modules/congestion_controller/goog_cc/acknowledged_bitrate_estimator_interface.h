@@ -33,8 +33,8 @@ struct RobustThroughputEstimatorSettings {
   explicit RobustThroughputEstimatorSettings(
       const FieldTrialsView* key_value_config);
 
-#if ENABLE_WHIST_CHANGE
-  bool enabled = false;
+#if ENABLE_WHIST_CHANGE && 0
+  bool enabled = true;
 #else
   bool enabled = false;  // Set to true to use RobustThroughputEstimator.
 #endif

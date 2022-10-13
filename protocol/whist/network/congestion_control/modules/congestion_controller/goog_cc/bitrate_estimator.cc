@@ -24,6 +24,8 @@ namespace webrtc {
 
 namespace {
 #if ENABLE_WHIST_CHANGE
+// the defualt initial window is too big, and can't get estimation in time.
+// especially our start_bitrate is high, which causes initial congestion easily
 constexpr int kInitialRateWindowMs = 50;
 #else
 constexpr int kInitialRateWindowMs = 500;

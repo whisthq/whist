@@ -176,7 +176,7 @@ TrendlineEstimator::TrendlineEstimator(
       smoothed_delay_(0),
       delay_hist_(),
       k_up_(0.0087),
-#if ENABLE_WHIST_CHANGE  //the default parameter is too police for competing bandwidth with other flows
+#if ENABLE_WHIST_CHANGE  //the default parameter is too polite for competing bandwidth with other flows
       k_down_(0.039/10),
 #else
       k_down(0.039)
@@ -374,6 +374,7 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   }
 #ifdef ENABLE_WHIST_CHANGE
   double k_down;
+  // adjust k_down according to current bitrate
   if(cc_shared_state.current_bitrate_ratio>0.7)
   {
      k_down= 0.039/10;

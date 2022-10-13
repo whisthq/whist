@@ -47,7 +47,9 @@ constexpr TimeDelta kRtcEventLogPeriod = TimeDelta::Millis(5000);
 constexpr TimeDelta kMaxRtcpFeedbackInterval = TimeDelta::Millis(5000);
 
 #if ENABLE_WHIST_CHANGE
-constexpr float kDefaultLowLossThreshold = 0.06f;
+// allow more inherent packet loss
+// also make it more simliar to old WCC
+constexpr float kDefaultLowLossThreshold = 0.08f;
 constexpr float kDefaultHighLossThreshold = 0.10f;
 #else
 constexpr float kDefaultLowLossThreshold = 0.02f;
@@ -553,6 +555,7 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
       //   it would take over one second since the lower packet loss to achieve
       //   108kbps.
 #if ENABLE_WHIST_CHANGE
+      //use more aggressive increase
       DataRate new_bitrate = DataRate::BitsPerSec(
           min_bitrate_history_.front().second.bps() * (1.f + cc_shared_state.g_increase_ratio) + 0.5);
 #else
@@ -579,6 +582,8 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
           //   newRate = rate * (1 - 0.5*lossRate);
           //   where packetLoss = 256*lossRate;
 #if ENABLE_WHIST_CHANGE
+          // decrease according to incoming rate
+          // to avoid get locked in constant congestion state
           if(cc_shared_state.ack_bitrate!=-1)
           {
             DataRate new_bitrate = DataRate::BitsPerSec(

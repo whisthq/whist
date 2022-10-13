@@ -26,6 +26,7 @@ class LinkCapacityEstimator {
   bool has_estimate() const;
   DataRate estimate() const;
 #if ENABLE_WHIST_CHANGE
+  // count how many samples we have in the estimator
   int est_cnt_=0;
 #endif
  private:
