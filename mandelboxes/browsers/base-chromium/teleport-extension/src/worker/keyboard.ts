@@ -3,7 +3,7 @@ import {
   NativeHostMessageType,
 } from "@app/constants/ipc"
 
-const initKeyboardRepeatRateHandler = (nativeHostPort: chrome.runtime.Port) => {
+const initKeyboardRepeatRateHandler = (socket: Socket, nativeHostPort: chrome.runtime.Port) => {
 
   socket.on("keyboard-repeat-rate-changed", async ([repeatDelay, repeatRate]: [number, number]) => {
     // Forward the message to the native host
