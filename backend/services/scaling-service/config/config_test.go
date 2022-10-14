@@ -7,20 +7,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 	"unsafe"
 
 	graphql "github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
-	"github.com/whisthq/whist/backend/services/utils"
 )
 
 // testClient implements the subscriptions.WhistGraphQLClient interface. We use
 // it to mock subscriptions.GraphQLClient.
 type testClient struct {
-	regions        []string
-	mandelboxLimit int32
+	targetFreeMandelboxes map[string]int
+	mandelboxLimit        int32
 }
 
 // Initialize is part of the subscriptions.WhistGraphQLClient interface.
@@ -36,19 +37,40 @@ func (*testClient) Mutate(_ context.Context, _ subscriptions.GraphQLQuery, _ map
 // Query is part of the subscriptions.WhistGraphQLClient interface. This
 // implementation populates the query struct with mock region data.
 func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ map[string]interface{}) error {
-	regions, err := json.Marshal(t.regions)
+	type entry struct {
+		Key   graphql.String `graphql:"key"`
+		Value graphql.String `graphql:"value"`
+	}
+
+	n := len(t.targetFreeMandelboxes)
+	regions := make([]string, 0, n)
+
+	// There are n + 2 entries in the configuration table because one entry is
+	// ENABLED_REGIONS, one is MANDELBOX_LIMIT_PER_USER, and there is one entry
+	// for each of the n enabled regions that specifies the desired number of
+	// free Mandelboxes in that region.
+	configs := make([]entry, 0, n+2)
+
+	for region, count := range t.targetFreeMandelboxes {
+		regions = append(regions, region)
+
+		suffix := strings.ToUpper(strings.ReplaceAll(region, "-", "_"))
+		key := graphql.String(fmt.Sprintf("DESIRED_FREE_MANDELBOXES_%s", suffix))
+		value := graphql.String(strconv.FormatInt(int64(count), 10))
+		configs = append(configs, entry{key, value})
+	}
+
+	regionJson, err := json.Marshal(regions)
 
 	if err != nil {
 		return err
 	}
 
-	configTable := []struct {
-		Key   graphql.String `graphql:"key"`
-		Value graphql.String `graphql:"value"`
-	}{
-		{Key: "ENABLED_REGIONS", Value: graphql.String(regions)},
-		{Key: "MANDELBOX_LIMIT_PER_USER", Value: graphql.String(utils.Sprintf("%d", t.mandelboxLimit))},
-	}
+	regionJsonString := graphql.String(regionJson)
+	limit := graphql.String(strconv.FormatInt(int64(t.mandelboxLimit), 10))
+
+	configs = append(configs, entry{"ENABLED_REGIONS", regionJsonString})
+	configs = append(configs, entry{"MANDELBOX_LIMIT_PER_USER", limit})
 
 	var config reflect.Value
 
@@ -79,7 +101,7 @@ func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ ma
 	case reflect.TypeOf(subscriptions.QueryProdConfigurations):
 		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistConfigs")
 
-		for _, entry := range configTable {
+		for _, entry := range configs {
 			config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
 				unsafe.Pointer(&entry)).Elem()))
 		}
@@ -117,12 +139,17 @@ func TestGetEnabledRegions(t *testing.T) {
 	}{
 		{metadata.EnvProd, []string{"us-east-1", "us-west-1", "ca-central-1"}},
 		{metadata.EnvProd, []string{}},
-		{metadata.EnvProd, nil},
 	}
 
 	for _, test := range tests {
 		t.Run(string(test.env), patchAppEnv(test.env, func(t *testing.T) {
-			client := testClient{regions: test.regions}
+			targetFreeMandelboxes := make(map[string]int)
+
+			for _, region := range test.regions {
+				targetFreeMandelboxes[region] = 2
+			}
+
+			client := testClient{targetFreeMandelboxes: targetFreeMandelboxes}
 
 			if err := Initialize(context.Background(), &client); err != nil {
 				t.Fatal("Initialize:", err)
@@ -190,6 +217,50 @@ func TestGetFrontendVersion(t *testing.T) {
 
 			if !reflect.DeepEqual(version, test.version) {
 				t.Errorf("Expected %v, got %v", test.version, version)
+			}
+		}))
+	}
+}
+
+// TestGetTargetFreeMandelboxes ensures that GetTargetFreeMandelboxes returns
+// the correct number of free Mandelboxes for each region.
+// GetTargetFreeMandelboxes should return 0 when it is called with the name of
+// a region that is not enabled as input.
+func TestGetTargetFreeMandelboxes(t *testing.T) {
+	tests := []struct {
+		env                           metadata.AppEnvironment
+		expectedTargetFreeMandelboxes map[string]int
+	}{
+		{metadata.EnvLocalDev, map[string]int{
+			"us-east-1":    2, // initializeLocal only enables us-east-1
+			"us-west-1":    0,
+			"us-west-2":    0,
+			"ca-central-1": 0,
+		}},
+		{metadata.EnvProd, map[string]int{
+			"us-east-1":    3,
+			"us-west-1":    4,
+			"us-west-2":    0, // us-west-2 is not enabled
+			"ca-central-1": 5,
+		}},
+	}
+
+	for _, test := range tests {
+		t.Run(string(test.env), patchAppEnv(test.env, func(t *testing.T) {
+			client := testClient{targetFreeMandelboxes: map[string]int{
+				"us-east-1":    3,
+				"us-west-1":    4,
+				"ca-central-1": 5,
+			}}
+
+			if err := Initialize(context.TODO(), &client); err != nil {
+				t.Fatal("Initialize:", err)
+			}
+
+			for region, count := range test.expectedTargetFreeMandelboxes {
+				if n := GetTargetFreeMandelboxes(region); n != count {
+					t.Errorf("Expected %d, got %d (%s)", count, n, region)
+				}
 			}
 		}))
 	}

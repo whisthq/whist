@@ -5,6 +5,9 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
@@ -103,6 +106,35 @@ func getFrontendVersion(dbVersion subscriptions.FrontendVersion, version *string
 	logger.Infof("Frontend version: %v", *version)
 }
 
+// getFreeMandelboxes
+func getFreeMandelboxes(db map[string]string, regions []string, dest *map[string]int) {
+	mboxes := make(map[string]int)
+
+	for _, region := range regions {
+		var n int
+		suffix := strings.ToUpper(strings.ReplaceAll(region, "-", "_"))
+		key := fmt.Sprintf("DESIRED_FREE_MANDELBOXES_%s", suffix)
+		count, ok := db[key]
+		fallback := 2
+
+		if !ok {
+			n = fallback
+			logger.Errorf("no value specified for configuration key '%s'. Using %d "+
+				"by default.", key, n)
+		} else if k, err := strconv.Atoi(count); err != nil {
+			n = fallback
+			logger.Errorf("Failed to parse value for configuration key '%s': %s", key,
+				err)
+		} else {
+			n = k
+		}
+
+		mboxes[region] = n
+	}
+
+	*dest = mboxes
+}
+
 // initialize populates the configuration singleton with values from the
 // configuration database.
 func initialize(ctx context.Context, client subscriptions.WhistGraphQLClient) error {
@@ -134,6 +166,8 @@ func initialize(ctx context.Context, client subscriptions.WhistGraphQLClient) er
 	}
 
 	getFrontendVersion(dbVersion, &newConfig.frontendVersion)
+	getFreeMandelboxes(db, newConfig.enabledRegions,
+		&newConfig.targetFreeMandelboxes)
 
 	config = newConfig
 
@@ -145,6 +179,11 @@ func initialize(ctx context.Context, client subscriptions.WhistGraphQLClient) er
 func initializeLocal(_ context.Context, _ subscriptions.WhistGraphQLClient) error {
 	config.enabledRegions = []string{"us-east-1"}
 	config.mandelboxLimitPerUser = 3
+	config.targetFreeMandelboxes = make(map[string]int)
+
+	for _, region := range config.enabledRegions {
+		config.targetFreeMandelboxes[region] = 2
+	}
 
 	logger.Warningf("Scaling service local build not fetching configuration " +
 		"values from the config database. Using static configuration instead.")

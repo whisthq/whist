@@ -261,10 +261,7 @@ func setup() {
 	testAlgorithm.CreateDBClient(testDBClient)
 	testLock = &sync.Mutex{}
 
-	// Set the desired mandelboxes map to a default value for testing
-	desiredFreeMandelboxesPerRegion = map[string]int{
-		"test-region": 2,
-	}
+	// TODO: Set desiredFreeMandelboxesPerRegion analog for testing.
 
 	config.Initialize(context.TODO(), testGraphQLClient)
 }

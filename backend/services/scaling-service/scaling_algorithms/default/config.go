@@ -7,21 +7,10 @@ import (
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
-// Default configuration values. These values should be pulled from
-// the config database, but we leave the default in case we fail to
-// query the database.
-var (
-	// defaultInstanceBuffer is the number of instances with space to run
-	// mandelboxes. This value is used when deciding how many instances to
-	// scale up if we don't have enough capacity.
-	defaultInstanceBuffer int = 1
-	// desiredFreeMandelboxesPerRegion is the number of free mandelboxes we always
-	// want available in a region. This value is set per-region and it represents
-	// the free mandelboxes we want on each.
-	desiredFreeMandelboxesPerRegion = map[string]int{
-		"us-east-1": 2,
-	}
-)
+// defaultInstanceBuffer is the number of instances with space to run
+// mandelboxes. This value is used when deciding how many instances to
+// scale up if we don't have enough capacity.
+var defaultInstanceBuffer int = 1
 
 const (
 	// The override value used when assigning users in dev, for developer convenience.

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -69,7 +70,8 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Extra capacity is considered once we have a full instance worth of capacity
 	// more than the desired free mandelboxes. TODO: Set the instance type once we
 	// have support for more instance types. For now default to `g4dn.2xlarge`.
-	extraCapacity := desiredFreeMandelboxesPerRegion[event.Region] + (defaultInstanceBuffer * instanceCapacity["g4dn.2xlarge"])
+	targetFreeMandelboxes := config.GetTargetFreeMandelboxes(event.Region)
+	extraCapacity := targetFreeMandelboxes + (defaultInstanceBuffer * instanceCapacity["g4dn.2xlarge"])
 
 	// Acquire lock on protected from scale down map
 	s.protectedMapLock.Lock()

@@ -3,6 +3,7 @@ package scaling_algorithms
 import (
 	"context"
 
+	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -85,16 +86,17 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	}
 
 	mandelboxCapacity := helpers.ComputeExpectedMandelboxCapacity(string(latestImage.ImageID), allActive, allStarting)
+	targetFreeMandelboxes := config.GetTargetFreeMandelboxes(event.Region)
 
 	// We consider the expected mandelbox capacity (active instances + starting instances)
 	// to account for warmup time and so that we don't scale up unnecesary instances.
-	if mandelboxCapacity < desiredFreeMandelboxesPerRegion[event.Region] {
+	if mandelboxCapacity < targetFreeMandelboxes {
 
 		// TODO: Change to a different instance type once we support more types or cloud providers
-		instancesToScale := helpers.ComputeInstancesToScale(desiredFreeMandelboxesPerRegion[event.Region], mandelboxCapacity, instanceCapacity["g4dn.2xlarge"])
+		instancesToScale := helpers.ComputeInstancesToScale(targetFreeMandelboxes, mandelboxCapacity, instanceCapacity["g4dn.2xlarge"])
 
 		logger.Infow(utils.Sprintf("Current mandelbox capacity of %d is less than desired %d. Scaling up %d instances to satisfy minimum desired capacity.",
-			mandelboxCapacity, desiredFreeMandelboxesPerRegion[event.Region], instancesToScale), contextFields)
+			mandelboxCapacity, targetFreeMandelboxes, instancesToScale), contextFields)
 
 		err = s.ScaleUpIfNecessary(instancesToScale, scalingCtx, event, latestImage)
 		if err != nil {
@@ -102,7 +104,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		}
 	} else {
 		logger.Infow(utils.Sprintf("Mandelbox capacity %d in %s is enough to satisfy minimum desired capacity of %d.",
-			mandelboxCapacity, event.Region, desiredFreeMandelboxesPerRegion[event.Region]), contextFields)
+			mandelboxCapacity, event.Region, targetFreeMandelboxes), contextFields)
 	}
 
 	return nil
