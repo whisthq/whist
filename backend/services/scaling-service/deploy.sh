@@ -34,8 +34,8 @@ IMAGE_FILE="$DEPLOY_DIR/images.json"
 # push the changes.
 # Args: none
 deploy_scaling_service() {
-    mkdir -p "$DEPLOY_DIR" && cp -r "$SERVICES_DIR"/* "$DEPLOY_DIR"
-    
+  mkdir -p "$DEPLOY_DIR" && cp -r "$SERVICES_DIR"/* "$DEPLOY_DIR"
+
   # Populate the deploy/ directory
   mv "$DEPLOY_DIR" ..
   git switch --orphan deploy-branch
@@ -46,7 +46,7 @@ deploy_scaling_service() {
 
   # Set stack to container so Heroku builds the Dockerfile
   heroku stack:set container -a "$HEROKU_APP_NAME"
-  
+
   # Push deploy directory to Heroku. Heroku is very bad, and will often fail to accept the deploy with:
   # error: RPC failed; HTTP 504 curl 22 The requested URL returned error: 504
   # To get around this, we simply try to push the deploy until it succeeds, up to 5 retries.

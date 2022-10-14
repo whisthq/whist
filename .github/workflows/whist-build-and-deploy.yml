@@ -1041,7 +1041,7 @@ jobs:
             yaml.dump(heroku_yml, file)
 
           print(open('heroku.yml').read())
-        
+
       - name: Deploy the Scaling Service, Start image upgrade and Migrate database schema
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: bash --noprofile --norc -eo pipefail {0}
