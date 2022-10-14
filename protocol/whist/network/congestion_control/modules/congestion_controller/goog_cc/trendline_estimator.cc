@@ -416,10 +416,11 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   threshold_smaller_ += k2 * (fabs(modified_trend) - threshold_smaller_) * time_delta_ms;
   threshold_smaller_ = rtc::SafeClamp(threshold_smaller_, cc_shared_state.k_smaller_clamp_min, 600.f);
 
+  /*
   if(cc_shared_state.loss_ratio> cc_shared_state.loss_decrease_threshold){
     threshold_=cc_shared_state.k_clamp_min;
     threshold_smaller_=cc_shared_state.k_clamp_min;
-  }
+  }*/
 #else
   threshold_ = rtc::SafeClamp(threshold_, 6.f, 600.f);
 #endif
