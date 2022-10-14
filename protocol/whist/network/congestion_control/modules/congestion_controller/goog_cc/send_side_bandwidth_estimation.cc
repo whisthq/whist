@@ -582,7 +582,7 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
           // Reduce rate:
           //   newRate = rate * (1 - 0.5*lossRate);
           //   where packetLoss = 256*lossRate;
-#if ENABLE_WHIST_CHANGE && 0
+#if ENABLE_WHIST_CHANGE
           // decrease according to incoming rate
           // to avoid get locked in constant congestion state
           if(cc_shared_state.ack_bitrate.has_value())

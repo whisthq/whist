@@ -362,9 +362,10 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
     hypothesis_=BandwidthUsage::kBwOverusing;
   }
 
+  /*
   if (ENABLE_WHIST_CHANGE && cc_shared_state.loss_ratio > cc_shared_state.loss_decrease_threshold){
     hypothesis_=BandwidthUsage::kBwOverusing;
-  }
+  }*/
 
   prev_trend_ = trend;
   UpdateThreshold(modified_trend, now_ms);
