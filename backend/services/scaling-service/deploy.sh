@@ -22,9 +22,8 @@ MONOREPO_COMMIT_HASH=${3}
 MIGRA_EXIT_CODE=${4}
 SQL_DIFF_STRING=${5}
 
-SERVICES_DIR="./backend/services"
-SCALING_SERVICE_DIR="./backend/services/scaling-service"
-DEPLOY_DIR="$SERVICES_DIR/deploy"
+SERVICES_DIR="./backend/services/"
+DEPLOY_DIR="./deploy/"
 IMAGE_FILE="$DEPLOY_DIR/images.json"
 
 ####################################################
@@ -36,10 +35,10 @@ IMAGE_FILE="$DEPLOY_DIR/images.json"
 # push the changes.
 # Args: none
 deploy_scaling_service() {
-  mkdir -p "$DEPLOY_DIR" && cp "$SERVICES_DIR" "$DEPLOY_DIR"
+  mkdir -p "$DEPLOY_DIR" && cp "$SERVICES_DIR"/* "$DEPLOY_DIR"
 
   # Write region image map to var file so the Procfile can read it.
-  echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
+  echo "$REGION_IMAGE_MAP" >> "$IMAGE_FILE"
 
   # Populate the deploy/ directory
   mv "$DEPLOY_DIR" ..
