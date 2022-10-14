@@ -396,10 +396,10 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   }
   else if(cc_shared_state.current_bitrate_ratio > 0.5)
   {
-    k_down_elastic =0.039/50;
+    k_down_elastic =0.039/40;
   }
   else {
-    k_down_elastic=0.039/100;
+    k_down_elastic=0.039/50;
   }
 
   const double k = fabs(modified_trend) < threshold_ ? k_down_elastic : k_up_;
