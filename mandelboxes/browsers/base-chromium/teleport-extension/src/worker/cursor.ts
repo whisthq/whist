@@ -5,8 +5,6 @@ import {
   NativeHostMessageType,
 } from "@app/constants/ipc"
 
-import { Socket } from "socket.io-client"
-
 const initCursorLockHandler = (nativeHostPort: chrome.runtime.Port) => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.POINTER_LOCK) return
