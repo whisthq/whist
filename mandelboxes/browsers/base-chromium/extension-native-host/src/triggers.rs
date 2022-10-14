@@ -7,7 +7,6 @@ pub enum Trigger {
     FileDownload,
     PointerLock,
     DidUpdateExtension,
-    KeyboardRepeatRate,
 }
 
 pub fn trigger_path(trigger: Trigger) -> PathBuf {
@@ -15,7 +14,6 @@ pub fn trigger_path(trigger: Trigger) -> PathBuf {
         Trigger::FileDownload => "downloaded-file",
         Trigger::PointerLock => "pointer-lock-update",
         Trigger::DidUpdateExtension => "did-update-extension",
-        Trigger::KeyboardRepeatRate => "keyboard-repeat-rate-update",
     })
 }
 
