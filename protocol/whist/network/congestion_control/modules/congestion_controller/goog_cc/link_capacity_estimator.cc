@@ -11,7 +11,10 @@
 
 #include <algorithm>
 
+#include "api/units/time_delta.h"
+#include "api/units/timestamp.h"
 #include "common_fixes.h"
+#include "cc_shared_state.h"
 #include "rtc_base/numerics/safe_minmax.h"
 //#include "whist.h"
 
@@ -45,7 +48,8 @@ DataRate LinkCapacityEstimator::LowerBound() const {
 void LinkCapacityEstimator::Reset() {
   estimate_kbps_.reset();
 #if ENABLE_WHIST_CHANGE
-  est_cnt_=0;
+  cc_shared_state.est_cnt_=0;
+  cc_shared_state.last_est_time = Timestamp::MinusInfinity();
 #endif
 }
 
@@ -59,7 +63,11 @@ void LinkCapacityEstimator::OnProbeRate(DataRate probe_rate) {
 
 void LinkCapacityEstimator::Update(DataRate capacity_sample, double alpha) {
 #if ENABLE_WHIST_CHANGE
-  est_cnt_++;
+  if(cc_shared_state.current_time - cc_shared_state.last_est_time > TimeDelta::Millis(1000))
+  {
+    cc_shared_state.last_est_time = cc_shared_state.current_time;
+    cc_shared_state.est_cnt_++;
+  }
 #endif
 
   double sample_kbps = capacity_sample.kbps();

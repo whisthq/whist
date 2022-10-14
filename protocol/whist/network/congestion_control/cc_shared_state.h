@@ -11,6 +11,9 @@ struct CCSharedState
     const double k_startup_duration=6;
     const double k_increase_ratio=0.12;
 
+    webrtc::Timestamp current_time = webrtc::Timestamp::MinusInfinity();
+
+
     bool in_slow_increase= false;
 
     webrtc::DataRate max_bitrate= webrtc::DataRate::MinusInfinity();
@@ -18,6 +21,10 @@ struct CCSharedState
 
     std::optional<webrtc::DataRate> ack_bitrate;
     webrtc::Timestamp first_process_time=webrtc::Timestamp::MinusInfinity();
+
+    // count how many samples we have in the estimator
+    int est_cnt_=0;
+    webrtc::Timestamp last_est_time = webrtc::Timestamp::MinusInfinity();
 
 };
 

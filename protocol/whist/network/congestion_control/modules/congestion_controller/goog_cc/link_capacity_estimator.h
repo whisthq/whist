@@ -25,10 +25,6 @@ class LinkCapacityEstimator {
   void OnProbeRate(DataRate probe_rate);
   bool has_estimate() const;
   DataRate estimate() const;
-#if ENABLE_WHIST_CHANGE
-  // count how many samples we have in the estimator
-  int est_cnt_=0;
-#endif
  private:
   friend class GoogCcStatePrinter;
   void Update(DataRate capacity_sample, double alpha);

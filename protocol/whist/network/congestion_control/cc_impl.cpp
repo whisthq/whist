@@ -184,7 +184,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
   virtual CCOutput feed_info(CCInput input) override
   {
       webrtc::Timestamp current_time= webrtc::Timestamp::Millis( input.current_time_ms);
-
+      cc_shared_state.current_time=current_time;
       /*
       ========================================
       do first time handling, mainly related to start bitrate

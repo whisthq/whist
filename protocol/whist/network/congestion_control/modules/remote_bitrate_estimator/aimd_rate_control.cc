@@ -296,6 +296,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
       //printf("<<<force reset!!!!!!!!!!!!!>>>\n");
       link_capacity_.Reset();
     }
+    whist_plotter_insert_sample("est_cnt", get_timestamp_sec(), cc_shared_state.est_cnt_*10 -100.0);
   }
   if(link_capacity_.has_estimate()){
     whist_plotter_insert_sample("link_uppder", get_timestamp_sec(), link_capacity_.UpperBound().bps()/100/1000);
@@ -454,7 +455,7 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
 DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
                                                Timestamp last_time) const {
 #if ENABLE_WHIST_CHANGE
-  cc_shared_state.in_slow_increase= (link_capacity_.est_cnt_ >=3? 1:0);
+  cc_shared_state.in_slow_increase= (cc_shared_state.est_cnt_ >=3? 1:0);
 #endif
   double time_period_seconds = (at_time - last_time).seconds<double>();
   double data_rate_increase_bps =
@@ -462,12 +463,12 @@ DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
   if(ENABLE_WHIST_CHANGE){
     //gradually use smaller increase depending on the the number of estimation
     RTC_CHECK(link_capacity_.has_estimate());
-    RTC_CHECK(link_capacity_.est_cnt_>0);
-    if(link_capacity_.est_cnt_ ==1)
+    RTC_CHECK(cc_shared_state.est_cnt_>0);
+    if(cc_shared_state.est_cnt_ ==1)
     {
        data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(cc_shared_state.k_increase_ratio/2)*current_bitrate_.bps() * time_period_seconds);
     }
-    else if(link_capacity_.est_cnt_ ==2) {
+    else if(cc_shared_state.est_cnt_ ==2) {
        data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(cc_shared_state.k_increase_ratio/4)*current_bitrate_.bps() * time_period_seconds);
     }
     else {
