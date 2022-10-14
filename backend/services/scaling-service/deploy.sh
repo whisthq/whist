@@ -16,11 +16,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Working directory is monorepo root
 cd "$DIR/../../.."
 
-REGION_IMAGE_MAP=${1}
-HEROKU_APP_NAME=${2}
-MONOREPO_COMMIT_HASH=${3}
-MIGRA_EXIT_CODE=${4}
-SQL_DIFF_STRING=${5}
+HEROKU_APP_NAME=${1}
+MONOREPO_COMMIT_HASH=${2}
+MIGRA_EXIT_CODE=${3}
+SQL_DIFF_STRING=${4}
 
 SERVICES_DIR="./backend/services/"
 DEPLOY_DIR="./deploy/"
@@ -35,11 +34,8 @@ IMAGE_FILE="$DEPLOY_DIR/images.json"
 # push the changes.
 # Args: none
 deploy_scaling_service() {
-  mkdir -p "$DEPLOY_DIR" && cp -r "$SERVICES_DIR"/* "$DEPLOY_DIR"
-
-  # Write region image map to var file so the Procfile can read it.
-  echo "$REGION_IMAGE_MAP" >> "$IMAGE_FILE"
-
+    mkdir -p "$DEPLOY_DIR" && cp -r "$SERVICES_DIR"/* "$DEPLOY_DIR"
+    
   # Populate the deploy/ directory
   mv "$DEPLOY_DIR" ..
   git switch --orphan deploy-branch
