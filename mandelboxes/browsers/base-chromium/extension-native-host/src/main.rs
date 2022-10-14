@@ -78,14 +78,14 @@ fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), Stri
     let repeatDelay = msg.value["repeatDelay"].as_str();
     let repeatRate = msg.value["repeatRate"].as_str();
 
-    if (repeatDelay == None || repeatRate == None) {
+    if repeatDelay.is_none() || repeatRate.is_none() {
         eprintln!("KeyboardRepeatRate message did not contain repeatDelay and repeatRate strings");
         return Ok(());
     }
 
     write_trigger_sequential(
         Trigger::KeyboardRepeatRate,
-        repeatDelay + " " + repeatRate,
+        repeatDelay.unwrap() + " " + repeatRate.unwrap(),
     )?;
     Ok(())
 }
