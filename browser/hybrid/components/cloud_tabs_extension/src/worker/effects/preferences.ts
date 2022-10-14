@@ -7,6 +7,11 @@ import { socket, socketConnected } from "@app/worker/events/socketio"
 import { whistState } from "@app/worker/utils/state"
 
 socketConnected.subscribe(async (socket: Socket) => {
+    // Set keyboard repeat rate
+    // TODO: actually get the repeat rate
+    socket.emit("keyboard-repeat-rate-changed", 20, 200)
+
+    // Set dark mode
     const usingDarkMode = new Promise((resolve) => {
         ;(chrome as any).braveTheme.getBraveThemeType((themeType: string) => {
           resolve(themeType === "Dark")

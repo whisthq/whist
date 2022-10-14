@@ -45,7 +45,7 @@ initCursorLockHandler(nativeHostPort)
 initLocationHandler(socket)
 
 // Receive keyboard repeat rate changes
-initKeyboardRepeatRateHandler(socket)
+initKeyboardRepeatRateHandler(socket, nativeHostPort)
 
 // Send and receive language actions
 initLanguageInitHandler(socket)
