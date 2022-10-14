@@ -177,7 +177,7 @@ func initialize(ctx context.Context, client subscriptions.WhistGraphQLClient) er
 // initializeLocal populates the global configuration singleton with static
 // data.
 func initializeLocal(_ context.Context, _ subscriptions.WhistGraphQLClient) error {
-	config.enabledRegions = []string{"us-east-1"}
+	config.enabledRegions = []string{"us-east-1", "test-region"}
 	config.mandelboxLimitPerUser = 3
 	config.targetFreeMandelboxes = make(map[string]int)
 

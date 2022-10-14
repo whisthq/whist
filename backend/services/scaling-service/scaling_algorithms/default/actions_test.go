@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/whisthq/whist/backend/services/scaling-service/config"
+	"github.com/whisthq/whist/backend/services/scaling-service/internal/sstest"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
@@ -232,22 +233,6 @@ func (mh *mockHostHandler) WaitForInstanceReady(scalingCtx context.Context, maxW
 	return nil
 }
 
-// mockHostHandler is used to test all interactions with hasura
-
-type mockGraphQLClient struct{}
-
-func (mg *mockGraphQLClient) Initialize(bool) error {
-	return nil
-}
-
-func (mg *mockGraphQLClient) Query(context.Context, subscriptions.GraphQLQuery, map[string]interface{}) error {
-	return nil
-}
-
-func (mg *mockGraphQLClient) Mutate(context.Context, subscriptions.GraphQLQuery, map[string]interface{}) error {
-	return nil
-}
-
 func setup() {
 	// Create and initialize a test scaling algorithm
 	testAlgorithm = &DefaultScalingAlgorithm{
@@ -255,13 +240,14 @@ func setup() {
 		Host:   &mockHostHandler{},
 	}
 	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
+	testGraphQLClient := &sstest.TestClient{TargetFreeMandelboxes: map[string]int{
+		"test-region": 2,
+		"us-east-1":   2,
+	}}
 	testAlgorithm.CreateEventChans()
 	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
 	testAlgorithm.CreateDBClient(testDBClient)
 	testLock = &sync.Mutex{}
-
-	// TODO: Set desiredFreeMandelboxesPerRegion analog for testing.
 
 	config.Initialize(context.TODO(), testGraphQLClient)
 }

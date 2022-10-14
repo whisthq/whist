@@ -18,7 +18,7 @@ func TestGetEnabledRegionsLocal(t *testing.T) {
 			t.Fatal("Initialize:", err)
 		}
 
-		expected := []string{"us-east-1"}
+		expected := []string{"us-east-1", "test-region"}
 		regions := GetEnabledRegions()
 
 		if !reflect.DeepEqual(regions, expected) {
