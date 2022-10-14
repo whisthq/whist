@@ -75,18 +75,17 @@ fn handle_pointer_lock(msg: NativeHostMessage) -> Result<(), String> {
 }
 
 fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), String> {
-    let repeatDelay = msg.value["repeatDelay"].as_str();
-    let repeatRate = msg.value["repeatRate"].as_str();
+    let repeatDelay = msg.value["repeatDelay"].as_i64();
+    let repeatRate = msg.value["repeatRate"].as_i64();
 
     if repeatDelay.is_none() || repeatRate.is_none() {
         eprintln!("KeyboardRepeatRate message did not contain repeatDelay and repeatRate strings");
         return Ok(());
     }
 
-    write_trigger_sequential(
-        Trigger::KeyboardRepeatRate,
-        (repeatDelay.unwrap().to_owned() + " " + repeatRate.unwrap()).as_str(),
-    )?;
+    let xset_cmd = Command::new("xset").args(
+        ["r", "rate", repeatDelay.unwrap().to_str(), repeatRate.unwrap().to_str(), 
+        "-display", ":10"]).spawn();
     Ok(())
 }
 
