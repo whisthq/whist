@@ -85,7 +85,7 @@ fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), Stri
     }
 
     let xset_cmd = Command::new("xset").args(
-        ["r", "rate", repeatDelay.unwrap().to_string(), repeatRate.unwrap().to_string(), 
+        ["r", "rate", repeatDelay.unwrap().as_str(), repeatRate.unwrap().as_str(), 
         "-display", ":10"]).spawn();
     Ok(())
 }
