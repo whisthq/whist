@@ -77,7 +77,7 @@ fn handle_pointer_lock(msg: NativeHostMessage) -> Result<(), String> {
 fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), String> {
     write_trigger_sequential(
         Trigger::KeyboardRepeatRate,
-        msg.value["repeatDelay"] + " " + msg.value["repeatRate"],
+        msg.value["repeatDelay"].as_str() + " " + msg.value["repeatRate"].as_str(),
     )?;
     Ok(())
 }
