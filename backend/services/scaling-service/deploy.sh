@@ -49,7 +49,7 @@ deploy_scaling_service() {
   git commit -m "scaling-service deploy for $MONOREPO_COMMIT_HASH"
 
   # Set stack to container so Heroku builds the Dockerfile
-  heroku stack:set container
+  heroku stack:set container -a "$HEROKU_APP_NAME"
   
   # Push deploy directory to Heroku. Heroku is very bad, and will often fail to accept the deploy with:
   # error: RPC failed; HTTP 504 curl 22 The requested URL returned error: 504
