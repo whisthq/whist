@@ -85,7 +85,7 @@ fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), Stri
 
     write_trigger_sequential(
         Trigger::KeyboardRepeatRate,
-        (repeatDelay.unwrap().to_owned() + " " + repeatRate.unwrap()).to_string(),
+        (repeatDelay.unwrap().to_owned() + " " + repeatRate.unwrap()).as_str(),
     )?;
     Ok(())
 }
