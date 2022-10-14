@@ -133,9 +133,7 @@ static void print_spaces(int count) {
 static void print_usage(const char *program, bool accepts_operands) {
     linked_list_sort(&option_list, &compare_options);
 
-    printf("Usage: %s [OPTIONS]", program);
-    if (accepts_operands) printf(" [OPERANDS]");
-    printf("\n");
+    printf("Usage: %s [OPTIONS]%s\n", program, accepts_operands ? " [OPERANDS]" : "");
 
     linked_list_for_each(&option_list, WhistCommandLineOption, option) {
         print_spaces(2);

@@ -267,12 +267,13 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
  *                  to true
  *
  * @param state		the Whist server state
- * @param device    CaptureDevice pointer
- * @param encoder   VideoEncoder pointer
+ * @param device    pointer to a CaptureDevice pointer (will be set to NULL)
+ * @param encoder   pointer to a VideoEncoder pointer (may be set to NULL)
  */
-static void retry_capture_screen(WhistServerState* state, CaptureDevice* device,
-                                 VideoEncoder* encoder) {
+static void retry_capture_screen(WhistServerState* state, CaptureDevice** device,
+                                 VideoEncoder** encoder) {
     LOG_WARNING("Failed to capture screen");
+    FATAL_ASSERT(device != NULL && encoder != NULL);
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device
     if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
         multithreaded_destroy_encoder(encoder);
