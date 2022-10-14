@@ -50,8 +50,8 @@ constexpr TimeDelta kMaxRtcpFeedbackInterval = TimeDelta::Millis(5000);
 #if ENABLE_WHIST_CHANGE
 // allow more inherent packet loss
 // also make it more simliar to old WCC
-constexpr float kDefaultLowLossThreshold = 0.08f;
-constexpr float kDefaultHighLossThreshold = 0.10f;
+constexpr float kDefaultLowLossThreshold = cc_shared_state.loss_hold_threshold;
+constexpr float kDefaultHighLossThreshold = cc_shared_state.loss_decrease_threshold;
 #else
 constexpr float kDefaultLowLossThreshold = 0.02f;
 constexpr float kDefaultHighLossThreshold = 0.1f;

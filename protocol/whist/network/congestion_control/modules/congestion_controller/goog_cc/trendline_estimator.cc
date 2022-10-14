@@ -362,7 +362,7 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
     hypothesis_=BandwidthUsage::kBwOverusing;
   }
 
-  if (ENABLE_WHIST_CHANGE && cc_shared_state.loss_ratio >0.1){
+  if (ENABLE_WHIST_CHANGE && cc_shared_state.loss_ratio > cc_shared_state.loss_decrease_threshold){
     hypothesis_=BandwidthUsage::kBwOverusing;
   }
 
@@ -416,7 +416,7 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   threshold_smaller_ += k2 * (fabs(modified_trend) - threshold_smaller_) * time_delta_ms;
   threshold_smaller_ = rtc::SafeClamp(threshold_smaller_, cc_shared_state.k_smaller_clamp_min, 600.f);
 
-  if(cc_shared_state.loss_ratio>0.1){
+  if(cc_shared_state.loss_ratio> cc_shared_state.loss_decrease_threshold){
     threshold_=cc_shared_state.k_clamp_min;
     threshold_smaller_=cc_shared_state.k_clamp_min;
   }
