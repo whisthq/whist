@@ -81,18 +81,15 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 		http.Error(w, "", http.StatusInternalServerError)
 	}
 
-	err = assign.MandelboxAssign(ctx, &reqdata, &dbclient.DBClient{}, grapQLClient)
-	if err != nil {
-		logger.Error(err)
-		http.Error(w, "", http.StatusInternalServerError)
-	}
+	go func() {
+		err = assign.MandelboxAssign(ctx, &reqdata, &dbclient.DBClient{}, grapQLClient)
+		if err != nil {
+			logger.Error(err)
+			http.Error(w, "", http.StatusInternalServerError)
+		}
+	}()
 
-	// After the assign request, we want to verify capacity.
-	events <- algos.ScalingEvent{
-		ID:   uuid.NewString(),
-		Type: "SERVER_MANDELBOX_ASSIGN_EVENT",
-		Data: &reqdata,
-	}
+	// TODO: After the assign request, verify capacity in region
 
 	res := <-reqdata.ResultChan
 	assignResult := res.Result.(httputils.MandelboxAssignRequestResult)
