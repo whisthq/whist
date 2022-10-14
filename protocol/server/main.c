@@ -398,8 +398,8 @@ int main(int argc, char* argv[]) {
     whist_init_subsystems();
 
     if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
-        // auto enable start sampling
-        whist_plotter_start_sampling();
+        // init as stream plotter, by passing a filename on init
+        whist_plotter_init(SERVER_SIDE_DEFAULT_EXPORT_FILE);
     }
 
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
@@ -425,7 +425,8 @@ int main(int argc, char* argv[]) {
     }
 
     // if SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT enabled, insert handler
-    // for grace quit for ctrl-c as well, so that plotter data can be
+    // for grace quit for ctrl-c as well, so that no plotter data will be lost
+    // on quit
     // exported automatically on quit
     if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT && sigaction(SIGINT, &sa, NULL) == -1) {
         LOG_FATAL("Establishing SIGINT signal handler failed.");
@@ -627,12 +628,8 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Protocol has shutdown gracefully");
 
-    if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
-        // if enabled, auto export to file as well
-        whist_plotter_export_to_file(SERVER_SIDE_DEFAULT_EXPORT_FILE);
-    }
-
     destroy_statistic_logger();
+    whist_plotter_destory();  // it's safe to call, regardless initalized or not
     destroy_logger();
     whist_error_monitor_shutdown();
 

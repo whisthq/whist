@@ -56,6 +56,16 @@ parser.add_option(
     help="weight of the line or point, default: 0.5",
 )
 
+parser.add_option(
+    "-t",
+    "--tail",
+    type="int",
+    action="store",
+    dest="tail_n",
+    default=0,
+    help="parse only last n lines, only for stream format",
+)
+
 # parse options by the optparse lib
 (options, args) = parser.parse_args()
 
@@ -107,12 +117,45 @@ def draw(label, arr):
         plt.plot(x, y, label=label, linewidth=options.weight)
 
 
+# load data from file
+def load_from_file(file_name):
+    s = open(file_name).read()
+    if len(s) < 2:
+        print("invalid file:", file_name)
+        os.exit(-1)
+    # if it's json with pretty print, the first line
+    # must be  "{\n".
+    if s[0] == "{" and s[1] == "\n":
+        # load whole content as json
+        data = json.loads(s)
+        return data
+    else:  # otherwise we try to parse it as jsonline
+        lines = s.split("\n")
+        # each completed line should finish with a '\n'
+        # if there are <= 1 line, then no data to parse
+        if len(lines) <= 1:
+            print("no valid data")
+            os.exit(-1)
+        lines = lines[0:-1]
+        if options.tail_n > 0:  # support the --tail option
+            lines = lines[-options.tail_n :]
+        data = {}
+        # we merge all data in each line of jsonline
+        # into a single structure
+        for i in range(0, len(lines)):
+            tmp_data = json.loads(lines[i])
+            for label in tmp_data.keys():
+                if not label in data:
+                    data[label] = []
+                data[label].extend(tmp_data[label])
+        return data
+
+
 # handle input of multiple files
 for file_name in args:
     # read in the file
     s = open(file_name).read()
-    # load in the content as json
-    data = json.loads(s)
+    data = load_from_file(file_name)
     # handle each lables in one file
     for i in data.keys():
         if options.filter_pattern:
