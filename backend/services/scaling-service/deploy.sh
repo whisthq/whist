@@ -23,7 +23,6 @@ SQL_DIFF_STRING=${4}
 
 SERVICES_DIR="./backend/services/"
 DEPLOY_DIR="./deploy/"
-IMAGE_FILE="$DEPLOY_DIR/images.json"
 
 ####################################################
 # Deploy Scaling Service

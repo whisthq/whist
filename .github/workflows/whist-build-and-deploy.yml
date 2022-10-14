@@ -1027,20 +1027,25 @@ jobs:
         run: |
           import yaml
 
-          heroku_yml = """
-          build:
-            config:
-              GIT_COMMIT: "${{ github.sha }}"
-              HEROKU_USER: "${{  }}"
-              HEROKU_API_KEY: "${{  }}"
-              REGION_IMAGE_MAP: "${{ needs.amis-publish-aws.outputs.region_to_ami_map }}"
-            docker:
-              web: Dockerfile
-          """
+          heroku_yml = {
+          'build': {
+            'config': {
+              'GIT_COMMIT':  '${{ github.sha }}',
+              'HEROKU_USER': 'developers@whist.com',
+              'HEROKU_API_KEY':  '${{ secrets.HEROKU_DEVELOPER_API_KEY }}',
+              'REGION_IMAGE_MAP': '${{ needs.amis-publish-aws.outputs.region_to_ami_map }}'
+              },
+              'docker': {
+                'web': 'Dockerfile'
+              }
+            }
+          }
+
           with open('heroku.yml', 'w') as file:
             yaml.dump(heroku_yml, file)
 
           print(open('heroku.yml').read())
+
 
       - name: Deploy the Scaling Service, Start image upgrade and Migrate database schema
         if: needs.whist-publish-build-config.outputs.publish == 'true'
