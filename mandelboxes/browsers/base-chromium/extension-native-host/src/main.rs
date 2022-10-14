@@ -6,6 +6,7 @@ use serde_json::json;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
+use std::process::Command;
 use triggers::{trigger_path, write_trigger, write_trigger_sequential, Trigger};
 
 // If the extension hasn't tried updating yet, then tell the
@@ -84,7 +85,7 @@ fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), Stri
     }
 
     let xset_cmd = Command::new("xset").args(
-        ["r", "rate", repeatDelay.unwrap().to_str(), repeatRate.unwrap().to_str(), 
+        ["r", "rate", repeatDelay.unwrap().to_string(), repeatRate.unwrap().to_string(), 
         "-display", ":10"]).spawn();
     Ok(())
 }
