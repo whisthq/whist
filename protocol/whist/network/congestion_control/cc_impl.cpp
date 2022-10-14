@@ -213,14 +213,17 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       ========================================
       */
       {
-        RTC_CHECK(input.rtt_ms.has_value() && input.rtt_ms.value() >0);
-        double rtt_ms= input.rtt_ms.value();
-        double adjusted_rtt_ms = rtt_ms;
+        double rtt_ms=50;
+        if(input.srtt_ms.has_value()){
+            RTC_CHECK( input.srtt_ms.value() >0);
+            rtt_ms=input.srtt_ms.value();
+        }
+
         send_side_bwd->UpdateRtt(webrtc::TimeDelta::Millis(rtt_ms), current_time);
 
         if(current_time-first_ts > webrtc::TimeDelta::Seconds( cc_shared_state.k_startup_duration))
         {
-           rtt_stat.insert( input.current_time_ms/1000, input.rtt_ms.value());
+           rtt_stat.insert( input.current_time_ms/1000, rtt_ms);
            if(current_time-first_ts >webrtc::TimeDelta::Seconds( cc_shared_state.k_startup_duration + rtt_window_size/2))
            {
               double window_rtt = rtt_stat.get_i_percentage_max( 90);
@@ -228,7 +231,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
               //adjusted_rtt_ms=max<double>(adjusted_rtt_ms,window_rtt);
            }
         }
-        delay_based_bwe->OnRttUpdate(webrtc::TimeDelta::Millis(adjusted_rtt_ms));
+        delay_based_bwe->OnRttUpdate(webrtc::TimeDelta::Millis(rtt_ms));
       }
 
       /*

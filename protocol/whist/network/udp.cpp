@@ -207,6 +207,7 @@ typedef struct {
     double long_term_latency;
     double short_term_latency;
     double raw_ping_sec;
+    double srtt_sec;
 
     // Latency Calculation (Only used on server)
     WhistMutex timestamp_mutex;
@@ -630,7 +631,11 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             FATAL_ASSERT(input.packet_loss>=0 && input.packet_loss<=1);
 
             if(context->raw_ping_sec>0){
-                input.rtt_ms=context->raw_ping_sec *MS_IN_SECOND;
+                input.raw_rtt_ms=context->raw_ping_sec *MS_IN_SECOND;
+            }
+
+            if(context->srtt_sec>0){
+                input.srtt_ms=context->srtt_sec *MS_IN_SECOND;
             }
             //=============important call here=============
             cc_controler->feed_info(input);
@@ -1280,7 +1285,8 @@ bool create_udp_socket_context(SocketContext* network_context, const char* desti
         if (ret == 0) {
             context->fec_controller = create_fec_controller(get_timestamp_sec());
             context->congestion_controller = create_congestion_controller();
-            context->raw_ping_sec=0.05;
+            context->raw_ping_sec=-1;
+            context->srtt_sec=-1;
             context->first_time=true;
         }
     }
@@ -2175,6 +2181,12 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     context->short_term_latency = PING_LAMBDA_SHORT_TERM * context->short_term_latency +
                                   (1 - PING_LAMBDA_SHORT_TERM) * ping_time;
     context->raw_ping_sec= ping_time;
+    if(context->srtt_sec < 0) {
+        context->srtt_sec = ping_time;
+    }else {
+        const double smooth_factor= 0.8;
+        context->srtt_sec = smooth_factor * context->srtt_sec +  + (1-smooth_factor) *ping_time;
+    }
     whist_plotter_insert_sample("ping_time", get_timestamp_sec(), ping_time*MS_IN_SECOND);
     whist_plotter_insert_sample("congestion_detected", get_timestamp_sec(), context->network_settings.congestion_detected *150);
     // Don't update long term latency during congestion

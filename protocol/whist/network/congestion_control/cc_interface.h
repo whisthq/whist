@@ -30,7 +30,8 @@ struct CCInput
 
    std::optional<double> incoming_bitrate;
 
-   std::optional<double> rtt_ms;
+   std::optional<double> raw_rtt_ms;
+   std::optional<double> srtt_ms;
 };
 
 struct CCOutput
