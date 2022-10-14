@@ -396,6 +396,11 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   else {
     k_down_elastic=0.039/100;
   }
+
+  if(cc_shared_state.loss_ratio>0.1){
+    threshold_=cc_shared_state.k_clamp_min;
+    threshold_smaller_=cc_shared_state.k_clamp_min;
+  }
   const double k = fabs(modified_trend) < threshold_ ? k_down_elastic : k_up_;
 #else
   const double k = fabs(modified_trend) < threshold_ ? k_down_ : k_up_;

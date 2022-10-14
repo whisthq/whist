@@ -144,6 +144,8 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         packet_loss = max<double>(0,packet_loss);
 
         send_side_bwd->UpdatePacketsLost(1e6*packet_loss, 1e6,current_time);
+
+        cc_shared_state.loss_ratio = packet_loss;
         //send_side_bwd->UpdatePacketsLostDirect(input.packet_loss.value(), current_time);
       }
 

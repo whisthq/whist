@@ -26,6 +26,8 @@ struct CCSharedState
     int est_cnt_=0;
     webrtc::Timestamp last_est_time = webrtc::Timestamp::MinusInfinity();
 
+    double loss_ratio=0;
+
 };
 
 extern CCSharedState cc_shared_state;
