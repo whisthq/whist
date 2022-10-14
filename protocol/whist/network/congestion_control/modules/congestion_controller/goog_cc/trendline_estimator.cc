@@ -313,7 +313,7 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
         whist_plotter_insert_sample("small_threshold_overusing", get_timestamp_sec(), 160);
       }
     }
-  } else if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ - 0.1f && cc_shared_state.in_slow_increase ) {
+  } else if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ *0.66 && cc_shared_state.in_slow_increase ) {
       //nop
   }
   else
