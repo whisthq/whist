@@ -10,6 +10,7 @@ export enum NativeHostMessageType {
   NATIVE_HOST_EXIT = "NATIVE_HOST_EXIT",
   NATIVE_HOST_UPDATE = "NATIVE_HOST_UPDATE",
   POINTER_LOCK = "POINTER_LOCK",
+  KEYBOARD_REPEAT_RATE = "KEYBOARD_REPEAT_RATE",
 }
 
 export interface ContentScriptMessage {

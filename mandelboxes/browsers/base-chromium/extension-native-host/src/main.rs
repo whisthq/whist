@@ -74,6 +74,14 @@ fn handle_pointer_lock(msg: NativeHostMessage) -> Result<(), String> {
     Ok(())
 }
 
+fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), String> {
+    write_trigger_sequential(
+        Trigger::KeyboardRepeatRate,
+        msg.value["repeatDelay"] + " " + msg.value["repeatRate"],
+    )?;
+    Ok(())
+}
+
 fn main() -> Result<(), String> {
     check_for_updates()?;
 
@@ -90,6 +98,7 @@ fn main() -> Result<(), String> {
                 NativeHostMessageType::NativeHostExit => break,
                 NativeHostMessageType::DownloadComplete => handle_download_complete(msg)?,
                 NativeHostMessageType::PointerLock => handle_pointer_lock(msg)?,
+                NativeHostMessageType::KeyboardRepeatRate => handle_keyboard_repeat_rate_change(msg)?,
                 _ => {}
             },
             Err(e) => eprintln!("{}", e),
