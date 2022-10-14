@@ -1024,6 +1024,7 @@ jobs:
       - name: Set build environment for building Docker container
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: python3 {0}
+        working-directory: backend/services/scaling-service
         run: |
           import yaml
 
