@@ -3,6 +3,9 @@
  */
 
 #include "gpu_commands.h"
+#include <whist/core/platform.h>
+
+#if OS_IS(OS_LINUX)
 
 #include <grp.h>
 #include <pwd.h>
@@ -76,6 +79,8 @@ int multithreaded_gpu_command_receiver(void *opaque) {
         LOG_ERROR("Could not bind to IPC unix socket");
     }
 
+    // Change the ownership so that the browser which is running as 'whist' user can connect to this
+    // socket
     do_chown(IPC_FILE, "whist", "whist");
 
     // Mark socket for accepting incoming connections using accept
@@ -137,3 +142,7 @@ int multithreaded_gpu_command_receiver(void *opaque) {
         }      // for
     }          // while (1)
 }  // main
+#else
+// Not implemented for other OSes
+int multithreaded_gpu_command_receiver(void *opaque) { return -1; }
+#endif

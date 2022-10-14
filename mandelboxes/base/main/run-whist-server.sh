@@ -144,7 +144,7 @@ start_browser() {
 }
 
 # Start the browser before WhistServer only when GPU command streaming is disabled
-if [ $ENABLE_GPU_COMMAND_STREAMING == 0 ]; then
+if [ "$ENABLE_GPU_COMMAND_STREAMING" == 0 ]; then
   echo "Starting the browser before WhistServer"
 
   start_browser
@@ -167,7 +167,7 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 /usr/share/whist/WhistServer $OPTIONS > $PROTOCOL_OUT_FILENAME 2>$PROTOCOL_ERR_FILENAME &
 whist_server_pid=$!
 
-if [ $ENABLE_GPU_COMMAND_STREAMING == 1 ]; then
+if [ "$ENABLE_GPU_COMMAND_STREAMING" == 1 ]; then
   echo "Starting the browser after WhistServer"
   start_browser
 fi

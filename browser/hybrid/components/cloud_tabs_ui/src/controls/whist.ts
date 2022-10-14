@@ -4,7 +4,7 @@ import { state } from "../shared/state"
 let whistParameters: string | null = null
 
 const GPUCommandStreaming = async () => {
-  return await new Promise(resolve =>
+  return await new Promise((resolve) =>
     (chrome as any).whist.isGPUCommandStreaming((enabled: boolean) => {
       resolve(enabled)
     })
@@ -66,8 +66,11 @@ const initializeWhistFreezeAllHandler = () => {
 
     if (parsed.type == "CHANGE_FOCUSED_TAB" && parsed.value.id === getTabId()) {
       const gpu_streaming = await GPUCommandStreaming()
-      if (whistParameters !== null && !whistTag.isWhistConnected() &&
-          !gpu_streaming) {
+      if (
+        whistParameters !== null &&
+        !whistTag.isWhistConnected() &&
+        !gpu_streaming
+      ) {
         whistTag.focus()
         whistTag.whistConnect(whistParameters)
       }

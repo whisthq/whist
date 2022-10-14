@@ -253,7 +253,7 @@ const char* virtual_get_chosen_file(WhistFrontend* frontend) {
     }
 }
 
-void virtual_send_gpu_command(WhistFrontend* frontend, void *buffer, int size) {
+void virtual_send_gpu_command(WhistFrontend* frontend, void* buffer, int size) {
     if (on_gpu_command != NULL) {
         return on_gpu_command(gpu_context, buffer, size);
     } else {

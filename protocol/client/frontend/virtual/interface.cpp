@@ -374,7 +374,7 @@ static const VirtualInterface vi = {
     .gpu =
         {
             .set_on_gpu_command_callback = vi_api_set_gpu_command_callback,
-        }
+        },
 };
 
 const VirtualInterface* get_virtual_interface() { return &vi; }

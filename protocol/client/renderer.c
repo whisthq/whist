@@ -124,8 +124,8 @@ bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type,
     }
 }
 
-void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packet_type,
-                            void* frame, int size) {
+void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packet_type, void* frame,
+                            int size) {
     WhistTimer statistics_timer;
 
     // Pass the receive packet into the video or audio context

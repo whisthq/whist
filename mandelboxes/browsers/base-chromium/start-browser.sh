@@ -159,8 +159,11 @@ fi
 ENABLE_GPU_COMMAND_STREAMING=$1
 echo "ENABLE_GPU_COMMAND_STREAMING is set to $ENABLE_GPU_COMMAND_STREAMING"
 
-if [ $ENABLE_GPU_COMMAND_STREAMING == 1 ]; then
+if [ "$ENABLE_GPU_COMMAND_STREAMING" == 1 ]; then
   flags+=("--enable-logging") # This is just required for debugging.
+  # TODO : We are disabling sandbox temporarily for streaming gpu commands via a unix socket.
+  # sandbox has to be re-enabled by following this
+  # https://chromium.googlesource.com/chromium/src.git/+/HEAD/docs/linux/sandbox_ipc.md
   flags+=("--no-sandbox")
   flags+=("--enable-gpu-command-streaming")
 fi
