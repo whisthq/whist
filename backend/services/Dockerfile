@@ -7,15 +7,12 @@ ARG HEROKU_USER=""
 ARG HEROKU_API_KEY=""
 ARG HEROKU_APP_NAME_OVERRIDE=""
 ARG REGION_IMAGE_MAP=""
-ENV APP_ENV=$APP_ENV
 
 # pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY . .
-
-
 
 RUN go build -ldflags "\
 		-X 'github.com/whisthq/whist/backend/services/metadata.gitCommit=$GIT_COMMIT'\
