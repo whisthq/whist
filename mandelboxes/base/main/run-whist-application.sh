@@ -55,7 +55,7 @@ fi
 cp -f $FONT_CONFIG_CUSTOM_FILE $FONTCONFIG_LOCAL_FOLDER/fonts.conf
 
 # Listen for keyboard repeat rate update events in the background
-/usr/share/whist/handle-keyboard-repeat-rate-update.sh &
+handle-keyboard-repeat-rate-update.sh &
 
 # To avoid interfering with Filebeat, the logs files should not contain hyphens in the name before the {-out, -err}.log suffix
 APPLICATION_OUT_FILENAME=/home/whist/whist_application-out.log

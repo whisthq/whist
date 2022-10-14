@@ -422,7 +422,7 @@ COPY --chmod=550 utils/run-as-whist-user.sh $HYDRAULIC_ROOT/usr/share/whist/run-
 
 COPY input/Xmodmap $HYDRAULIC_ROOT/root/.Xmodmap
 
-COPY --chown=whist input/handle-keyboard-repeat-rate-update.sh $HYDRAULIC_ROOT/usr/share/whist/handle-keyboard-repeat-rate-update.sh
+COPY --chmod=555 input/handle-keyboard-repeat-rate-update.sh $HYDRAULIC_ROOT/usr/local/bin/handle-keyboard-repeat-rate-update.sh
 
 #########################
 # Display
