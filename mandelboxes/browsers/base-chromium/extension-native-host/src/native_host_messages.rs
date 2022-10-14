@@ -21,6 +21,8 @@ pub enum NativeHostMessageType {
     PointerLock,
     #[serde(rename = "NATIVE_HOST_KEEPALIVE")]
     NativeHostKeepalive,
+    #[serde(rename = "KEYBOARD_REPEAT_RATE")]
+    KeyboardRepeatRate,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

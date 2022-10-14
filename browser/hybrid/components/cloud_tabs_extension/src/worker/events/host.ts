@@ -48,8 +48,6 @@ const jsonTransport = async () => {
     user_agent: u,
     client_os: p,
     client_dpi: window.devicePixelRatio * 96,
-    key_repeat: r,
-    initial_key_repeat: i,
     system_languages: systemLangs,
   }
 }

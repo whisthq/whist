@@ -8,6 +8,7 @@ import { initFileSyncHandler } from "./downloads"
 import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
 import { initLocationHandler } from "./geolocation"
+import { initKeyboardRepeatRateHandler } from "./keyboard"
 import { initLanguageInitHandler, initLanguageChangeHandler } from "./language"
 import { initPreferencesInitHandler, initDarkModeChangeHandler } from "./preferences"
 import {
@@ -42,6 +43,9 @@ initCursorLockHandler(nativeHostPort)
 
 // Send and receive geolocation actions
 initLocationHandler(socket)
+
+// Receive keyboard repeat rate changes
+initKeyboardRepeatRateHandler(socket)
 
 // Send and receive language actions
 initLanguageInitHandler(socket)

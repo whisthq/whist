@@ -50,7 +50,6 @@ Xft/Antialias 1
 Xft/Hinting 1
 Xft/HintStyle "hintslight"
 Xft/RGBA "rgb"
-Gtk/CursorThemeSize $((24*WHIST_DPI/96))
 EOF
 
 echo "$WHIST_DPI" > $WHIST_DPI_CACHE_FILE
