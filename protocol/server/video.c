@@ -267,19 +267,20 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
  *                  to true
  *
  * @param state		the Whist server state
- * @param device    CaptureDevice pointer
- * @param encoder   VideoEncoder pointer
+ * @param device    pointer to a CaptureDevice pointer (will be set to NULL)
+ * @param encoder   pointer to a VideoEncoder pointer (may be set to NULL)
  */
-static void retry_capture_screen(WhistServerState* state, CaptureDevice* device,
-                                 VideoEncoder* encoder) {
+static void retry_capture_screen(WhistServerState* state, CaptureDevice** device,
+                                 VideoEncoder** encoder) {
     LOG_WARNING("Failed to capture screen");
+    FATAL_ASSERT(device != NULL && encoder != NULL);
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device
-    if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
-        multithreaded_destroy_encoder(encoder);
-        encoder = NULL;
+    if (*encoder != NULL && (*encoder)->active_encoder == NVIDIA_ENCODER) {
+        multithreaded_destroy_encoder(*encoder);
+        *encoder = NULL;
     }
-    destroy_capture_device(device);
-    device = NULL;
+    destroy_capture_device(*device);
+    *device = NULL;
     state->update_device = true;
 
     whist_sleep(100);
@@ -745,7 +746,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // If capture screen failed, we should try again
             if (accumulated_frames < 0) {
-                retry_capture_screen(state, device, encoder);
+                retry_capture_screen(state, &device, &encoder);
                 continue;
             }
             // Immediately bring consecutives to 0, when a new frame is captured
