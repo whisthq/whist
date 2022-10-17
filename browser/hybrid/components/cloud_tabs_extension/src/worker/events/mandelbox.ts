@@ -16,6 +16,7 @@ import { AuthInfo } from "@app/@types/payload"
 
 const mandelboxNeeded = stateDidChange("waitingCloudTabs").pipe(
   filter((change: any) => change?.applyData?.name === "push"),
+  filter(() => navigator.onLine),
   filter(
     () =>
       whistState.mandelboxState === MandelboxState.MANDELBOX_NONEXISTENT &&
