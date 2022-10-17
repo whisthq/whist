@@ -437,9 +437,9 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
     Timestamp last_time,
     DataRate current_bitrate) const {
 #if ENABLE_WHIST_CHANGE
-  cc_shared_state.in_slow_increase=0;
+  RTC_CHECK(cc_shared_state.est_cnt_==0);
   //use more aggressive increase ratio
-  double alpha = 1 + cc_shared_state.k_increase_ratio;
+  double alpha = 1 + cc_shared_state.get_increase_ratio();
 #else
   double alpha = 1.08;
 #endif
@@ -454,9 +454,6 @@ DataRate AimdRateControl::MultiplicativeRateIncrease(
 
 DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
                                                Timestamp last_time) const {
-#if ENABLE_WHIST_CHANGE
-  cc_shared_state.in_slow_increase= (cc_shared_state.est_cnt_ >=3? 1:0);
-#endif
   double time_period_seconds = (at_time - last_time).seconds<double>();
   double data_rate_increase_bps =
       GetNearMaxIncreaseRateBpsPerSecond() * time_period_seconds;
@@ -464,16 +461,7 @@ DataRate AimdRateControl::AdditiveRateIncrease(Timestamp at_time,
     //gradually use smaller increase depending on the the number of estimation
     RTC_CHECK(link_capacity_.has_estimate());
     RTC_CHECK(cc_shared_state.est_cnt_>0);
-    if(cc_shared_state.est_cnt_ ==1)
-    {
-       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(cc_shared_state.k_increase_ratio/2)*current_bitrate_.bps() * time_period_seconds);
-    }
-    else if(cc_shared_state.est_cnt_ ==2) {
-       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,(cc_shared_state.k_increase_ratio/4)*current_bitrate_.bps() * time_period_seconds);
-    }
-    else {
-       data_rate_increase_bps = std::max<double> (data_rate_increase_bps,0.015*current_bitrate_.bps() * time_period_seconds);
-    }
+    data_rate_increase_bps = std::max<double> (data_rate_increase_bps,cc_shared_state.get_increase_ratio()*current_bitrate_.bps() * time_period_seconds);
   }
   return DataRate::BitsPerSec(data_rate_increase_bps);
 }

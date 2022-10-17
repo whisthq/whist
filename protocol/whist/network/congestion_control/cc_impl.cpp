@@ -127,6 +127,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         send_side_bwd->SetBitrates(std::nullopt, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
                                       webrtc::DataRate::BitsPerSec(input.max_bitrate.value()),  current_time);
         delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
+        cc_shared_state.min_bitrate = webrtc::DataRate::BitsPerSec(input.min_bitrate.value());
         cc_shared_state.max_bitrate = webrtc::DataRate::BitsPerSec(input.max_bitrate.value());
       }
 
@@ -249,9 +250,9 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       CCOutput output;
       webrtc::DataRate loss_based_target_rate = send_side_bwd->target_rate();
       output.target_bitrate=loss_based_target_rate.bps();
-      cc_shared_state.current_bitrate_ratio= loss_based_target_rate.bps()*1.0/cc_shared_state.max_bitrate.bps();
 
-      whist_plotter_insert_sample("current_bitrate_ratio", get_timestamp_sec(), cc_shared_state.current_bitrate_ratio*100);
+      cc_shared_state.current_bitrate = loss_based_target_rate;
+      //whist_plotter_insert_sample("current_bitrate_ratio", get_timestamp_sec(), cc_shared_state.current_bitrate_ratio*100);
 
       return output;
   }

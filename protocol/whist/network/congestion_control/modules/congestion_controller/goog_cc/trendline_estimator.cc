@@ -177,11 +177,7 @@ TrendlineEstimator::TrendlineEstimator(
       smoothed_delay_(0),
       delay_hist_(),
       k_up_(0.0087),
-#if ENABLE_WHIST_CHANGE  //the default parameter is too polite for competing bandwidth with other flows
-      k_down_(0.039/10),
-#else
-      k_down(0.039)
-#endif
+      k_down_(0.039),
       overusing_time_threshold_(kOverUsingTimeThreshold),
       threshold_(12.5),
       prev_modified_trend_(NAN),
@@ -297,7 +293,7 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
   //RTC_CHECK( small_threshold > 0);
   //printf("<%f %f>\n",modified_trend, small_threshold);
   RTC_CHECK(threshold_smaller_ >0);
-  if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ && cc_shared_state.in_slow_increase) {
+  if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ && cc_shared_state.in_slow_increase()) {
     if (small_time_over_using_ == -1) {
       small_time_over_using_ = ts_delta / 2;
     } else {
@@ -313,7 +309,7 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
         whist_plotter_insert_sample("small_threshold_overusing", get_timestamp_sec(), 160);
       }
     }
-  } else if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ *0.66 && cc_shared_state.in_slow_increase ) {
+  } else if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ *0.66 && cc_shared_state.in_slow_increase() ) {
       //nop
   }
   else
@@ -384,25 +380,9 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   }
 
 #ifdef ENABLE_WHIST_CHANGE
-  double k_down_elastic;
-  // adjust k_down according to current bitrate
-  if(cc_shared_state.current_bitrate_ratio>0.7)
-  {
-     k_down_elastic= 0.039/10;
-  }
-  else if(cc_shared_state.current_bitrate_ratio > 0.6)
-  {
-    k_down_elastic =0.039/30;
-  }
-  else if(cc_shared_state.current_bitrate_ratio > 0.5)
-  {
-    k_down_elastic =0.039/40;
-  }
-  else {
-    k_down_elastic=0.039/50;
-  }
-
-  const double k = fabs(modified_trend) < threshold_ ? k_down_elastic : k_up_;
+  double k_down_elastic = cc_shared_state.get_kdown();
+  double k_up_elastic = cc_shared_state.get_kup();
+  const double k = fabs(modified_trend) < threshold_ ? k_down_elastic : k_up_elastic;
 #else
   const double k = fabs(modified_trend) < threshold_ ? k_down_ : k_up_;
 #endif
@@ -413,7 +393,7 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
 #ifdef ENABLE_WHIST_CHANGE
   threshold_ = rtc::SafeClamp(threshold_, cc_shared_state.k_clamp_min, 600.f);
 
-  const double k2 = fabs(modified_trend) < threshold_smaller_ ? k_down_elastic : k_up_;
+  const double k2 = fabs(modified_trend) < threshold_smaller_ ? k_down_elastic : k_up_elastic;
   threshold_smaller_ += k2 * (fabs(modified_trend) - threshold_smaller_) * time_delta_ms;
   threshold_smaller_ = rtc::SafeClamp(threshold_smaller_, cc_shared_state.k_smaller_clamp_min, 600.f);
 
