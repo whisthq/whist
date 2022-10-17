@@ -152,9 +152,9 @@ class BasicPlotter {
         plot_mutex = whist_create_mutex();
     }
     ~BasicPlotter() {
-        delete plot_data_ptr;
         stop_sampling();
         whist_lock_mutex(plot_mutex);
+        delete plot_data_ptr;
         whist_destroy_mutex(plot_mutex);
     }
 
