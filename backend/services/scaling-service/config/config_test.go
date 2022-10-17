@@ -5,6 +5,7 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -12,6 +13,7 @@ import (
 	graphql "github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/utils"
 )
 
 // testClient implements the subscriptions.WhistGraphQLClient interface. We use
@@ -40,14 +42,50 @@ func (t *testClient) Query(_ context.Context, q subscriptions.GraphQLQuery, _ ma
 		return err
 	}
 
-	regionConfig := struct {
+	configTable := []struct {
 		Key   graphql.String `graphql:"key"`
 		Value graphql.String `graphql:"value"`
-	}{Key: "ENABLED_REGIONS", Value: graphql.String(regions)}
+	}{
+		{Key: "ENABLED_REGIONS", Value: graphql.String(regions)},
+		{Key: "MANDELBOX_LIMIT_PER_USER", Value: graphql.String(utils.Sprintf("%d", t.mandelboxLimit))},
+	}
 
-	config := reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistConfigs")
-	config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(regionConfig),
-		unsafe.Pointer(&regionConfig)).Elem()))
+	var config reflect.Value
+
+	// If reflect.ValueOf(q) is a Pointer, reflect.Indirect() will dereference it,
+	// otherwise it will return reflect.ValueOf(q). We do this instead of
+	// reflect.TypeOf(q).Elem() just in case reflect.TypeOf(q) is not a Pointer.
+	// In that case, Elem() would panic.
+	ty := reflect.Indirect(reflect.ValueOf(q)).Type()
+
+	switch ty {
+	case reflect.TypeOf(subscriptions.QueryFrontendVersion):
+		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistFrontendVersions")
+		entry := subscriptions.WhistFrontendVersion{
+			ID:    1,
+			Major: 1,
+			Minor: 0,
+			Micro: 0,
+		}
+		config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
+			unsafe.Pointer(&entry)).Elem()))
+
+		// Use different cases with fallthrough statements rather than using a
+		// single case to avoid having one super long line.
+	case reflect.TypeOf(subscriptions.QueryDevConfigurations):
+		fallthrough
+	case reflect.TypeOf(subscriptions.QueryStagingConfigurations):
+		fallthrough
+	case reflect.TypeOf(subscriptions.QueryProdConfigurations):
+		config = reflect.Indirect(reflect.ValueOf(q)).FieldByName("WhistConfigs")
+
+		for _, entry := range configTable {
+			config.Set(reflect.Append(config, reflect.NewAt(reflect.TypeOf(entry),
+				unsafe.Pointer(&entry)).Elem()))
+		}
+	default:
+		return fmt.Errorf("Not implemented: %v", ty)
+	}
 
 	return nil
 }
@@ -123,6 +161,35 @@ func TestGetMandelboxLimit(t *testing.T) {
 
 			if !reflect.DeepEqual(limit, test.limit) {
 				t.Errorf("Expected %v, got %v", test.limit, limit)
+			}
+		}))
+	}
+}
+
+// TestGetFrontendVersion ensures that GetFrontendVersion returns the
+// frontend version retrieved from the configuration database.
+func TestGetFrontendVersion(t *testing.T) {
+	var tests = []struct {
+		env     metadata.AppEnvironment
+		version string
+	}{
+		{metadata.EnvDev, "1.0.0-dev-rc.0"},
+		{metadata.EnvStaging, "1.0.0-staging-rc.0"},
+		{metadata.EnvProd, "1.0.0"},
+	}
+
+	for _, test := range tests {
+		t.Run(string(test.env), patchAppEnv(test.env, func(t *testing.T) {
+			client := testClient{}
+
+			if err := Initialize(context.Background(), &client); err != nil {
+				t.Fatal("Initialize:", err)
+			}
+
+			version := GetFrontendVersion()
+
+			if !reflect.DeepEqual(version, test.version) {
+				t.Errorf("Expected %v, got %v", test.version, version)
 			}
 		}))
 	}

@@ -87,6 +87,22 @@ func getMandelboxLimit(db map[string]string, mandelboxLimit *int32) error {
 	return nil
 }
 
+// getFrontendVersion returns the current version of the frontend, which is initially
+// populated from the config database. This value is used by the scaling algorithm to
+// determine if the incoming requests come from an outdated frontend, and is part of
+// common configuration values shared by the scaling algorithms. Its necessary to grab
+// a lock because multiple scaling algorithms read and update it.
+func getFrontendVersion(dbVersion subscriptions.FrontendVersion, version *string) {
+	if dbVersion == (subscriptions.FrontendVersion{}) {
+		*version = "0.0.0"
+		logger.Warningf("Got an empty frontend version, falling back to %s", version)
+	}
+
+	*version = dbVersion.String()
+
+	logger.Infof("Frontend version: %v", *version)
+}
+
 // initialize populates the configuration singleton with values from the
 // configuration database.
 func initialize(ctx context.Context, client subscriptions.WhistGraphQLClient) error {
@@ -110,6 +126,14 @@ func initialize(ctx context.Context, client subscriptions.WhistGraphQLClient) er
 	if err := getMandelboxLimit(db, &newConfig.mandelboxLimitPerUser); err != nil {
 		return err
 	}
+
+	// Get the most recent frontend version from the config database
+	dbVersion, err := dbclient.GetFrontendVersion(ctx, client)
+	if err != nil {
+		logger.Error(err)
+	}
+
+	getFrontendVersion(dbVersion, &newConfig.frontendVersion)
 
 	config = newConfig
 

@@ -132,22 +132,10 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
-	// Get the most recent frontend version from the config database
-	version, err := dbclient.GetFrontendVersion(ctx, client)
-	if err != nil {
-		logger.Error(err)
-	}
-
-	if version == (subscriptions.FrontendVersion{}) {
-		logger.Errorf("got an empty frontend version")
-	}
-
-	// Set the scaling algorithm's internal version to the one received
-	// from the config database. The scaling service uses this value for
-	// checking if the incoming requests are coming from an outdated frontend.
-	setFrontendVersion(version)
-
-	var configs map[string]string
+	var (
+		configs map[string]string
+		err     error
+	)
 
 	switch metadata.GetAppEnvironmentLowercase() {
 	case string(metadata.EnvDev):

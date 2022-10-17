@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -185,7 +186,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	// Update the internal version with the new one received from the database.
 	// This function updates the value inside the config file, so we can keep  track
 	// of the current version locally, it does not update the value in the database.
-	setFrontendVersion(version)
+	config.SetFrontendVersion(version)
 
 	var (
 		commitHash string

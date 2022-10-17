@@ -221,7 +221,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	)
 
 	// Get the version we keep locally for comparing the incoming request value.
-	frontendVersion := getFrontendVersion()
+	frontendVersion := config.GetFrontendVersion()
 
 	// Parse the version with the `hashicorp/go-version` package so we can compare.
 	parsedFrontendVersion, err = hashicorp.NewVersion(frontendVersion)
