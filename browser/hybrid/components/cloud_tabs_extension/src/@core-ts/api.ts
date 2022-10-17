@@ -10,7 +10,7 @@ const httpConfig =
   (method: string) =>
   async (args: { body: object; url: string; accessToken?: string }) => {
     let response = null
-    
+
     try {
       response = await fetch(args.url, {
         method,
@@ -22,7 +22,7 @@ const httpConfig =
         },
         body: stringify(args.body),
       })
-    } catch(err) {
+    } catch (err) {
       return {
         status: 500,
         json: {},

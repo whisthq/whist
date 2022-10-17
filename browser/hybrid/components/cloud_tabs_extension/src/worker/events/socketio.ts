@@ -7,7 +7,6 @@ import {
   count,
   take,
   withLatestFrom,
-  tap
 } from "rxjs/operators"
 
 import { mandelboxSuccess } from "@app/worker/events/mandelbox"
