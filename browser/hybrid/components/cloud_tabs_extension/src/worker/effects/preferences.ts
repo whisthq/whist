@@ -8,8 +8,17 @@ import { whistState } from "@app/worker/utils/state"
 
 socketConnected.subscribe(async (socket: Socket) => {
     // Set keyboard repeat rate
-    // TODO: actually get the repeat rate
-    socket.emit("keyboard-repeat-rate-changed", 20, 200)
+    const delay = new Promise((resolve) => {
+        ;(chrome as any).whist.getKeyboardRepeatInitialDelay((delay: number) => {
+            resolve(delay)
+        })
+    })
+    const rate = new Promise((resolve) => {
+        ;(chrome as any).whist.getKeyboardRepeatRate((rate: number) => {
+            resolve(rate)
+        })
+    })
+    socket.emit("keyboard-repeat-rate-changed", await delay, await rate)
 
     // Set dark mode
     const usingDarkMode = new Promise((resolve) => {
