@@ -746,7 +746,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // If capture screen failed, we should try again
             if (accumulated_frames < 0) {
-                retry_capture_screen(state, device, encoder);
+                retry_capture_screen(state, &device, &encoder);
                 continue;
             }
             // Immediately bring consecutives to 0, when a new frame is captured
