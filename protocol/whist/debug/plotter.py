@@ -48,6 +48,15 @@ parser.add_option(
 )
 
 parser.add_option(
+    "",
+    "--figsize",
+    action="store",
+    dest="figsize",
+    type="string",
+    help='size of figure, e.g. "16x8"',
+)
+
+parser.add_option(
     "-w",
     "--weight",
     action="store",
@@ -80,6 +89,15 @@ if range_x:
         parser.error("invalid format: %s" % (rang_x))
     range_x_min = float(range_x.split("~")[0])
     range_x_max = float(range_x.split("~")[1])
+
+figsize = options.figsize
+figsize_x = -1
+figsize_y = -1
+if figsize:
+    if len(figsize.split("x")) != 2:
+        parser.error("invalid format: %s" % (figsize))
+    figsize_x = int(figsize.split("x")[0])
+    figsize_y = int(figsize.split("x")[1])
 
 
 # need at least 1 input file to plot
@@ -150,6 +168,9 @@ def load_from_file(file_name):
                 data[label].extend(tmp_data[label])
         return data
 
+
+if figsize_x > 0 and figsize_y > 0:
+    plt.figure(figsize=(figsize_x, figsize_y))
 
 # handle input of multiple files
 for file_name in args:
