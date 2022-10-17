@@ -78,4 +78,4 @@ int whist_plotter_export_to_file(const char* filename);
  *                                 this function doesn't mean to be thread safe, and should
  *                                 be called at the very end, i.e. before the protocol quits
  */
-void whist_plotter_destory(void);
+void whist_plotter_destroy(void);

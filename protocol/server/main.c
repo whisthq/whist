@@ -629,7 +629,7 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Protocol has shutdown gracefully");
 
     destroy_statistic_logger();
-    whist_plotter_destory();  // it's safe to call, regardless initalized or not
+    whist_plotter_destroy();  // it's safe to call, regardless initalized or not
     destroy_logger();
     whist_error_monitor_shutdown();
 

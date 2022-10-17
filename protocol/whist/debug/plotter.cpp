@@ -40,7 +40,7 @@ class StreamPlotter {
     std::thread periodical_check_thread;
 
    public:
-    StreamPlotter(std::string file_name) {
+    StreamPlotter(const std::string &file_name) {
         // initalization
         current_idx = 0;
         current_idx_start_time = get_timestamp_sec();
@@ -64,12 +64,12 @@ class StreamPlotter {
             while (running) {
                 double current_time = get_timestamp_sec();
                 if (current_time - current_idx_start_time > k_flush_interval) {
-                    int previous_idx = current_idx;  // just a convenient name for previous idx
+                    int previous_idx;  // just a convenient name for previous idx
 
                     // switch current_idx to next
                     // so that we can safely flush existing data to disk without mutex contention
                     whist_lock_mutex(plot_mutex);
-                    current_idx++;
+                    previous_idx = current_idx++;
                     whist_unlock_mutex(plot_mutex);
                     current_idx_start_time = get_timestamp_sec();
                     // flush the group pointed by previous_idx to disk
@@ -287,7 +287,7 @@ int whist_plotter_export_to_file(const char *filename) {
     return ((BasicPlotter *)g_plotter)->export_to_file(filename);
 }
 
-void whist_plotter_destory() {
+void whist_plotter_destroy() {
     initalized = false;
     if (stream_mode) {
         delete (StreamPlotter *)g_plotter;

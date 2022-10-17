@@ -495,7 +495,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
     destroy_statistic_logger();
 
-    whist_plotter_destory();  // it's safe to call, regardless initalized or not
+    whist_plotter_destroy();  // it's safe to call, regardless initalized or not
 
     destroy_logger();
 
