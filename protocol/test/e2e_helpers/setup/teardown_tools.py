@@ -431,7 +431,7 @@ def complete_experiment_and_save_results(
     # If the connection failed, trigger an error.
     experiment_metadata["client_server_connection_failure"] = (
         not experiment_metadata["client_failure"]
-        and len(open(client_metrics_file).readlines()) <= 500
+        and len(open(client_metrics_file).readlines()) <= 400
     )
     experiment_metadata["server_hang_detected"] = (
         server_hang_detected and not experiment_metadata["server_failure"]
