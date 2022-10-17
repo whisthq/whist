@@ -7,6 +7,7 @@ import {
   count,
   take,
   withLatestFrom,
+  tap
 } from "rxjs/operators"
 
 import { mandelboxSuccess } from "@app/worker/events/mandelbox"
@@ -52,5 +53,8 @@ const socketReconnectFailed = merge(socket, socketConnected).pipe(
     ).pipe(take(15), count())
   )
 )
+
+// I'm not sure why this fixes things but it does
+socket.subscribe()
 
 export { socket, socketConnected, socketDisconnected, socketReconnectFailed }
