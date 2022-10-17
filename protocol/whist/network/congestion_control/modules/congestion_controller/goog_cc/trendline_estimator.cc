@@ -293,7 +293,8 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
   //RTC_CHECK( small_threshold > 0);
   //printf("<%f %f>\n",modified_trend, small_threshold);
   RTC_CHECK(threshold_smaller_ >0);
-  if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ && cc_shared_state.in_slow_increase()) {
+  bool use_threshold_smaller_condition = (threshold_ == cc_shared_state.k_clamp_min && cc_shared_state.in_slow_increase());
+  if ( use_threshold_smaller_condition && modified_trend > threshold_smaller_) {
     if (small_time_over_using_ == -1) {
       small_time_over_using_ = ts_delta / 2;
     } else {
@@ -309,11 +310,13 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
         whist_plotter_insert_sample("small_threshold_overusing", get_timestamp_sec(), 160);
       }
     }
-  } else if (threshold_ == cc_shared_state.k_clamp_min && modified_trend > threshold_smaller_ *0.66 && cc_shared_state.in_slow_increase() ) {
-      //nop
+  } else if (use_threshold_smaller_condition && modified_trend > threshold_smaller_ *0.5) {
+      //noop
+      //don't clear the  accumulating values
   }
   else
   {
+    //otherwise clear all values
     small_hypothesis_ = BandwidthUsage::kBwNormal;
     small_time_over_using_ = -1;
     small_overuse_counter_ = 0;
