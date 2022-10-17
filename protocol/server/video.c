@@ -275,11 +275,11 @@ static void retry_capture_screen(WhistServerState* state, CaptureDevice** device
     LOG_WARNING("Failed to capture screen");
     FATAL_ASSERT(device != NULL && encoder != NULL);
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device
-    if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
-        multithreaded_destroy_encoder(encoder);
+    if (*encoder != NULL && (*encoder)->active_encoder == NVIDIA_ENCODER) {
+        multithreaded_destroy_encoder(*encoder);
         encoder = NULL;
     }
-    destroy_capture_device(device);
+    destroy_capture_device(*device);
     device = NULL;
     state->update_device = true;
 
