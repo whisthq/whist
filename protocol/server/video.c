@@ -661,7 +661,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // If we got an update device request, we should update the device
         if (state->update_device) {
-            update_current_device(state, &statistics_timer, device, encoder, true_width,
+            update_current_device(state, &statistics_timer, &device, &encoder, true_width,
                                   true_height);
             state->stream_needs_restart = true;
         }
