@@ -2,11 +2,11 @@ FROM golang:1.19
 
 WORKDIR /usr/src/app
 
-ARG GIT_COMMIT=""
-ARG HEROKU_USER=""
-ARG HEROKU_API_KEY=""
-ARG HEROKU_APP_NAME_OVERRIDE=""
-ARG REGION_IMAGE_MAP=""
+ARG GIT_COMMIT
+ARG HEROKU_USER
+ARG HEROKU_API_KEY
+ARG HEROKU_APP_NAME_OVERRIDE
+ARG REGION_IMAGE_MAP
 
 # pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
 COPY go.mod go.sum ./
