@@ -154,7 +154,7 @@ bool AimdRateControl::TimeToReduceFurther(Timestamp at_time,
                                           DataRate estimated_throughput) const {
   const TimeDelta bitrate_reduction_interval =
       rtt_.Clamped(TimeDelta::Millis(10), TimeDelta::Millis(200));
-#if ENABLE_WHIST_CHANGE
+#if ENABLE_WHIST_CHANGE && 0
   TimeDelta bitrate_reduction_interval_by_decrease =bitrate_reduction_interval*1.5;
   bitrate_reduction_interval_by_decrease = bitrate_reduction_interval.Clamped(TimeDelta::Millis(200), TimeDelta::Millis(1000));
   if (at_time - time_last_bitrate_change_ >= bitrate_reduction_interval  && at_time - time_last_bitrate_decrease_ >= bitrate_reduction_interval_by_decrease ) {
