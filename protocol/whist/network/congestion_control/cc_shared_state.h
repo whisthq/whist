@@ -37,7 +37,7 @@ struct CCSharedState {
         if(est_cnt_==0) return k_increase_ratio;
         else if(est_cnt_==1) return k_increase_ratio/2;
         else if(est_cnt_==2) return k_increase_ratio/4;
-        return 0.015;
+        return 0.01;
     }
 
     double get_kdown(){
