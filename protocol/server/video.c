@@ -277,10 +277,10 @@ static void retry_capture_screen(WhistServerState* state, CaptureDevice** device
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device
     if (*encoder != NULL && (*encoder)->active_encoder == NVIDIA_ENCODER) {
         multithreaded_destroy_encoder(*encoder);
-        encoder = NULL;
+        *encoder = NULL;
     }
     destroy_capture_device(*device);
-    device = NULL;
+    *device = NULL;
     state->update_device = true;
 
     whist_sleep(100);
