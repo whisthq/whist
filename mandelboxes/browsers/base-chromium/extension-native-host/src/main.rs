@@ -94,7 +94,7 @@ fn handle_timezone_change(msg: NativeHostMessage) -> Result<(), String> {
     match msg.value.as_str() {
         Some(timezone) => {
             Command::new("timedatectl").args(
-            ["set-timezone", timezone.unwrap()]).spawn();
+            ["set-timezone", timezone]).spawn();
         },
         None => {
             eprintln!("Timezone message did not contain timezone");
@@ -121,7 +121,7 @@ fn main() -> Result<(), String> {
                 NativeHostMessageType::DownloadComplete => handle_download_complete(msg)?,
                 NativeHostMessageType::PointerLock => handle_pointer_lock(msg)?,
                 NativeHostMessageType::KeyboardRepeatRate => handle_keyboard_repeat_rate_change(msg)?,
-                NativeHostMessageType::TimezoneChange => handle_timezone_change(msg)?,
+                NativeHostMessageType::Timezone => handle_timezone_change(msg)?,
                 _ => {}
             },
             Err(e) => eprintln!("{}", e),
