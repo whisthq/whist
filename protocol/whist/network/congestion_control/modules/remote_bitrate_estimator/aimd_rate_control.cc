@@ -154,9 +154,10 @@ bool AimdRateControl::TimeToReduceFurther(Timestamp at_time,
                                           DataRate estimated_throughput) const {
   const TimeDelta bitrate_reduction_interval =
       rtt_.Clamped(TimeDelta::Millis(10), TimeDelta::Millis(200));
-#if ENABLE_WHIST_CHANGE && 0
-  TimeDelta bitrate_reduction_interval_by_decrease =bitrate_reduction_interval*2;
-  if (at_time - time_last_bitrate_change_ >= bitrate_reduction_interval  && at_time - time_last_bitrate_decrease_ >= bitrate_reduction_interval_by_decrease.Clamped(TimeDelta::Millis(200), TimeDelta::Millis(1000)) ) {
+#if ENABLE_WHIST_CHANGE
+  TimeDelta bitrate_reduction_interval_by_decrease =bitrate_reduction_interval*1.5;
+  bitrate_reduction_interval_by_decrease = bitrate_reduction_interval.Clamped(TimeDelta::Millis(200), TimeDelta::Millis(1000));
+  if (at_time - time_last_bitrate_change_ >= bitrate_reduction_interval  && at_time - time_last_bitrate_decrease_ >= bitrate_reduction_interval_by_decrease ) {
 #else
   if (at_time - time_last_bitrate_change_ >= bitrate_reduction_interval) {
 #endif
@@ -288,7 +289,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
 
   ChangeState(input, at_time);
 
-  whist_plotter_insert_sample("change_state", get_timestamp_sec(), -55  + 2.0 * (rate_control_state_==RateControlState::kRcIncrease)  -2.0* (rate_control_state_==RateControlState::kRcDecrease) );
+  whist_plotter_insert_sample("change_state", get_timestamp_sec(), -60  + 2.0 * (rate_control_state_==RateControlState::kRcIncrease)  -2.0* (rate_control_state_==RateControlState::kRcDecrease) );
 
   if(ENABLE_WHIST_CHANGE)
   {
@@ -298,7 +299,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
       //printf("<<<force reset!!!!!!!!!!!!!>>>\n");
       link_capacity_.Reset();
     }
-    whist_plotter_insert_sample("est_cnt", get_timestamp_sec(), cc_shared_state.est_cnt_*2 -60.0);
+    whist_plotter_insert_sample("est_cnt", get_timestamp_sec(), cc_shared_state.est_cnt_*2 -70.0);
   }
   if(link_capacity_.has_estimate()){
     whist_plotter_insert_sample("link_uppder", get_timestamp_sec(), link_capacity_.UpperBound().bps()/100/1000);
