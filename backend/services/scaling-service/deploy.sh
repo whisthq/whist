@@ -21,8 +21,8 @@ MONOREPO_COMMIT_HASH=${2}
 MIGRA_EXIT_CODE=${3}
 SQL_DIFF_STRING=${4}
 
-SERVICES_DIR="./backend/services/"
-DEPLOY_DIR="./deploy/"
+SERVICES_DIR="./backend/services"
+DEPLOY_DIR="./deploy"
 
 ####################################################
 # Deploy Scaling Service
