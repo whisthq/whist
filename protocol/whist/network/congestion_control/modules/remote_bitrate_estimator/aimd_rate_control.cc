@@ -288,6 +288,8 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
 
   ChangeState(input, at_time);
 
+  whist_plotter_insert_sample("change_state", get_timestamp_sec(), -55  + 2.0 * (rate_control_state_==RateControlState::kRcIncrease)  -2.0* (rate_control_state_==RateControlState::kRcDecrease) );
+
   if(ENABLE_WHIST_CHANGE)
   {
     // prevent from accidently enter slow increase state in the first few seconds
@@ -296,7 +298,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
       //printf("<<<force reset!!!!!!!!!!!!!>>>\n");
       link_capacity_.Reset();
     }
-    whist_plotter_insert_sample("est_cnt", get_timestamp_sec(), cc_shared_state.est_cnt_*10 -100.0);
+    whist_plotter_insert_sample("est_cnt", get_timestamp_sec(), cc_shared_state.est_cnt_*2 -60.0);
   }
   if(link_capacity_.has_estimate()){
     whist_plotter_insert_sample("link_uppder", get_timestamp_sec(), link_capacity_.UpperBound().bps()/100/1000);

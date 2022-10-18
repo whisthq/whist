@@ -26,6 +26,8 @@
 #include "modules/remote_bitrate_estimator/include/bwe_defines.h"
 //#include "modules/remote_bitrate_estimator/test/bwe_test_logging.h"
 #include "rtc_base/checks.h"
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 
 //#include "rtc_base/logging.h"
 //#include "system_wrappers/include/metrics.h"
@@ -283,6 +285,7 @@ DelayBasedBwe::Result DelayBasedBwe::MaybeUpdateEstimate(
 bool DelayBasedBwe::UpdateEstimate(Timestamp at_time,
                                    absl::optional<DataRate> acked_bitrate,
                                    DataRate* target_rate) {
+  whist_plotter_insert_sample("update_estimate", get_timestamp_sec(), -50  + 2.0 * (active_delay_detector_->State()==BandwidthUsage::kBwOverusing)  -2.0* (active_delay_detector_->State()==BandwidthUsage::kBwUnderusing) );
   const RateControlInput input(active_delay_detector_->State(), acked_bitrate);
   *target_rate = rate_control_.Update(&input, at_time);
   return rate_control_.ValidEstimate();
