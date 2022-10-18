@@ -20,6 +20,10 @@ socketConnected.subscribe(async (socket: Socket) => {
     })
     socket.emit("keyboard-repeat-rate-changed", await delay, await rate)
 
+    // Set timezone
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    socket.emit("timezone-changed", timezone)
+
     // Set dark mode
     const usingDarkMode = new Promise((resolve) => {
         ;(chrome as any).braveTheme.getBraveThemeType((themeType: string) => {
@@ -35,3 +39,5 @@ darkModeChanged
     .subscribe(([isDarkMode, socket]: [boolean, Socket]) => {
         socket.emit("darkmode-changed", isDarkMode)
     })
+
+// TODO: detect changes in keyboard repeat rate, keyboard repeat delay, and timezone

@@ -6,7 +6,6 @@ import {
 import { Socket } from "socket.io-client"
 
 const initKeyboardRepeatRateHandler = (socket: Socket, nativeHostPort: chrome.runtime.Port) => {
-
   socket.on("keyboard-repeat-rate-changed", async ([repeatDelay, repeatRate]: [number, number]) => {
     // Forward the message to the native host
     nativeHostPort.postMessage(<NativeHostMessage>{
