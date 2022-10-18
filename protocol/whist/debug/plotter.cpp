@@ -26,20 +26,20 @@ extern "C" {
 typedef std::unordered_map<std::string, std::deque<std::pair<double, double>>> PlotData;
 class PlotterInterface {
    protected:
-    std::string name;
+    std::string type_name;
 
    public:
     virtual void insert_sample(const char *label, double x, double y) = 0;
 
     virtual void start_sampling() {
-        LOG_FATAL("start_sampling() not implemented for %s", name.c_str());
+        LOG_FATAL("start_sampling() not implemented for %s", type_name.c_str());
     }
     virtual void stop_sampling() {
-        LOG_FATAL("stop_sampling() not implemented for %s", name.c_str());
+        LOG_FATAL("stop_sampling() not implemented for %s", type_name.c_str());
     }
 
     virtual int export_to_file(const char *filename) {
-        LOG_FATAL("export_to_file() not implemented for %s", name.c_str());
+        LOG_FATAL("export_to_file() not implemented for %s", type_name.c_str());
     }
     virtual ~PlotterInterface() {}
 };
@@ -61,7 +61,7 @@ class StreamPlotter : public PlotterInterface {
 
    public:
     StreamPlotter(const std::string &file_name) {
-        name = "StreamPlotter";
+        type_name = "StreamPlotter";
         // initalization
         current_idx = 0;
         current_idx_start_time = get_timestamp_sec();
@@ -123,8 +123,6 @@ class StreamPlotter : public PlotterInterface {
         periodical_check_thread.join();  // wait for quit
         plot_file.close();
 
-        // grab the mutex before destorying for extra saftety
-        whist_lock_mutex(plot_mutex);
         for (int i = 0; i < 2; i++) {
             delete plot_data_array[i];
         }
@@ -167,7 +165,7 @@ class BasicPlotter : public PlotterInterface {
     std::atomic<bool> in_sampling;  // indicate if in the sampling status
    public:
     BasicPlotter() {
-        name = "BasicPlotter";
+        type_name = "BasicPlotter";
         in_sampling = false;
         plot_data_ptr = new PlotData;
         plot_data_ptr->reserve(9999);
@@ -175,7 +173,6 @@ class BasicPlotter : public PlotterInterface {
     }
     ~BasicPlotter() override {
         stop_sampling();
-        whist_lock_mutex(plot_mutex);
         delete plot_data_ptr;
         whist_destroy_mutex(plot_mutex);
     }
@@ -320,6 +317,6 @@ int whist_plotter_export_to_file(const char *filename) {
 void whist_plotter_destroy() {
     initalized = false;
     // release the long-term ownship of plotter. the plotter will be automatically destroyed when
-    // all temp ownership are relased.
+    // all temp ownership are released.
     g_plotter_ptr.reset();
 }
