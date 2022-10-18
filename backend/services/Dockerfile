@@ -1,12 +1,11 @@
-FROM golang:1.19
+FROM golang:1.19-alpine3.16 as build
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
 ARG GIT_COMMIT
 ARG HEROKU_USER
 ARG HEROKU_API_KEY
 ARG HEROKU_APP_NAME_OVERRIDE
-ARG REGION_IMAGE_MAP
 
 # pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
 COPY go.mod go.sum ./
@@ -19,7 +18,13 @@ RUN go build -ldflags "\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.email=$HEROKU_USER'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.apiKey=$HEROKU_API_USER'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.appNameOverride=$HEROKU_APP_NAME_OVERRIDE'\
-    " -v -o /usr/local/bin/scaling-service ./scaling-service
+    " -v -o ./build/scaling-service ./scaling-service
+
+# Create another stage to avoid copying the source code
+FROM alpine:3.16
+ARG REGION_IMAGE_MAP
+
+COPY --from=build /app/build/scaling-service /usr/local/bin/scaling-service
 
 RUN echo $REGION_IMAGE_MAP > images.json 
 
