@@ -157,12 +157,14 @@ Public Function Implementations
 ============================
 */
 
-NVFBC_BOOL cuda_destroy(CUcontext cuda_context) {
-    CUresult cu_res = cu_ctx_destroy_v2_ptr(cuda_context);
+NVFBC_BOOL cuda_destroy(CUcontext* cuda_context_ptr) {
+    FATAL_ASSERT(cuda_context_ptr != NULL);
+    CUresult cu_res = cu_ctx_destroy_v2_ptr(*cuda_context_ptr);
     if (cu_res != CUDA_SUCCESS) {
         LOG_ERROR("Unable to destroy CUDA context (result: %d)\n", cu_res);
         return NVFBC_FALSE;
     }
+    *cuda_context_ptr = NULL;
     return NVFBC_TRUE;
 }
 

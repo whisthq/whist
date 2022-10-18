@@ -73,9 +73,10 @@ CUcontext* get_nvidia_thread_cuda_context_ptr(void);
 /**
  * @brief                           Destroys the CUDA context given.
  *
- * @param cuda_context              CUDA context to destroy
+ * @param cuda_context_ptr          Pointer to the CUDA context to destroy. The context
+ *                                  value will be set to NULL.
  *
  * @returns                         NVFBC_TRUE on success, NVFBC_FALSE otherwise.
  */
-NVFBC_BOOL cuda_destroy(CUcontext cuda_context);
+NVFBC_BOOL cuda_destroy(CUcontext* cuda_context_ptr);
 #endif
