@@ -30,7 +30,6 @@ import (
 	"encoding/json"
 	"os"
 	"os/signal"
-	"path"
 	"sync"
 	"syscall"
 	"time"
