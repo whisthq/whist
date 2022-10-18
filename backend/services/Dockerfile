@@ -26,6 +26,7 @@ ARG REGION_IMAGE_MAP
 
 COPY --from=build /app/build/scaling-service /usr/local/bin/scaling-service
 
-RUN echo $REGION_IMAGE_MAP > images.json 
+RUN mkdir -p /etc/whist
+RUN echo $REGION_IMAGE_MAP > /etc/whist/images.json
 
 CMD ["scaling-service"]

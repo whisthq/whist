@@ -241,16 +241,10 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 func getRegionImageMap() (map[string]interface{}, error) {
 	var regionImageMap map[string]interface{}
 
-	// Get current working directory to read images file.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return nil, utils.MakeError("failed to get working directory: %s", err)
-	}
-
 	// Read file which contains the region to image on JSON format. This file will
 	// be read by the binary generated during deploy, located in the `bin` directory.
-	// The file is also generated during deploy and lives in the scaling service directory.
-	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "images.json"))
+	// The file is written to /etc/whist/images.json when building the Docker container.
+	content, err := os.ReadFile("/etc/whist/images.json")
 	if err != nil {
 		return nil, utils.MakeError("failed to read region to image map from file: %s", err)
 	}
