@@ -28,49 +28,8 @@ DESIRED_TIMEZONE=Etc/UTC # needs to be set on system
 #INITIAL_URL="" # unused
 #USER_AGENT="" # already set by extension
 SYSTEM_LANGUAGES="en_US" # needs to be set on system
-#KIOSK_MODE=false # always should be on kiosk - make a development flag
+#KIOSK_MODE=false # always should be on kiosk - TODO: make a development flag
 CLIENT_OS="darwin" # set to mac for now
-
-WHIST_JSON_FILE=/whist/resourceMappings/config.json
-if [[ -f $WHIST_JSON_FILE ]]; then
-  # if [ "$( jq -rc 'has("dark_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #   DARK_MODE="$(jq -rc '.dark_mode' < $WHIST_JSON_FILE)"
-  # fi
-  # if [ "$( jq -rc 'has("restore_last_session")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #   RESTORE_LAST_SESSION="$(jq -rc '.restore_last_session' < $WHIST_JSON_FILE)"
-  # fi
-  # if [ "$( jq -rc 'has("load_extension")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #   LOAD_EXTENSION="$(jq -rc '.load_extension' < $WHIST_JSON_FILE)"
-  # fi
-  if [ "$( jq -rc 'has("desired_timezone")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    DESIRED_TIMEZONE="$(jq -rc '.desired_timezone' < $WHIST_JSON_FILE)"
-    # Set the system-wide timezone
-    timedatectl set-timezone "$DESIRED_TIMEZONE"
-  fi
-  if [ "$( jq -rc 'has("system_languages")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    SYSTEM_LANGUAGES="$(jq -rc '.system_languages' < $WHIST_JSON_FILE)"
-  fi
-  # if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #   if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #     INITIAL_KEY_REPEAT=$( jq -rc '.initial_key_repeat' < $WHIST_JSON_FILE )
-  #     KEY_REPEAT=$( jq -rc '.key_repeat' < $WHIST_JSON_FILE )
-  #     # Set key repeat rate and repeat delay
-  #     xset r rate "$INITIAL_KEY_REPEAT" "$KEY_REPEAT"
-  #   fi
-  # fi
-  # if [ "$( jq -rc 'has("initial_url")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #   INITIAL_URL="$(jq -rc '.initial_url' < $WHIST_JSON_FILE)"
-  # fi
-  # if [ "$( jq -rc 'has("user_agent")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #   USER_AGENT="$(jq -rc '.user_agent' < $WHIST_JSON_FILE)"
-  # fi
-  # if [ "$( jq -rc 'has("kiosk_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #   KIOSK_MODE="$(jq -rc '.kiosk_mode' < $WHIST_JSON_FILE)"
-  # fi
-  #if [ "$( jq -rc 'has("client_os")' < $WHIST_JSON_FILE )" == "true"  ]; then
-  #  CLIENT_OS="$(jq -rc '.client_os' < $WHIST_JSON_FILE)"
-  #fi
-fi
 
 # # Most keys on macOS do not repeat, but all keys repeat on Linux. We turn off key repeat on certain Linux keys
 # # to match the macOS behavior. This needs to be done *after* setting the key repeat rate above.

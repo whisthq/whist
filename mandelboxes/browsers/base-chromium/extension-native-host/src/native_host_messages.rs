@@ -23,6 +23,8 @@ pub enum NativeHostMessageType {
     NativeHostKeepalive,
     #[serde(rename = "KEYBOARD_REPEAT_RATE")]
     KeyboardRepeatRate,
+    #[serde(rename = "TIMEZONE")]
+    Timezone,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

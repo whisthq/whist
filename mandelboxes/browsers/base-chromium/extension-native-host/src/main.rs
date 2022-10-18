@@ -90,6 +90,20 @@ fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), Stri
     Ok(())
 }
 
+fn handle_timezone_change(msg: NativeHostMessage) -> Result<(), String> {
+    match msg.value.as_str() {
+        Some(timezone) => {
+            Command::new("timedatectl").args(
+            ["set-timezone", timezone.unwrap()]).spawn();
+        },
+        None => {
+            eprintln!("Timezone message did not contain timezone");
+            return Ok(());
+        }
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), String> {
     check_for_updates()?;
 
@@ -107,6 +121,7 @@ fn main() -> Result<(), String> {
                 NativeHostMessageType::DownloadComplete => handle_download_complete(msg)?,
                 NativeHostMessageType::PointerLock => handle_pointer_lock(msg)?,
                 NativeHostMessageType::KeyboardRepeatRate => handle_keyboard_repeat_rate_change(msg)?,
+                NativeHostMessageType::TimezoneChange => handle_timezone_change(msg)?,
                 _ => {}
             },
             Err(e) => eprintln!("{}", e),

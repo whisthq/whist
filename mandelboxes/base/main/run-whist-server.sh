@@ -32,7 +32,6 @@ PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
-WHIST_JSON_FILE=/whist/resourceMappings/config.json
 
 # Read and export the session id, if the file exists
 if [ -f "$SESSION_ID_FILENAME" ]; then
@@ -48,11 +47,7 @@ TELEPORT_ERR_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-err.log
 
 # Parse options from JSON transport file
 LOCAL_CLIENT=false # true if the frontend is being tested manually by a Whist engineer
-if [[ -f $WHIST_JSON_FILE ]]; then
-  if [ "$( jq -rc 'has("local_client")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    LOCAL_CLIENT="$(jq -rc '.local_client' < $WHIST_JSON_FILE)"
-  fi
-fi
+# TODO: how to set to true if wanted?
 
 # Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)

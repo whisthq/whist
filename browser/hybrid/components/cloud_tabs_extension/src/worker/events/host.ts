@@ -44,7 +44,7 @@ const jsonTransport = async () => {
     ])
 
   return {
-    desired_timezone: t,
+    // desired_timezone: t,
     user_agent: u,
     client_os: p,
     client_dpi: window.devicePixelRatio * 96,
@@ -70,7 +70,7 @@ const hostInfo = mandelboxSuccess.pipe(
         jwt_access_token: auth.accessToken ?? "",
         mandelbox_id: mandelbox.mandelboxID,
         json_data: JSON.stringify({
-          kiosk_mode: true,
+          kiosk_mode: false,
           restore_last_session: false,
           load_extension: true,
           ...jsonData,

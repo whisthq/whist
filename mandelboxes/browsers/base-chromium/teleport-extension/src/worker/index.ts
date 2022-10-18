@@ -10,7 +10,11 @@ import { initCursorLockHandler } from "./cursor"
 import { initLocationHandler } from "./geolocation"
 import { initKeyboardRepeatRateHandler } from "./keyboard"
 import { initLanguageInitHandler, initLanguageChangeHandler } from "./language"
-import { initPreferencesInitHandler, initDarkModeChangeHandler } from "./preferences"
+import { 
+  initPreferencesInitHandler, 
+  initDarkModeChangeHandler,
+  initTimezoneChangeHandler,
+} from "./preferences"
 import {
   initTabState,
   initSocketioConnection,
@@ -54,6 +58,7 @@ initLanguageChangeHandler(socket)
 // Send and receive preferences actions
 initPreferencesInitHandler(socket)
 initDarkModeChangeHandler(socket)
+initTimezoneChangeHandler(socket, nativeHostPort)
 
 // Listen to the client for tab actions
 initActivateTabListener(socket)
