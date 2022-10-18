@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <whist/core/whist.h>
+#include <memory>
 #include <thread>
 
 extern "C" {
@@ -23,9 +24,28 @@ extern "C" {
 
 // the data struct for sampling
 typedef std::unordered_map<std::string, std::deque<std::pair<double, double>>> PlotData;
+class PlotterInterface {
+   protected:
+    std::string name;
+
+   public:
+    virtual void insert_sample(const char *label, double x, double y) = 0;
+
+    virtual void start_sampling() {
+        LOG_FATAL("start_sampling() not implemented for %s", name.c_str());
+    }
+    virtual void stop_sampling() {
+        LOG_FATAL("stop_sampling() not implemented for %s", name.c_str());
+    }
+
+    virtual int export_to_file(const char *filename) {
+        LOG_FATAL("export_to_file() not implemented for %s", name.c_str());
+    }
+    virtual ~PlotterInterface() {}
+};
 
 // the stream plotter peridically flush samples onto the disk using jsonline format
-class StreamPlotter {
+class StreamPlotter : public PlotterInterface {
     PlotData *plot_data_array[2];  // even odd array for storing samples
                                    // so that insert sample and flushing to disk doesn't
                                    // block each other
@@ -41,6 +61,7 @@ class StreamPlotter {
 
    public:
     StreamPlotter(const std::string &file_name) {
+        name = "StreamPlotter";
         // initalization
         current_idx = 0;
         current_idx_start_time = get_timestamp_sec();
@@ -87,7 +108,7 @@ class StreamPlotter {
             flush_to_file(current_idx);
         });
     }
-    void insert_sample(const char *label, double x, double y) {
+    void insert_sample(const char *label, double x, double y) override {
         if (!running) return;
         whist_lock_mutex(plot_mutex);
         auto &plot_data = *plot_data_array[current_idx % 2];
@@ -96,7 +117,7 @@ class StreamPlotter {
         whist_unlock_mutex(plot_mutex);
     }
 
-    ~StreamPlotter() {
+    ~StreamPlotter() override {
         running = 0;                     // prevent new samples' inserting
                                          // also tell the peridically thread to quit
         periodical_check_thread.join();  // wait for quit
@@ -139,39 +160,40 @@ class StreamPlotter {
     }
 };
 
-class BasicPlotter {
+class BasicPlotter : public PlotterInterface {
     PlotData *plot_data_ptr;
     WhistMutex plot_mutex;
 
     std::atomic<bool> in_sampling;  // indicate if in the sampling status
    public:
     BasicPlotter() {
+        name = "BasicPlotter";
         in_sampling = false;
         plot_data_ptr = new PlotData;
         plot_data_ptr->reserve(9999);
         plot_mutex = whist_create_mutex();
     }
-    ~BasicPlotter() {
+    ~BasicPlotter() override {
         stop_sampling();
         whist_lock_mutex(plot_mutex);
         delete plot_data_ptr;
         whist_destroy_mutex(plot_mutex);
     }
 
-    void start_sampling() {
+    void start_sampling() override {
         whist_lock_mutex(plot_mutex);
         plot_data_ptr->clear();  // clear all previous data
         in_sampling = true;      // indicate sampling start
         whist_unlock_mutex(plot_mutex);
     }
 
-    void stop_sampling() {
+    void stop_sampling() override {
         whist_lock_mutex(plot_mutex);
         in_sampling = false;  // indicate sampling stopped
         whist_unlock_mutex(plot_mutex);
     }
 
-    void insert_sample(const char *label, double x, double y) {
+    void insert_sample(const char *label, double x, double y) override {
         if (!in_sampling) return;  // if not in sampling, this function returns immediately
         auto &plot_data = *plot_data_ptr;
 
@@ -214,7 +236,7 @@ class BasicPlotter {
         return ss.str();
     }
 
-    int export_to_file(const char *filename) {
+    int export_to_file(const char *filename) override {
         std::string s = export_as_string();
         std::ofstream myfile;
         myfile.open(filename);
@@ -231,8 +253,14 @@ class BasicPlotter {
 
 // plotter is simliar to logger, which only has a global singleton instance
 // so we use static global
-static void *g_plotter;
-static bool stream_mode = false;
+
+// this is the pointer holding the long-term ownership of plotter
+std::shared_ptr<PlotterInterface> g_plotter_ptr;
+// the weak_ptr which allows us get a copy of the above ptr in a thread safe way
+// Note: accessing a single shared_ptr from two threads is not thread-safe,
+// it's thread-safe to get a copy of shared_ptr with weak_ptr's lock() method
+// from another thread, then do concurrent access
+std::weak_ptr<PlotterInterface> g_plotter_weak_ptr;
 static std::atomic<bool> initalized = false;
 
 /*
@@ -245,54 +273,53 @@ void whist_plotter_init(const char *file_name) {
         LOG_FATAL("whist_plotter_init is called twice");
     }
     if (file_name) {
-        g_plotter = new StreamPlotter(file_name);
-        stream_mode = true;
+        g_plotter_ptr = std::make_shared<StreamPlotter>(file_name);
     } else {
-        g_plotter = new BasicPlotter();
-        stream_mode = false;
+        g_plotter_ptr = std::make_shared<BasicPlotter>();
     }
+    // let the weak_ptr point to shared_ptr
+    g_plotter_weak_ptr = g_plotter_ptr;
     initalized = true;
 }
 
 void whist_plotter_start_sampling() {
-    FATAL_ASSERT(initalized == true);
-    // this function only has effect for basic plotter
-    if (!stream_mode) ((BasicPlotter *)g_plotter)->start_sampling();
-    // other wise it's a noop.
+    std::shared_ptr<PlotterInterface> local_ptr = g_plotter_weak_ptr.lock();
+    FATAL_ASSERT(local_ptr);
+    // Note: this function is only implemented for BasicPlotter
+    local_ptr->start_sampling();
 }
 
 void whist_plotter_stop_sampling() {
-    FATAL_ASSERT(initalized == true);
-    // this function only has effect for basic plotter
-    if (!stream_mode) ((BasicPlotter *)g_plotter)->stop_sampling();
-    // other wise it's a noop
+    std::shared_ptr<PlotterInterface> local_ptr = g_plotter_weak_ptr.lock();
+    FATAL_ASSERT(local_ptr);
+    // Note: this function is only implemented for BasicPlotter
+    if (!local_ptr) local_ptr->stop_sampling();
 }
 
 // the whist_plotter_insert_sample() uses a string instead a int as label. So that you don't need a
 // centralized logic to manage the mapping of id and string. It's optimized for easily use, instead
 // of max performance.
 void whist_plotter_insert_sample(const char *label, double x, double y) {
-    // here is no FATAL_ASSERT on initalized since we explicitly allow it
+    // this function is a heavily called function.
+    // we use the aomic<bool> to quit fast if the plotter is not initalized at all.
+    // since the weak ptr's lock operation might be costly (depend on implementation).
     if (!initalized) return;
-    if (stream_mode) {
-        ((StreamPlotter *)g_plotter)->insert_sample(label, x, y);
-    } else {
-        ((BasicPlotter *)g_plotter)->insert_sample(label, x, y);
-    }
+
+    std::shared_ptr<PlotterInterface> local_ptr = g_plotter_weak_ptr.lock();
+    if (!local_ptr) return;
+    local_ptr->insert_sample(label, x, y);
 }
 
 int whist_plotter_export_to_file(const char *filename) {
-    FATAL_ASSERT(initalized == true);
-    FATAL_ASSERT(!stream_mode);  // for stream plotter
-    return ((BasicPlotter *)g_plotter)->export_to_file(filename);
+    std::shared_ptr<PlotterInterface> local_ptr = g_plotter_weak_ptr.lock();
+    FATAL_ASSERT(local_ptr);
+    // Note: this function is only implemented for BasicPlotter
+    return local_ptr->export_to_file(filename);
 }
 
 void whist_plotter_destroy() {
     initalized = false;
-    if (stream_mode) {
-        delete (StreamPlotter *)g_plotter;
-    } else {
-        delete (BasicPlotter *)g_plotter;
-    }
-    g_plotter = NULL;
+    // release the long-term ownship of plotter. the plotter will be automatically destroyed when
+    // all temp ownership are relased.
+    g_plotter_ptr.reset();
 }
