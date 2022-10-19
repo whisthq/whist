@@ -3,3 +3,5 @@ tags
 
 # Build
 build/
+
+/config_schema.sql
