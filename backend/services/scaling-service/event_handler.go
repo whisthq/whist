@@ -43,6 +43,7 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"path"
 )
 
 func main() {
@@ -238,12 +239,25 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 // getRegionImageMap tries to read and parse the contents of the `images.json` file
 // which is written by the Github deploy workflow.
 func getRegionImageMap() (map[string]interface{}, error) {
-	var regionImageMap map[string]interface{}
+	var (
+		regionImageMap map[string]interface{}
+		filename string
+	)
 
 	// Read file which contains the region to image on JSON format. This file will
 	// be read by the binary generated during deploy, located in the `bin` directory.
 	// The file is written to /etc/whist/images.json when building the Docker container.
-	content, err := os.ReadFile("/etc/whist/images.json")
+	if metadata.IsLocalEnv() {
+		// Get current working directory to read images file.
+		currentWorkingDirectory, err := os.Getwd()
+		if err != nil {
+			return nil, utils.MakeError("failed to get working directory: %s", err)
+		}
+		filename = path.Join(currentWorkingDirectory, "images.json")
+	} else {
+		filename = "/etc/whist/images.json"
+	}
+	content, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, utils.MakeError("failed to read region to image map from file: %s", err)
 	}
