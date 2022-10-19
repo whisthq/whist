@@ -93,8 +93,9 @@ fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), Stri
 fn handle_timezone_change(msg: NativeHostMessage) -> Result<(), String> {
     match msg.value.as_str() {
         Some(timezone) => {
-            Command::new("timedatectl").args(
-            ["set-timezone", timezone]).spawn();
+            // Command::new("timedatectl").args(
+            // ["set-timezone", timezone]).spawn();
+            Command::new("sudo").args(["/usr/bin/set-timezone.sh", timezone]);
         },
         None => {
             eprintln!("Timezone message did not contain timezone");
