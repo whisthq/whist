@@ -18,6 +18,12 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+# Wait for JSON transport to write the config.json file. Starting the server and application
+# before the JSON transport settings have been written can have weird side-effects.
+# TODO: remove once JSON transport is phased out.
+WHIST_MAPPINGS_DIR=/whist/resourceMappings/
+block-until-file-exists.sh $WHIST_MAPPINGS_DIR/config.json >&1
+
 # Set/Retrieve Mandelbox parameters
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 WHIST_LOGS_FOLDER=/var/log/whist
