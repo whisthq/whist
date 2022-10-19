@@ -24,6 +24,8 @@ extern "C" {
 
 // the data struct for sampling
 typedef std::unordered_map<std::string, std::deque<std::pair<double, double>>> PlotData;
+
+// the interface for plotter implementations
 class PlotterInterface {
    protected:
     std::string type_name;
@@ -70,12 +72,12 @@ class StreamPlotter : public PlotterInterface {
             plot_data_array[i]->reserve(9999);
         }
         plot_mutex = whist_create_mutex();
-        running = 1;
+        running = true;
 
         // open file for writing
         plot_file.open(file_name);
         if (plot_file.fail()) {
-            LOG_FATAL("open file %s for plotter export failed\n", file_name.c_str());
+            LOG_FATAL("open file %s for saving plotter data failed\n", file_name.c_str());
         }
 
         // start peridicial checking thread for increasing the current_idx
@@ -118,7 +120,7 @@ class StreamPlotter : public PlotterInterface {
     }
 
     ~StreamPlotter() override {
-        running = 0;                     // prevent new samples' inserting
+        running = false;                 // prevent new samples' inserting
                                          // also tell the peridically thread to quit
         periodical_check_thread.join();  // wait for quit
         plot_file.close();
@@ -253,6 +255,7 @@ class BasicPlotter : public PlotterInterface {
 
 // this is the pointer holding the long-term ownership of plotter
 std::shared_ptr<PlotterInterface> g_plotter_ptr;
+
 // the weak_ptr which allows us get a copy of the above ptr in a thread safe way
 // Note: accessing a single shared_ptr from two threads is not thread-safe,
 // it's thread-safe to get a copy of shared_ptr with weak_ptr's lock() method

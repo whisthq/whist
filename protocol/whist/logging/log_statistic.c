@@ -243,10 +243,9 @@ void destroy_statistic_logger(void) {
 
         LOG_INFO("Saving data for plotter to file...");
 
-        const char *plt_filename = PLOT_DATA_FILENAME;
-        int ret = whist_plotter_export_to_file(plt_filename);
+        int ret = whist_plotter_export_to_file(PLOT_DATA_FILENAME);
         if (ret) {
-            LOG_ERROR("Exporet plotting data to file %s failed!", plt_filename);
+            LOG_ERROR("Export plotting data to file %s failed!", PLOT_DATA_FILENAME);
         }
     }
 }

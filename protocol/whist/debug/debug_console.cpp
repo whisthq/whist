@@ -98,7 +98,7 @@ int init_debug_console() {
         whist_plotter_init(NULL);
     } else {
         LOG_WARNING(
-            "CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT is enabled, so debug console's plot "
+            "CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT is enabled, so Debug_Console's plot "
             "commands will not work");
     }
 

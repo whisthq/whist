@@ -136,6 +136,11 @@ def draw(label, arr):
 
 
 # load data from file
+# the file format might be:
+# 1. whole file as a single json with pretty print
+# 2. jsonline, with each line as a seperated json
+# this function automatically detects the two format, and
+# turn the file to a unified python data structure
 def load_from_file(file_name):
     s = open(file_name).read()
     if len(s) < 2:
