@@ -101,7 +101,7 @@ fn handle_timezone_change(msg: NativeHostMessage) -> Result<(), String> {
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn();
-            let ecode = set_timezone_cmd?.wait().expect("failed to wait on set-timezone child");
+            let ecode = set_timezone_cmd.map_err(|e| e.to_string())?.wait().expect("failed to wait on set-timezone child");
             println!("set-timezone result {}", ecode);
         },
         None => {
