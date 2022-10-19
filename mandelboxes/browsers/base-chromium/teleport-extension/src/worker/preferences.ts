@@ -22,7 +22,7 @@ const initTimezoneChangeHandler = (socket: Socket, nativeHostPort: chrome.runtim
     // Forward the message to the native host
     nativeHostPort.postMessage(<NativeHostMessage>{
       type: NativeHostMessageType.TIMEZONE,
-      value: { timezone },
+      value: timezone,
     })
   })
 }
