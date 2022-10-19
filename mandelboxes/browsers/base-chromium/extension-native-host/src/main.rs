@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::thread;
 use std::process::Command;
 use std::process::Stdio;
-use std::os::unix::io::FromRawFd
+use std::os::unix::io::FromRawFd;
 use triggers::{trigger_path, write_trigger, write_trigger_sequential, Trigger};
 
 // If the extension hasn't tried updating yet, then tell the
