@@ -34,6 +34,8 @@ import (
 	"syscall"
 	"time"
 
+	"path"
+
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -43,7 +45,6 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
-	"path"
 )
 
 func main() {
@@ -241,7 +242,7 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 func getRegionImageMap() (map[string]interface{}, error) {
 	var (
 		regionImageMap map[string]interface{}
-		filename string
+		filename       string
 	)
 
 	// Read file which contains the region to image on JSON format. This file will
