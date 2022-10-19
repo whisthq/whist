@@ -510,7 +510,7 @@ COPY main/dbus-session-local.conf $HYDRAULIC_ROOT/etc/dbus-1/session-local.conf
 COPY --chmod=555 main/run-whist-application.sh $HYDRAULIC_ROOT/usr/bin/run-whist-application.sh
 
 COPY --chmod=555 utils/set-timezone.sh $HYDRAULIC_ROOT/usr/bin/set-timezone.sh
-RUN echo 'whist   ALL=NOPASSWD: /usr/bin/set-timezone.sh'
+RUN echo 'whist   ALL=NOPASSWD: /usr/bin/set-timezone.sh' >> /etc/sudoers
 
 # Consolidate and copy teleport executable and launcher script
 COPY --chmod=555 --from=whist-teleport-drag-drop /whist-teleport-drag-drop/build/whist-teleport-drag-drop $HYDRAULIC_ROOT/opt/teleport/drag-drop
