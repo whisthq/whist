@@ -98,7 +98,7 @@ CLIENT_OS="darwin" # set to mac for now
 # Set all JSON transport-related settings
 # We set the TZ environment variable (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
 # in order to automatically adjust the timezone at the lower layers
-export TZ=$DESIRED_TIMEZONE
+# export TZ=$DESIRED_TIMEZONE
 # export DARK_MODE=$DARK_MODE
 # export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 # export LOAD_EXTENSION=$LOAD_EXTENSION
@@ -109,7 +109,7 @@ export SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
 export SYSTEM_LANGUAGES=$SYSTEM_LANGUAGES
 export CLIENT_OS=$CLIENT_OS
 
-exec runuser --login whist --whitelist-environment=TZ,RESTORE_LAST_SESSION,LOAD_EXTENSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,SYSTEM_LANGUAGES,CLIENT_OS -c \
+exec runuser --login whist --whitelist-environment=RESTORE_LAST_SESSION,LOAD_EXTENSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,SYSTEM_LANGUAGES,CLIENT_OS -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
