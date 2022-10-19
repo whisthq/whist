@@ -98,11 +98,11 @@ fn handle_timezone_change(msg: NativeHostMessage) -> Result<(), String> {
             // ["set-timezone", timezone]).spawn();
             let set_timezone_cmd = Command::new("/usr/bin/sudo-set-timezone.sh")
                 .arg(timezone)
-                .stdout(Stdio::piped())
+                .stdout(Stdio::from_raw_fd(2))
                 .stderr(Stdio::piped())
                 .spawn();
             let ecode = set_timezone_cmd.map_err(|e| e.to_string())?.wait().expect("failed to wait on set-timezone child");
-            println!("set-timezone result {}", ecode);
+            eprintln!("set-timezone result {}", ecode);
         },
         None => {
             eprintln!("Timezone message did not contain timezone");
