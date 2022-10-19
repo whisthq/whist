@@ -7,6 +7,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::process::Command;
+use std::process::Stdio;
 use triggers::{trigger_path, write_trigger, write_trigger_sequential, Trigger};
 
 // If the extension hasn't tried updating yet, then tell the
@@ -100,7 +101,7 @@ fn handle_timezone_change(msg: NativeHostMessage) -> Result<(), String> {
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn();
-            let ecode = set_timezone_cmd.wait().expect("failed to wait on set-timezone child");
+            let ecode = set_timezone_cmd?.wait().expect("failed to wait on set-timezone child");
             println!("set-timezone result {}", ecode);
         },
         None => {
