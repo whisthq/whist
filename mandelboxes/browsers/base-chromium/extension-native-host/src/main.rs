@@ -95,7 +95,7 @@ fn handle_timezone_change(msg: NativeHostMessage) -> Result<(), String> {
         Some(timezone) => {
             // Command::new("timedatectl").args(
             // ["set-timezone", timezone]).spawn();
-            Command::new("sudo").args(["/usr/bin/set-timezone.sh", timezone]);
+            Command::new("/usr/bin/sudo-set-timezone.sh").args([timezone]).spawn();
         },
         None => {
             eprintln!("Timezone message did not contain timezone");
