@@ -21,6 +21,7 @@ socketConnected.subscribe(async (socket: Socket) => {
     socket.emit("keyboard-repeat-rate-changed", await delay, await rate)
 
     // Set timezone
+    // TODO: check if this works after removing json transport and having chrome already be started
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
     socket.emit("timezone-changed", timezone)
 
@@ -38,6 +39,8 @@ darkModeChanged
     .pipe(withLatestFrom(socket))
     .subscribe(([isDarkMode, socket]: [boolean, Socket]) => {
         socket.emit("darkmode-changed", isDarkMode)
+        // const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+        // socket.emit("timezone-changed", timezone)
     })
 
 // TODO: detect changes in keyboard repeat rate, keyboard repeat delay, and timezone
