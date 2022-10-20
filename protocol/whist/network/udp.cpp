@@ -700,7 +700,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             }
 
             whist_plotter_insert_sample("target_bitrate", get_timestamp_sec(), context->network_settings.video_bitrate/1000.0/100.0);
-            whist_plotter_insert_sample("burst_bitrate", get_timestamp_sec(), context->network_settings.burst_bitrate/1000.0/100.0);
+            //whist_plotter_insert_sample("burst_bitrate", get_timestamp_sec(), context->network_settings.burst_bitrate/1000.0/100.0);
             whist_plotter_insert_sample("saturate", get_timestamp_sec(), context->network_settings.saturate_bandwidth *100);
         }
         context->prev_group_id = context->curr_group_id;

@@ -30,13 +30,13 @@ struct CCSharedState {
     double loss_ratio=0;
 
     bool in_slow_increase(){
-        return est_cnt_>=3;
+        return est_cnt_>=2;
     }
 
     double get_increase_ratio(){
         if(est_cnt_==0) return k_increase_ratio;
-        else if(est_cnt_==1) return k_increase_ratio/2;
-        else if(est_cnt_==2) return k_increase_ratio/4;
+        else if(est_cnt_==1) return k_increase_ratio/4;
+        //else if(est_cnt_==2) return k_increase_ratio/4;
         return 0.01;
     }
 

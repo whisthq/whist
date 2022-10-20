@@ -29,6 +29,7 @@ Includes
 #include "whist/debug/debug_console.h"
 #include "whist/core/features.h"
 #include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 #include <whist/fec/fec_controller.h>
 #include <whist/fec/fec.h>
 #include <whist/debug/protocol_analyzer.h>
@@ -323,6 +324,12 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
 
     WccOp op = WCC_NO_OP;
     int old_bitrate = network_settings->video_bitrate;
+
+    whist_plotter_insert_sample("last_success_bitrate", get_timestamp_sec(), last_successful_bitrate/100.0/1000.0);
+    whist_plotter_insert_sample("max_bitrate_available", get_timestamp_sec(), max_bitrate_available/100.0/1000.0);
+    whist_plotter_insert_sample("increase_percent", get_timestamp_sec(), increase_percentage *10);
+
+    whist_plotter_insert_sample("burst_mode", get_timestamp_sec(), burst_mode*-30);
 
     // Delay-based controller selects based on overuse signal
     // It is RECOMMENDED to send the REMB message as soon
