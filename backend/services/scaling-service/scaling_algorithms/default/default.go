@@ -42,7 +42,6 @@ type ScalingAlgorithm interface {
 	CreateEventChans()
 	CreateGraphQLClient(subscriptions.WhistGraphQLClient)
 	CreateDBClient(dbclient.WhistDBClient)
-	GetConfig(subscriptions.WhistGraphQLClient)
 }
 
 // ScalingEvent is an event that contains all the relevant information
@@ -113,9 +112,6 @@ func (s *DefaultScalingAlgorithm) CreateDBClient(dbClient dbclient.WhistDBClient
 		s.DBClient = dbClient
 	}
 }
-
-// TODO(owen): Delete me
-func (*DefaultScalingAlgorithm) GetConfig(subscriptions.WhistGraphQLClient) {}
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing
 // events and executing the appropiate scaling actions. This function is specific for each region

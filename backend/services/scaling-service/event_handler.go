@@ -131,7 +131,6 @@ func main() {
 		scalingAlgorithm.CreateGraphQLClient(graphqlClient)
 		scalingAlgorithm.CreateDBClient(dbClient)
 		scalingAlgorithm.ProcessEvents(globalCtx, goroutineTracker)
-		scalingAlgorithm.GetConfig(configGraphqlClient)
 
 		return true
 	})
