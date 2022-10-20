@@ -56,13 +56,48 @@ services:
       HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
     command: ["/wait-for-it.sh", "postgres-config:5432", "--", "graphql-engine", "serve"]
 
-  setup:
-    build:
-      context: .
-      dockerfile: Dockerfile.setup
+  setup-db:
+    image: ellerbrock/alpine-bash-curl-ssl:0.3.0
     depends_on:
       - graphql-engine
+    volumes:
+      - ${PWD}/wait-for-it.sh:/wait-for-it.sh
+      - ${PWD}/track.sh:/track.sh
+    command:
+      - /wait-for-it.sh
+      - graphql-engine:8080
+      - --
+      - /track.sh
+      - graphql-engine
+      - whist_images
+      - whist_instances
+      - whist_mandelboxes
+    profiles:
+      - run
+
+  setup-config:
+    image: ellerbrock/alpine-bash-curl-ssl:0.3.0
+    depends_on:
       - graphql-config-engine
+    volumes:
+      - ${PWD}/wait-for-it.sh:/wait-for-it.sh
+      - ${PWD}/track.sh:/track.sh
+    command:
+      - /wait-for-it.sh
+      - graphql-config-engine:8080
+      - --
+      - /track.sh
+      - graphql-config-engine
+      - dev
+      - desktop_app_version
+    profiles:
+      - run
+
+  setup:
+    image: hello-world
+    depends_on:
+      - setup-db
+      - setup-config
     profiles:
       - run
 
