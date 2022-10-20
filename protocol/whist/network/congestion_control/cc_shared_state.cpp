@@ -11,7 +11,7 @@ struct Point
     double y;
 };
 
-static std::vector<Point> k_down_points= { {0.9,1}, {0.85,5}, {0.7,10}, {0.6,20}, {0.5,40}, {0.4,60}, {0.3,100} };
+static std::vector<Point> k_down_points= { {0.9,1}, {0.85,5}, {0.7,10}, {0.6,20}, {0.5,40}, {0.4,50}, {0.35,60}, {0.3,100} };
 
 double get_linear_interpolate(double x, const std::vector<Point> & points)
 {
