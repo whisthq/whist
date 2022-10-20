@@ -27,7 +27,7 @@ import (
 // AWSHost implements the HostHandler interface using the AWS sdk.
 type AWSHost struct {
 	// The AWS region the host is initialized in.
-	Region string
+	region string
 	// The AWS specific configurations, including credentials.
 	Config aws.Config
 	// The EC2 client used for calling the AWS EC2 service API.
@@ -52,7 +52,7 @@ func (host *AWSHost) Initialize(region string) error {
 	}
 
 	// Start AWS host and EC2 client
-	host.Region = region
+	host.region = region
 	host.Config = cfg
 	host.EC2 = ec2.NewFromConfig(cfg)
 
@@ -79,6 +79,11 @@ func (host *AWSHost) Initialize(region string) error {
 	host.InstanceProfile = profile
 
 	return nil
+}
+
+// GetRegion is part of the HostHandler interface.
+func (h *AWSHost) GetRegion() string {
+	return h.region
 }
 
 // MakeInstances is a simple method that calls the RunInstances function from the ec2 client.
@@ -162,7 +167,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 			ImageID    = aws.ToString(outputInstance.ImageId)
 			Type       = string(outputInstance.InstanceType)
 			InstanceID = aws.ToString(outputInstance.InstanceId)
-			Region     = host.Region
+			Region     = host.region
 			Status     = "PRE_CONNECTION"
 			ClientSHA  = image.ClientSHA
 			Name       = host.GenerateName()
@@ -372,7 +377,7 @@ func (host *AWSHost) getInstanceProfile() string {
 // GenerateName is a helper function for generating an instance
 // name using a random UUID.
 func (host *AWSHost) GenerateName() string {
-	return utils.Sprintf("ec2-%v-%v-%v-%v", host.Region, metadata.GetAppEnvironmentLowercase(),
+	return utils.Sprintf("ec2-%v-%v-%v-%v", host.region, metadata.GetAppEnvironmentLowercase(),
 		metadata.GetGitCommit()[0:7], shortuuid.New())
 }
 
