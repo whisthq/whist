@@ -36,7 +36,7 @@ static WhistFeatureDescriptor feature_list[] = {
     },
     {
         .feature = WHIST_FEATURE_LONG_TERM_REFERENCE_FRAMES,
-        .enabled = true,
+        .enabled = LTR_DEFAULT_SETTING,
         .name = "long-term reference frames",
     },
 };

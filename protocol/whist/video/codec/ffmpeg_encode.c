@@ -473,7 +473,12 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
      */
     FFmpegEncoder *ffmpeg_encoder = NULL;
     // TODO: Get QSV Encoder Working
-    FFmpegEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
+    FFmpegEncoderCreator encoder_precedence[] = {
+#if USING_FFMPEG_NVENC
+        create_nvenc_encoder,
+#endif  // USING_FFMPEG_NVENC
+        create_sw_encoder
+    };
     for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(FFmpegEncoderCreator); ++i) {
         ffmpeg_encoder = encoder_precedence[i](in_width, in_height, out_width, out_height, bitrate,
                                                vbv_size, codec_type);

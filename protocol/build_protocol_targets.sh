@@ -35,15 +35,17 @@ eval set -- "$TEMP"
 
 CMAKE_BUILD_TYPE=Debug
 CMAKE_DOWNLOAD_BINARIES=ON
-CMAKE_SET_CI=FALSE
+CMAKE_SET_CI=OFF
 CMAKE_SANITIZE=OFF
+CMAKE_NOGPU=OFF
 while true; do
   case "$1" in
     -h | --help | --usage ) usage ;;
     --cmakebuildtype ) CMAKE_BUILD_TYPE="$2"; shift 2 ;;
     --nodownloadbinaries ) CMAKE_DOWNLOAD_BINARIES=OFF; shift ;;
-    --cmakesetCI ) CMAKE_SET_CI=TRUE; shift ;;
+    --cmakesetCI ) CMAKE_SET_CI=ON; shift ;;
     --sanitize ) CMAKE_SANITIZE="$2"; shift 2 ;;
+    --nogpu ) CMAKE_NOGPU=ON; shift ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
@@ -97,9 +99,10 @@ docker run \
     cmake                                               \
         -S ..                                           \
         -B .                                            \
-        -DDOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES}  \
+        -D DOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES} \
         -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}         \
         -D CHECK_CI=${CMAKE_SET_CI}                     \
-        -D SANITIZE=${CMAKE_SANITIZE} &&                \
+        -D SANITIZE=${CMAKE_SANITIZE}                   \
+        -D NOGPU=${CMAKE_NOGPU} &&                      \
     make -j ${TARGETS}                                  \
   "

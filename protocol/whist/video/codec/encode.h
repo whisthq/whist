@@ -77,14 +77,10 @@ Public Functions
 /**
  * @brief                          Will create a new encoder
  *
- * @param in_width                 Width of the frames that the encoder must
- *                                 intake
- * @param in_height                Height of the frames that the encoder must
- *                                 intake
- * @param out_width                Width of the frames that the encoder must
- *                                 output
- * @param out_height               Height of the frames that the encoder must
- *                                 output
+ * @param width                    Width of the frames that the encoder must
+ *                                 take in
+ * @param height                   Height of the frames that the encoder must
+ *                                 take in
  * @param bitrate                  The number of bits per second that this
  *                                 encoder will encode to
  * @param vbv_size                 VBV Buffer size in bits
@@ -93,7 +89,7 @@ Public Functions
  *
  * @returns                        The newly created encoder
  */
-VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
+VideoEncoder* create_video_encoder(int width   , int height   , int out_width, int out_height,
                                    int bitrate, int vbv_size, CodecType codec_type);
 
 /**

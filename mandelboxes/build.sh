@@ -17,6 +17,7 @@ mode=dev
 cmake_build_type_opt=""
 beta="false"
 provider="AWS"
+nogpu_flag=""
 for arg in "$@"; do
   case $arg in
     --dev|-d)
@@ -42,6 +43,9 @@ for arg in "$@"; do
       ;;
     --gcloud|-gc)
       provider="GCP"
+      ;;
+    --nogpu)
+      nogpu_flag="--nogpu"
       ;;
     *)
       python_args+=("$arg")
@@ -77,11 +81,11 @@ fi
 # Build the WhistClient if we are building the development/client mandelbox. Otherwise, build the WhistServer
 if [[ "${python_args[0]}" == "development/client" ]]; then
   echo "Building $cmake_build_type WhistClient..."
-  ../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type WhistClient
+  ../protocol/build_protocol_targets.sh --cmakebuildtype="$cmake_build_type" "$nogpu_flag" WhistClient
   ./scripts/copy_protocol_build.sh base/build-assets/build-temp WhistClient
 else
   echo "Building $cmake_build_type WhistServer..."
-  ../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type WhistServer
+  ../protocol/build_protocol_targets.sh --cmakebuildtype="$cmake_build_type" "$nogpu_flag" WhistServer
   ./scripts/copy_protocol_build.sh base/build-assets/build-temp WhistServer
 fi
 
@@ -112,4 +116,4 @@ docker build --quiet -t whist/build-assets:protocol -f base/build-assets/Dockerf
 # and whist/build-assets:protocol when they determine that
 # they want to copy the protocol based on the mode.
 
-python3 ./scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode" --beta="$beta"
+python3 ./scripts/build_mandelbox_image.py "${python_args[@]}" "$nogpu_flag" --mode="$mode" --beta="$beta"

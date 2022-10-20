@@ -128,23 +128,23 @@ Defines
 #define USING_MULTIWINDOW false
 
 #if OS_IS(OS_WIN32)
-
-// possible on windows, so let's do it
-#define USING_SERVERSIDE_SCALE true
 #define INPUT_DRIVER WINAPI_INPUT_DRIVER
-#define USING_NVIDIA_ENCODE false
-
 #else
-
-// not possible yet on linux
-#define USING_SERVERSIDE_SCALE false
 #define INPUT_DRIVER UINPUT_INPUT_DRIVER
+#endif
 
-// Serverside nvidia usage
+#ifdef NOGPU
+#define USING_NVIDIA_CAPTURE false
+#define USING_NVIDIA_ENCODE false
+#define USING_FFMPEG_NVENC false
+// TODO: Fix LTR with FFmpeg encoder and remove this macro.
+#define LTR_DEFAULT_SETTING false
+#else
 #define USING_NVIDIA_CAPTURE true
 #define USING_NVIDIA_ENCODE true
-
-#endif
+#define USING_FFMPEG_NVENC true
+#define LTR_DEFAULT_SETTING true
+#endif  // NOGPU
 
 // Whether or not client will use hw copy to SDL
 #if USING_MULTIWINDOW

@@ -169,7 +169,7 @@ TEST_F(CodecTest, EncodeDecodeTest) {
     uint8_t *packet_buffer = (uint8_t *)malloc(packet_buffer_size);
     EXPECT_TRUE(packet_buffer);
 
-    VideoEncoder *enc = create_video_encoder(width, height, width, height, bitrate,
+    VideoEncoder *enc = create_video_encoder(width, height, bitrate,
                                              bitrate / MAX_FPS, CODEC_TYPE_H264);
     EXPECT_TRUE(enc);
 
