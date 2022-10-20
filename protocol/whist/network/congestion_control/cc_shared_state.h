@@ -43,29 +43,7 @@ struct CCSharedState {
         return 0.015;
     }
 
-    double get_kdown(){
-        const double k_down_default=0.039;
-        if(current_bitrate.IsInfinite()) return k_down_default/10;
-        RTC_CHECK(max_bitrate.IsFinite());
-        RTC_CHECK(min_bitrate.IsFinite());
-
-        double bitrate_ratio= current_bitrate.bps()*1.0/ max_bitrate.bps();
-        if(bitrate_ratio>0.7)
-        {
-            return k_down_default/10;
-        }
-        else if(bitrate_ratio > 0.6)
-        {
-            return k_down_default/30;
-        }
-        else if(bitrate_ratio > 0.5)
-        {
-            return k_down_default/40;
-        }
-        else {
-            return k_down_default/50;
-        }
-    }
+    double get_kdown();
     double get_kup(){
         const double k_up_default=0.0087;
         return k_up_default;
