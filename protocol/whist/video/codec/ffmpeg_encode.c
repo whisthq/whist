@@ -472,6 +472,11 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
             (FFmpegEncoder*): the newly created encoder
      */
     FFmpegEncoder *ffmpeg_encoder = NULL;
+
+    // Allow for encoder creators to be unused depending on build flags
+    UNUSED(create_nvenc_encoder);
+    UNUSED(create_sw_encoder);
+
     // TODO: Get QSV Encoder Working
     FFmpegEncoderCreator encoder_precedence[] = {
 #if USING_FFMPEG_NVENC
