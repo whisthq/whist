@@ -6,6 +6,5 @@ Architecture: all
 Depends: libevdev2, libmtdev1, libwacom2
 Provides: libinput10 (= 9.99.9), libinput-bin (= 9.99.9), libinput-tools (= 9.99.9), libinput (= 9.99.9)
 Maintainer: Whist (developers@whist.com)
-Description: Whist provides our own, patched
- build of libinput. Please contact us for more
- details.
+Description: Whist builds an up-to-date release of
+  this package.
