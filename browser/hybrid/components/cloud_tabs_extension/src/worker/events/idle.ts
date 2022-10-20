@@ -7,4 +7,10 @@ const activatedFromSleep = fromEventPattern(
   (newState: chrome.idle.IdleState) => newState
 ).pipe(filter((newState: chrome.idle.IdleState) => newState === "active"))
 
-export { activatedFromSleep }
+const networkOnline = fromEventPattern(
+  (handler: any) => window.addEventListener("online", handler),
+  (handler: any) => window.removeEventListener("online", handler),
+  (args: any) => args
+)
+
+export { activatedFromSleep, networkOnline }

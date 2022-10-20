@@ -1,4 +1,4 @@
-import { from, of } from "rxjs"
+import { from, of, merge } from "rxjs"
 import { switchMap, map, filter, share } from "rxjs/operators"
 
 import { getStorage } from "@app/worker/utils/storage"
@@ -7,6 +7,7 @@ import {
   mandelboxCreateSuccess,
 } from "@app/worker/utils/mandelbox"
 import { stateDidChange, whistState } from "@app/worker/utils/state"
+import { authSuccess } from "./auth"
 
 import { MandelboxState, Storage } from "@app/constants/storage"
 import { config } from "@app/constants/app"
@@ -14,8 +15,12 @@ import { AsyncReturnType } from "@app/@types/api"
 import { AWSRegion, AWSRegionOrdering } from "@app/constants/location"
 import { AuthInfo } from "@app/@types/payload"
 
-const mandelboxNeeded = stateDidChange("waitingCloudTabs").pipe(
-  filter((change: any) => change?.applyData?.name === "push"),
+const mandelboxNeeded = merge(
+  stateDidChange("waitingCloudTabs").pipe(
+    filter((change: any) => change?.applyData?.name === "push")
+  ),
+  authSuccess.pipe(filter(() => whistState.waitingCloudTabs.length > 0))
+).pipe(
   filter(
     () =>
       whistState.mandelboxState === MandelboxState.MANDELBOX_NONEXISTENT &&

@@ -53,4 +53,7 @@ const socketReconnectFailed = merge(socket, socketConnected).pipe(
   )
 )
 
+// I'm not sure why this fixes things but it does
+socket.subscribe()
+
 export { socket, socketConnected, socketDisconnected, socketReconnectFailed }
