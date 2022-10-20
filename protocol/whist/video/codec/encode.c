@@ -274,26 +274,25 @@ VideoEncoder *create_video_encoder(int width, int height, int bitrate, int vbv_s
         // the expected stream.
     }
 
-#if USING_NVIDIA_ENCODE
+#if OS_IS(OS_LINUX) && USING_NVIDIA_ENCODE
     LOG_INFO("Creating nvidia encoder...");
+
     // find next nonempty entry in nvidia_encoders
     encoder->nvidia_encoders[0] = create_nvidia_encoder(
         bitrate, codec_type, width, height, vbv_size, *get_video_thread_cuda_context_ptr());
 
-    if (!encoder->nvidia_encoders[0]) {
-        LOG_ERROR("Failed to create nvidia encoder!");
-        encoder->active_encoder = FFMPEG_ENCODER;
-    } else {
+    if (encoder->nvidia_encoders[0]) {
         LOG_INFO("Created nvidia encoder!");
         // nvidia creation succeeded!
         encoder->active_encoder = NVIDIA_ENCODER;
         encoder->active_encoder_idx = 0;
         return encoder;
     }
-#else
-    // No nvidia found
+
+    LOG_ERROR("Failed to create nvidia encoder!");
+#endif  // OS_IS(OS_LINUX) && USING_NVIDIA_ENCODE
+
     encoder->active_encoder = FFMPEG_ENCODER;
-#endif  // USING_NVIDIA_ENCODE
 
     LOG_INFO("Creating ffmpeg encoder...");
     encoder->ffmpeg_encoder =
