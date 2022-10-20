@@ -9,7 +9,7 @@ import {
   socketDisconnected,
 } from "@app/worker/events/socketio"
 import { initSettingsSent } from "@app/worker/events/settings"
-import { tabRemoved, tabUpdated, tabZoomed } from "@app/worker/events/tabs"
+import { cloudTabCreated, cloudTabUpdated, tabRemoved, tabUpdated, tabZoomed } from "@app/worker/events/tabs"
 import {
   webUiNavigate,
   webUiRefresh,
@@ -100,6 +100,19 @@ tabUpdated
       socket.emit("close-tab", tab)
       unmarkActiveCloudTab(tab)
     }
+  })
+
+merge(cloudTabCreated, cloudTabUpdated)
+  .pipe(withLatestFrom(socket))
+  .subscribe(([tab, socket]: [chrome.tabs.Tab, Socket]) => {
+    // Keep passing the timezone every time a tab is activated or updated
+    // as a makeshift way to continuously update the timezone. This is
+    // because sometimes the timezone is not set on socket connection,
+    // which is where we send the first timezone-changed message.
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    // If setting to the same timezone as before, the browser does not react unless we set to something different first.
+    socket.emit("timezone-changed", "Etc/UTC")
+    socket.emit("timezone-changed", timezone)
   })
 
 tabZoomed
