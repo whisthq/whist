@@ -175,7 +175,15 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       if(acknowledged_bitrate.has_value())
       {
         send_side_bwd->SetAcknowledgedRate(webrtc::DataRate::BitsPerSec(acknowledged_bitrate->bps()),current_time);
-        whist_plotter_insert_sample("ack_bitrate", get_timestamp_sec(), acknowledged_bitrate->bps()/1000.0/100.0);
+        {
+            static double last_plot_time_ms=0;
+            if(input.current_time_ms - last_plot_time_ms > 5)
+            {
+                whist_plotter_insert_sample("ack_bitrate", get_timestamp_sec(), acknowledged_bitrate->bps()/1000.0/100.0);
+                last_plot_time_ms = input.current_time_ms;
+            }
+        }
+
         //incoming_optional = webrtc::DataRate::BitsPerSec(input.incoming_bitrate.value());
         cc_shared_state.ack_bitrate = acknowledged_bitrate;
       }

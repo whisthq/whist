@@ -547,10 +547,12 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     static timestamp_us d_first=0;
     static timestamp_us a_first=0;
     static double t_first=0;
+    double current_time= get_timestamp_sec();
+    double current_time_ms = current_time*MS_IN_SECOND;
 
     if(context->first_time)
     {
-        t_first= get_timestamp_sec();
+        t_first= current_time;
         d_first= departure_time;
         a_first= arrival_time;
         context->first_time=false;
@@ -559,8 +561,15 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     timestamp_us d_relative= departure_time - d_first +t_first*1e6;
     timestamp_us a_relative= arrival_time - a_first +t_first*1e6;
 
-    whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0  -10);
-    whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0- 20);
+    {
+        static double last_plot_time_ms=0;
+        if(current_time_ms - last_plot_time_ms > 5)
+        {
+            whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0  -10);
+            whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0- 20);
+            last_plot_time_ms = current_time_ms;
+        }
+    }
 
     // Initialize desired_network_settings if it is not done yet. Also send that starting bitrate
     // setting to server.
@@ -616,9 +625,16 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             //input.packets[0].arrival_time_ms= (long long)input.packets[0].arrival_time_ms;
             //input.packets[0].depature_time_ms= (long long)input.packets[0].depature_time_ms;
 
-            whist_plotter_insert_sample("min_rate", get_timestamp_sec(), min_rate/1000.0/100.0);
-            whist_plotter_insert_sample("max_rate", get_timestamp_sec(), max_rate/1000.0/100.0);
-            whist_plotter_insert_sample("start_rate", get_timestamp_sec(), start_rate/1000.0/100.0);
+            {
+                static double last_plot_time_ms=0;
+                if(current_time_ms - last_plot_time_ms > 50)
+                {
+                    whist_plotter_insert_sample("min_rate", get_timestamp_sec(), min_rate/1000.0/100.0);
+                    whist_plotter_insert_sample("max_rate", get_timestamp_sec(), max_rate/1000.0/100.0);
+                    whist_plotter_insert_sample("start_rate", get_timestamp_sec(), start_rate/1000.0/100.0);
+                    last_plot_time_ms = current_time_ms;
+                }
+            }
 
             double incoming_rate=get_incoming_bitrate(context);
             if(incoming_rate>0){
@@ -645,11 +661,11 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         }
 
         static double last_process_time_ms=0;
-        double current_time_ms = get_timestamp_sec()*MS_IN_SECOND;
         if( (current_time_ms - last_process_time_ms)> 10) //TODO: review if this is too often
         {
             //=============important call here=============
             CCOutput output= cc_controler->process_interval(current_time_ms);
+            LOG_INFO_RATE_LIMITED(5, 1, "CURRENT_BITRATE= %f x100kbps; current_time=%f", output.target_bitrate.value()/100.0/1000.0, get_timestamp_sec());
             context->network_settings.video_bitrate = output.target_bitrate.value();
             context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
             send_network_settings=true;
@@ -676,7 +692,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
 
             if (ENABLE_FEC) {
                 // feed current time and latency info into fec controller
-                double current_time = get_timestamp_sec();
+                //double current_time = get_timestamp_sec();
                 fec_controller_feed_latency(context->fec_controller, current_time,
                                             context->short_term_latency);
                 if (LOG_FEC_CONTROLLER) {
