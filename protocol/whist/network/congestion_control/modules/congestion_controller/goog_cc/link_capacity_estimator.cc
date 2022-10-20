@@ -70,6 +70,7 @@ void LinkCapacityEstimator::Update(DataRate capacity_sample, double alpha) {
   {
     cc_shared_state.last_est_time = cc_shared_state.current_time;
     cc_shared_state.est_cnt_++;
+    cc_shared_state.est_cnt_ = std::min(10, cc_shared_state.est_cnt_);
   }
 
   if ( capacity_sample == cc_shared_state.last_sample  && cc_shared_state.current_time - cc_shared_state.last_sample_time <TimeDelta::Millis(500)  ) {
