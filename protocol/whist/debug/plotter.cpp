@@ -114,7 +114,7 @@ class StreamPlotter : public PlotterInterface {
         if (!running) return;
         whist_lock_mutex(plot_mutex);
         auto &plot_data = *plot_data_array[current_idx % 2];
-        auto &q = plot_data[label];  // get the dataset with specific lable
+        auto &q = plot_data[label];  // get the dataset with specific label
         q.push_back({x, y});         // insert a sample
         whist_unlock_mutex(plot_mutex);
     }
@@ -197,10 +197,10 @@ class BasicPlotter : public PlotterInterface {
         auto &plot_data = *plot_data_ptr;
 
         // for simplicity it uses a global lock, for debugging and analysis perpurse it's good
-        // enough. If aimming for more performance in future, we can use one lock for each lable. We
+        // enough. If aimming for more performance in future, we can use one lock for each label. We
         // can even consider lock free queues.
         whist_lock_mutex(plot_mutex);
-        auto &q = plot_data[label];  // get the dataset with specific lable
+        auto &q = plot_data[label];  // get the dataset with specific label
         q.push_back({x, y});         // insert a sample
         whist_unlock_mutex(plot_mutex);
     }
