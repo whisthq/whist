@@ -23,9 +23,12 @@ struct CCSharedState {
     std::optional<webrtc::DataRate> ack_bitrate;
     webrtc::Timestamp first_process_time=webrtc::Timestamp::MinusInfinity();
 
-    // count how many samples we have in the estimator
+    // count how many est (valid samples) we have in the estimator
     int est_cnt_=0;
     webrtc::Timestamp last_est_time = webrtc::Timestamp::MinusInfinity();
+
+    webrtc::DataRate last_sample = webrtc::DataRate::MinusInfinity();
+    webrtc::Timestamp last_sample_time = webrtc::Timestamp::MinusInfinity();
 
     double loss_ratio=0;
 

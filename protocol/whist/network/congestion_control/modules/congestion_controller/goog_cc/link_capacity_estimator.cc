@@ -11,6 +11,7 @@
 
 #include <algorithm>
 
+#include "api/units/data_rate.h"
 #include "api/units/time_delta.h"
 #include "api/units/timestamp.h"
 #include "common_fixes.h"
@@ -50,6 +51,8 @@ void LinkCapacityEstimator::Reset() {
 #if ENABLE_WHIST_CHANGE
   cc_shared_state.est_cnt_=0;
   cc_shared_state.last_est_time = Timestamp::MinusInfinity();
+  cc_shared_state.last_sample = DataRate::MinusInfinity();
+  cc_shared_state.last_sample_time = Timestamp::MinusInfinity();
 #endif
 }
 
@@ -68,6 +71,14 @@ void LinkCapacityEstimator::Update(DataRate capacity_sample, double alpha) {
     cc_shared_state.last_est_time = cc_shared_state.current_time;
     cc_shared_state.est_cnt_++;
   }
+
+  if ( capacity_sample == cc_shared_state.last_sample  && cc_shared_state.current_time - cc_shared_state.last_sample_time <TimeDelta::Millis(500)  ) {
+      //if current sample is exactly same as last one and the time is very close, then it means the sample is not updated at all
+      // skip this sample
+      return ;
+  }
+  cc_shared_state.last_sample = capacity_sample;
+  cc_shared_state.last_sample_time = cc_shared_state.current_time;
 #endif
 
   double sample_kbps = capacity_sample.kbps();

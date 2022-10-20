@@ -32,7 +32,7 @@ class LinkCapacityEstimator {
   double deviation_estimate_kbps() const;
   absl::optional<double> estimate_kbps_;
 #if ENABLE_WHIST_CHANGE
-  double deviation_kbps_ = 1.2;
+  double deviation_kbps_ = 2.0;
 #else
   double deviation_kbps_ = 0.4;
 #endif
