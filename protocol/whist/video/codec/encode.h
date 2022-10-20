@@ -89,8 +89,8 @@ Public Functions
  *
  * @returns                        The newly created encoder
  */
-VideoEncoder* create_video_encoder(int width, int height,
-                                   int bitrate, int vbv_size, CodecType codec_type);
+VideoEncoder* create_video_encoder(int width, int height, int bitrate, int vbv_size,
+                                   CodecType codec_type);
 
 /**
  * @brief                       Encode a frame. This will call the necessary encoding functions

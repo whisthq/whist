@@ -241,8 +241,8 @@ Public Function Implementations
 ============================
 */
 
-VideoEncoder *create_video_encoder(int width, int height,
-                                   int bitrate, int vbv_size, CodecType codec_type) {
+VideoEncoder *create_video_encoder(int width, int height, int bitrate, int vbv_size,
+                                   CodecType codec_type) {
     /*
        Create a video encoder with the specified parameters. Try Nvidia first if available, and fall
        back to FFmpeg if not.
@@ -277,9 +277,8 @@ VideoEncoder *create_video_encoder(int width, int height,
 #if USING_NVIDIA_ENCODE
     LOG_INFO("Creating nvidia encoder...");
     // find next nonempty entry in nvidia_encoders
-    encoder->nvidia_encoders[0] =
-        create_nvidia_encoder(bitrate, codec_type, width, height, vbv_size,
-                                *get_video_thread_cuda_context_ptr());
+    encoder->nvidia_encoders[0] = create_nvidia_encoder(
+        bitrate, codec_type, width, height, vbv_size, *get_video_thread_cuda_context_ptr());
 
     if (!encoder->nvidia_encoders[0]) {
         LOG_ERROR("Failed to create nvidia encoder!");
@@ -297,8 +296,8 @@ VideoEncoder *create_video_encoder(int width, int height,
 #endif  // USING_NVIDIA_ENCODE
 
     LOG_INFO("Creating ffmpeg encoder...");
-    encoder->ffmpeg_encoder = create_ffmpeg_encoder(width, height, width, height,
-                                                    bitrate, vbv_size, codec_type);
+    encoder->ffmpeg_encoder =
+        create_ffmpeg_encoder(width, height, width, height, bitrate, vbv_size, codec_type);
     if (!encoder->ffmpeg_encoder) {
         LOG_ERROR("FFmpeg encoder creation failed!");
         return NULL;
