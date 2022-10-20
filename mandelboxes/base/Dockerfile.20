@@ -628,7 +628,6 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     libxdamage-dev \
     xclip \
     x11-xserver-utils \
-    xserver-xorg-video-dummy \
     xserver-xorg-core \
     awesome \
     xsettingsd \
