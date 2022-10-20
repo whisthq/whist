@@ -118,6 +118,9 @@ func main() {
 
 	// Load default scaling algorithm for all enabled regions.
 	for _, region := range config.GetEnabledRegions() {
+		logger.Infof("There should be as close as possible to %d unassigned "+
+			"Mandelboxes available at all times in %s",
+			config.GetTargetFreeMandelboxes(region), region)
 		name := utils.Sprintf("default-sa-%s", region)
 		algorithmByRegionMap.Store(name, &algos.DefaultScalingAlgorithm{
 			Region: region,

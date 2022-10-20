@@ -177,6 +177,15 @@ func initialize(ctx context.Context, client subscriptions.WhistGraphQLClient) er
 // initializeLocal populates the global configuration singleton with static
 // data.
 func initializeLocal(_ context.Context, _ subscriptions.WhistGraphQLClient) error {
+	// When APP_ENV has localenv, this function is the Initialize function's
+	// implementation. Notice that when this function is the Initialize function's
+	// implementation, there are no opportunities to patch the Initialize
+	// function's return value. APP_ENV gets localenv when we run the scaling
+	// service's automated test suite, so this function is the unpatchable
+	// implementation of the Initialize function when we are running tests. There
+	// are a lot of existing tests that rely on a region called test-region being
+	// enabled. Since this function is unpatchable, we always have to make it
+	// return that the region called test-region is enabled.
 	config.enabledRegions = []string{"us-east-1", "test-region"}
 	config.mandelboxLimitPerUser = 3
 	config.targetFreeMandelboxes = make(map[string]int)
