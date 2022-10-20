@@ -46,7 +46,7 @@ struct UnitTest
     }
 };
 
-UnitTest test;
+//UnitTest test;
 
 double CCSharedState::get_kdown()
 {
