@@ -41,11 +41,11 @@ extern "C" {
 
 static bool always_saturate;
 static bool no_burst_mode;
-static bool wcc_v2;
+static bool no_wcc_v2;
 
 COMMAND_LINE_BOOL_OPTION(
-    wcc_v2, 0, "wcc_v2",
-    "use wcc_v2");
+    no_wcc_v2, 0, "no-wcc_v2",
+    "disable wcc_v2");
 
 COMMAND_LINE_BOOL_OPTION(
     always_saturate, 0, "always-saturate",
@@ -588,7 +588,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         group_stats->departure_time = departure_time;
         group_stats->arrival_time = arrival_time;
     }
-
+    bool wcc_v2 = !no_wcc_v2;
     if(wcc_v2)
     {
         //double old_bitrate=context->network_settings.video_bitrate;
@@ -732,6 +732,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
 }
 
 static bool udp_update(void* raw_context) {
+    bool wcc_v2 = !no_wcc_v2;
     /*
      * Read a WhistPacket from the socket, decrypt it if necessary, and store the decrypted data for
      * the next get_packet call.
