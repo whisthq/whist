@@ -37,11 +37,6 @@ parser.add_argument(
     default="whisthq/base:current-build",
 )
 parser.add_argument(
-    "--json-data",
-    help="Json string to pass through json transport.",
-    default="",
-)
-parser.add_argument(
     "--host-address",
     help="IP address of the host service to send the request. Defaults to '127.0.0.1'.",
     default="127.0.0.1",
@@ -72,8 +67,6 @@ mandelbox_server_path = os.path.abspath("/usr/share/whist")
 PortBindings = namedtuple(
     "PortBindings", ["host_port_32262tcp", "host_port_32263udp", "host_port_32273tcp"]
 )
-json_data = args.json_data
-
 
 def ensure_root_privileges():
     if os.geteuid() != 0:
@@ -128,12 +121,11 @@ def send_spin_up_mandelbox_request(mandelbox_id):
 
     Args: mandelbox_id: the id of the mandelbox to create
     """
-    print("Sending SpinUpMandelbox request to host service!")
-    url = HOST_SERVICE_URL + "json_transport"
+    print("Sending GetMandelbox request to host service!")
+    url = HOST_SERVICE_URL + "get_mandelbox"
     payload = {
         "app_name": args.image,
         "jwt_access_token": "bogus_jwt",
-        "json_data": json_data,
         "mandelbox_id": str(mandelbox_id),
     }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH

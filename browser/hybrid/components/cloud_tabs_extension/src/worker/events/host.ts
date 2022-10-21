@@ -14,43 +14,10 @@ import {
   hostSpinUpSuccess,
   HostSpinUpResponse,
 } from "@app/worker/utils/host"
-import {
-  timeZone,
-  darkMode,
-  userAgent,
-  platform,
-  keyboardRepeatRate,
-  keyboardRepeatInitialDelay,
-  userLocale,
-  browserLanguages,
-  systemLanguages,
-  location,
-} from "@app/worker/utils/jsonTransport"
 import { mandelboxSuccess } from "@app/worker/events/mandelbox"
 
 import { AuthInfo, MandelboxInfo } from "@app/@types/payload"
 import { Storage } from "@app/constants/storage"
-
-const jsonTransport = async () => {
-  const t = timeZone()
-  const u = userAgent()
-
-  const [p, r, i, systemLangs] =
-    await Promise.all([
-      platform(),
-      keyboardRepeatRate(),
-      keyboardRepeatInitialDelay(),
-      systemLanguages(),
-    ])
-
-  return {
-    // desired_timezone: t,
-    user_agent: u,
-    client_os: p,
-    client_dpi: window.devicePixelRatio * 96,
-    system_languages: systemLangs,
-  }
-}
 
 const hostInfo = mandelboxSuccess.pipe(
   switchMap((mandelbox: MandelboxInfo) =>
@@ -59,22 +26,15 @@ const hostInfo = mandelboxSuccess.pipe(
         getStorage<AuthInfo>(Storage.AUTH_INFO),
         // TODO: This is silly and probably not needed.
         new Promise<MandelboxInfo>((resolve) => resolve(mandelbox)),
-        jsonTransport(),
       ])
     )
   ),
-  switchMap(([auth, mandelbox, jsonData]) =>
+  switchMap(([auth, mandelbox]) =>
     from(
       hostSpinUp({
         ip: mandelbox.mandelboxIP ?? "",
         jwt_access_token: auth.accessToken ?? "",
         mandelbox_id: mandelbox.mandelboxID,
-        json_data: JSON.stringify({
-          kiosk_mode: false,
-          restore_last_session: false,
-          load_extension: true,
-          ...jsonData,
-        }),
       })
     ).pipe(
       timeout(10000), // If nothing is emitted for 10s, we assume a timeout so that an error can be shown

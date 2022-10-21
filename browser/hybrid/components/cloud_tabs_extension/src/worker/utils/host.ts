@@ -20,20 +20,17 @@ const hostSpinUp = async ({
   ip,
   jwt_access_token,
   mandelbox_id,
-  json_data,
 }: {
   ip: string
   jwt_access_token: string
   mandelbox_id: string
-  json_data: string
 }) => {
   return await put({
     body: {
       mandelbox_id,
-      json_data,
       ip,
     },
-    url: `${config.SCALING_SERVICE_URL as string}/json_transport`,
+    url: `${config.SCALING_SERVICE_URL as string}/get_mandelbox`,
     accessToken: jwt_access_token,
   })
 }
