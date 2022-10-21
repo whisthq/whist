@@ -122,7 +122,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     Args: mandelbox_id: the id of the mandelbox to create
     """
     print("Sending GetMandelbox request to host service!")
-    url = HOST_SERVICE_URL + "get_mandelbox"
+    url = HOST_SERVICE_URL + "json_transport"
     payload = {
         "app_name": args.image,
         "jwt_access_token": "bogus_jwt",
