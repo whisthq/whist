@@ -72,9 +72,6 @@ function commit_preferences_jq() {
   mv "$PREFERENCES.new" "$PREFERENCES"
 }
 
-# Set the browser language
-# add_preferences_jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}'
-
 # Notes on Chromium flags:
 #
 # The following flags are currently unsupported on Linux, but desirable. Once they are
@@ -126,44 +123,24 @@ flags=(
   "--password-store=basic" # This disables the kwalletd backend, which we don't support
 )
 
-# if [[ "$DARK_MODE" == true ]]; then
-#   features="$features,WebUIDarkMode"
-#   flags+=("--force-dark-mode")
-# fi
 features="$features,WebUIDarkMode"
 flags+=("--force-dark-mode")
-
-# if [[ "$RESTORE_LAST_SESSION" == true ]]; then
-#   flags+=("--restore-last-session")
-# fi
 
 flags+=("--enable-features=$features")
 flags+=("--disable-features=$antifeatures")
 flags+=("--flag-switches-end")
 
-# # Pass user agent corresponding to user's OS from JSON-transport
-# if [[ -n "$USER_AGENT" ]]; then
-#   flags+=("--user-agent=$USER_AGENT")
-# fi
+# Start the server-side extension if the client requests it
+if [[ "$LOAD_EXTENSION" == true ]]; then
+  flags+=(  "--load-extension=/opt/teleport/chrome-extension")
+fi
 
-# # Start the server-side extension if the client requests it
-# if [[ "$LOAD_EXTENSION" == true ]]; then
-#   flags+=(  "--load-extension=/opt/teleport/chrome-extension")
-# fi
-flags+=(  "--load-extension=/opt/teleport/chrome-extension")
-
-# # Start the browser in Kiosk mode (full-screen). This flag is used when the client is a
-# # local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
-# # not be set when the client is a fully-streamed browser rendered via SDL.
-# if [[ "$KIOSK_MODE" == true ]]; then
-#   flags+=("--kiosk")
-# fi
-flags+=("--kiosk")
-
-# # Passing the initial url from JSON transport as a parameter to the browser launch command. If the url is not
-# # empty, the browser will open the url as an additional tab at start time. The other tabs will be restored depending
-# # on the user settings.
-# flags+=("$INITIAL_URL")
+# Start the browser in Kiosk mode (full-screen). This flag is used when the client is a
+# local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
+# not be set when the client is a fully-streamed browser rendered via SDL.
+if [[ "$KIOSK_MODE" == true ]]; then
+  flags+=("--kiosk")
+fi
 
 # OS-specific provisions
 # If no CLIENT_OS is passed (i.e. we're testing locally), assume macOS

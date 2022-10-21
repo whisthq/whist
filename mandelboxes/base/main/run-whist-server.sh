@@ -18,14 +18,8 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# Wait for JSON transport to write the config.json file. Starting the server and application
-# before the JSON transport settings have been written can have weird side-effects.
-# TODO: remove once JSON transport is phased out.
-WHIST_MAPPINGS_DIR=/whist/resourceMappings/
-block-until-file-exists.sh $WHIST_MAPPINGS_DIR/config.json >&1
-
 # Set/Retrieve Mandelbox parameters
-WHIST_MAPPINGS_DIR=/whist/resourceMappings
+WHIST_MAPPINGS_DIR=/whist/resourceMappings/
 WHIST_LOGS_FOLDER=/var/log/whist
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
@@ -45,9 +39,8 @@ PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-err.log
 TELEPORT_OUT_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-out.log
 TELEPORT_ERR_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-err.log
 
-# Parse options from JSON transport file
+# TODO: set to development flag
 LOCAL_CLIENT=false # true if the frontend is being tested manually by a Whist engineer
-# TODO: how to set to true if wanted?
 
 # Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
