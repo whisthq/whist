@@ -11,7 +11,7 @@ struct CCSharedState {
     const double k_startup_duration=6;
     const double k_increase_ratio=0.12;
 
-    static constexpr double loss_hold_threshold=0.08;
+    static constexpr double loss_hold_threshold=0.0999;
     static constexpr double loss_decrease_threshold=0.10;
 
     webrtc::Timestamp current_time = webrtc::Timestamp::MinusInfinity();
