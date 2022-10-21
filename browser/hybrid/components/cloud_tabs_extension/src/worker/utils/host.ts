@@ -30,7 +30,7 @@ const hostSpinUp = async ({
       mandelbox_id,
       ip,
     },
-    url: `${config.SCALING_SERVICE_URL as string}/get_mandelbox`,
+    url: `${config.SCALING_SERVICE_URL as string}/json_transport`,
     accessToken: jwt_access_token,
   })
 }
