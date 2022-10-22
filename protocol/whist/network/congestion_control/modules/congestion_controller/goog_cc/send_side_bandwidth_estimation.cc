@@ -592,7 +592,7 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
           // to avoid get locked in constant congestion state when cross-traffic is involved
           if(cc_shared_state.ack_bitrate.has_value())
           {
-            new_bitrate = std::min(new_bitrate, DataRate::BitsPerSec(cc_shared_state.ack_bitrate->bps() *0.95) );
+            new_bitrate = std::min(new_bitrate, DataRate::BitsPerSec(cc_shared_state.ack_bitrate->bps() *0.90) );
           } 
 #endif
           UpdateTargetBitrate(new_bitrate, at_time);

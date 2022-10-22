@@ -11,7 +11,13 @@ struct Point
     double y;
 };
 
-static std::vector<Point> k_down_points= { {0.85,1}, {0.8,5}, {0.7,10}, {0.6,20}, {0.5,30}, {0.45,40}, {0.4,50}, {0.35,60}, {0.3,100} };
+//old threshold
+//static std::vector<Point> k_down_points= { {0.85,1}, {0.8,5}, {0.7,10}, {0.6,20}, {0.5,30}, {0.45,40}, {0.4,50}, {0.35,60}, {0.3,100} };
+
+// exp
+//static std::vector<Point> k_down_points= { {0.85,1}, {0.8,1}, {0.7,10}, {0.6,20}, {0.5,20}, {0.45,20}, {0.4,20}, {0.35,20}, {0.3,100} };
+
+static std::vector<Point> k_down_points= { {0.8,1}, {0.7,10}, {0.35,10}, {0.3,100} };
 
 double get_linear_interpolate(double x, const std::vector<Point> & points)
 {
