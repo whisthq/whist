@@ -790,6 +790,9 @@ static bool udp_update(void* raw_context) {
     current_time = last_recv_timer;
 
     if (received_packet) {
+        if(PLOT_UDP_SEQ){
+            whist_plotter_insert_sample("udp_seq", get_timestamp_sec(), (double)udp_packet.seq);
+        }
         // if the packet is a whist_segment, store the data to give later via get_packet
         // Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
@@ -1761,8 +1764,8 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 
     // NOTE: This doesn't interfere with clientside hotpath,
     // since the throttler only throttles the serverside
+    udp_packet->seq=g_seq_cnt++;
     if (throttle) {
-        udp_packet->seq=g_seq_cnt++;
         udp_packet->group_id = network_throttler_wait_byte_allocation(
             context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
     }
