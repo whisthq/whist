@@ -28,6 +28,8 @@ Includes
 #include "network_algorithm.h"
 #include "whist/debug/debug_console.h"
 #include "whist/core/features.h"
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 #include <whist/fec/fec_controller.h>
 #include <whist/fec/fec.h>
 #include <whist/debug/protocol_analyzer.h>
@@ -98,6 +100,14 @@ static int get_video_bitrate(int width, int height, int screen_dpi, double bitra
     double dpi_ratio = max(min((double)DPI_BITRATE_PER_PIXEL / screen_dpi, 2.0), 0.5);
     double dpi_scaling_factor = pow(dpi_ratio, DPI_RATIO_EXPONENT);
     return (int)(width * height * bitrate_per_pixel * dpi_scaling_factor);
+}
+
+
+void get_bitrates(double *start, double *min,double *max)
+{
+    *start=STARTING_BITRATE;
+    *min=MINIMUM_BITRATE;
+    *max=MAXIMUM_BITRATE;
 }
 
 /*
@@ -287,15 +297,39 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         max(latency_threshold_decrease_state, MIN_LATENCY_THRESHOLD_SEC);
     latency_threshold_hold_state = max(latency_threshold_hold_state, MIN_LATENCY_THRESHOLD_SEC);
 
+    int force_d=0;
+    int force_h=0;
     if (short_term_latency > latency_threshold_decrease_state) {
         delay_controller_state = DELAY_CONTROLLER_DECREASE;
+        force_d=1;
     } else if (short_term_latency > latency_threshold_hold_state &&
                delay_controller_state == DELAY_CONTROLLER_INCREASE) {
         delay_controller_state = DELAY_CONTROLLER_HOLD;
+        force_h=1;
     }
+    whist_plotter_insert_sample("force_decrease_by_latency", get_timestamp_sec(), force_d*120);
+    whist_plotter_insert_sample("force_hold_by_latency", get_timestamp_sec(), force_h*130);
+
+    int signal=0;
+    if (overuse_detector_signal == NORMAL_SIGNAL) signal= 90;
+    if (overuse_detector_signal == OVERUSE_SIGNAL) signal= 140;
+    if (overuse_detector_signal == UNDERUSE_SIGNAL) signal= 40;
+    whist_plotter_insert_sample("current_signal", get_timestamp_sec(), signal);
+
+    int state=0;
+    if(delay_controller_state ==DELAY_CONTROLLER_HOLD ) state=100;
+    if(delay_controller_state == DELAY_CONTROLLER_INCREASE) state=150;
+    if(delay_controller_state == DELAY_CONTROLLER_DECREASE) state= 50;
+    whist_plotter_insert_sample("current_state", get_timestamp_sec(), state);
 
     WccOp op = WCC_NO_OP;
     int old_bitrate = network_settings->video_bitrate;
+
+    whist_plotter_insert_sample("last_success_bitrate", get_timestamp_sec(), last_successful_bitrate/100.0/1000.0);
+    whist_plotter_insert_sample("max_bitrate_available", get_timestamp_sec(), max_bitrate_available/100.0/1000.0);
+    whist_plotter_insert_sample("increase_percent", get_timestamp_sec(), increase_percentage *10);
+
+    whist_plotter_insert_sample("burst_mode", get_timestamp_sec(), burst_mode*-30);
 
     // Delay-based controller selects based on overuse signal
     // It is RECOMMENDED to send the REMB message as soon

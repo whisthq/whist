@@ -21,6 +21,7 @@ Includes
 #include <whist/core/whist.h>
 #include "logging.h"
 #include "log_statistic.h"
+#include "whist/debug/plotter.h"
 
 #define LOG_STATISTICS true
 
@@ -181,7 +182,7 @@ void whist_init_statistic_logger(int interval) {
         statistic_context.all_statistics[i].min = 0;
     }
     if (LOG_DATA_FOR_PLOTTER) {
-        whist_plotter_init();
+        whist_plotter_init(NULL);
         whist_plotter_start_sampling();
     }
 }
@@ -241,18 +242,10 @@ void destroy_statistic_logger(void) {
         whist_plotter_stop_sampling();
 
         LOG_INFO("Saving data for plotter to file...");
-        char *json_buffer = (char *)calloc(PLOT_DATA_SIZE, sizeof(char));
-        whist_plotter_export_c(json_buffer, PLOT_DATA_SIZE);
 
-        const char *plt_filename = PLOT_DATA_FILENAME;
-        FILE *plt_file = fopen(plt_filename, "w");
-        if (plt_file != NULL) {
-            fprintf(plt_file, "%s", json_buffer);
-            fclose(plt_file);
-        } else {
-            LOG_ERROR("Could not open %s file to export plotting data!", plt_filename);
+        int ret = whist_plotter_export_to_file(PLOT_DATA_FILENAME);
+        if (ret) {
+            LOG_ERROR("Export plotting data to file %s failed!", PLOT_DATA_FILENAME);
         }
-        free(json_buffer);
-        free((char *)plt_filename);
     }
 }

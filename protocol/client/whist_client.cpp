@@ -363,8 +363,8 @@ int whist_client_main(int argc, const char* argv[]) {
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
     if (CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
-        // auto enable start sampling
-        whist_plotter_start_sampling();
+        // init as stream plotter, by passing a filename on init
+        whist_plotter_init(CLIENT_SIDE_DEFAULT_EXPORT_FILE);
     }
 
     // (internally, only happens for debug builds)
@@ -377,8 +377,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
 #if CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT && (OS_IS(OS_LINUX) || OS_IS(OS_MACOS))
     // if CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT enabled, insert handler
-    // for grace quit for ctrl-c and kill, so that plotter data can be
-    // exported automatically on quit
+    // for grace quit for ctrl-c and kill, so that no plotter data will be lost on quit
     struct sigaction sa = {0};
     sa.sa_handler = sig_handler;
     if (sigaction(SIGTERM, &sa, NULL) == -1) {
@@ -487,11 +486,6 @@ int whist_client_main(int argc, const char* argv[]) {
     // Wait on system info thread before destroying logger
     whist_wait_thread(system_info_thread, NULL);
 
-    if (CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
-        // if enabled, auto export to file as well
-        whist_plotter_export_to_file(CLIENT_SIDE_DEFAULT_EXPORT_FILE);
-    }
-
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
 
@@ -500,6 +494,8 @@ int whist_client_main(int argc, const char* argv[]) {
     LOG_INFO("Client frontend has exited...");
 
     destroy_statistic_logger();
+
+    whist_plotter_destroy();  // it's safe to call, regardless initalized or not
 
     destroy_logger();
 

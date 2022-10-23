@@ -72,6 +72,8 @@ Public Functions
 ============================
 */
 
+void get_bitrates(double *start, double *min,double *max);
+
 /**
  * @brief               This function will estimate the new bitrate based on whist congestion
  *                      control algo

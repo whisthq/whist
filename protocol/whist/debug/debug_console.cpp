@@ -94,6 +94,13 @@ int init_debug_console() {
     FATAL_ASSERT(create_local_udp_listen_socket(&debug_console_listen_socket,
                                                 debug_console_listen_port, -1) == 0);
     whist_create_thread(debug_console_thread, "MultiThreadedDebugConsole", NULL);
+    if (!CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+        whist_plotter_init(NULL);
+    } else {
+        LOG_WARNING(
+            "CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT is enabled, so Debug_Console's plot "
+            "commands will not work");
+    }
 
     whist_analyzer_init();
 #else
@@ -196,8 +203,6 @@ static string handle_plot(vector<string> cmd) {
         return "stopped";
     } else if (cmd[0] == "plot_export") {
         if (cmd.size() < 2) return "need file name";
-
-        string s = whist_plotter_export();
 
         int ret = whist_plotter_export_to_file(cmd[1].c_str());
 

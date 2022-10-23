@@ -1,4 +1,5 @@
 #include <whist/core/platform.h>
+
 #if OS_IS(OS_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
@@ -24,12 +25,35 @@ extern "C" {
 #include <whist/core/features.h>
 #include <whist/debug/debug_console.h>
 #include <whist/fec/fec_controller.h>
+#include <whist/network/congestion_control/cc_interface.h>
+#include <whist/logging/logging.h>
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
+#include <whist/utils/command_line.h>
 }
+
+#include <whist/network/congestion_control/cc_interface.h>
 
 #if !OS_IS(OS_WIN32)
 #include <fcntl.h>
 #endif
 
+
+static bool always_saturate;
+static bool no_burst_mode;
+static bool no_wcc_v2;
+
+COMMAND_LINE_BOOL_OPTION(
+    no_wcc_v2, 0, "no-wcc_v2",
+    "disable wcc_v2");
+
+COMMAND_LINE_BOOL_OPTION(
+    always_saturate, 0, "always-saturate",
+    "always saturate bandwith, to simlulate a perfect encoder that never undershoot");
+
+COMMAND_LINE_BOOL_OPTION(
+    no_burst_mode, 0, "no-burst-mode",
+    "disable burst-mode");
 /*
 ============================
 Defines
@@ -56,6 +80,9 @@ typedef struct {
     UDPPacketType type;
     // id of the group of packets that are sent in one burst.
     int group_id;
+#if ENABLE_UDP_SEQ
+    int seq;
+#endif
     // The data itself
     union {
         // UDP_WHIST_SEGMENT
@@ -182,6 +209,8 @@ typedef struct {
     bool connection_lost;
     double long_term_latency;
     double short_term_latency;
+    double raw_ping_sec;
+    double srtt_sec;
 
     // Latency Calculation (Only used on server)
     WhistMutex timestamp_mutex;
@@ -224,6 +253,8 @@ typedef struct {
     void* nack_queue;
 
     void* fec_controller;
+    void* congestion_controller;
+    bool first_time;
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -498,13 +529,51 @@ static void send_desired_network_settings(UDPContext* context) {
     UDPPacket network_settings_packet;
     network_settings_packet.type = UDP_NETWORK_SETTINGS;
     network_settings_packet.udp_network_settings_data.network_settings = context->network_settings;
+
+    if(always_saturate) {
+        network_settings_packet.udp_network_settings_data.network_settings.saturate_bandwidth=1;
+    }
+
+    if(no_burst_mode||always_saturate) { // if always_saturate enabled, burst_mode must be disabled as well, otherwise there are problems
+        network_settings_packet.udp_network_settings_data.network_settings.burst_bitrate = context->network_settings.video_bitrate;
+    }
+
     udp_send_udp_packet(context, &network_settings_packet);
+
     start_timer(&context->last_network_settings_send_time);
 }
 
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
-                                   timestamp_us arrival_time, int group_id) {
+                                   timestamp_us arrival_time, int group_id,int packet_size) {
     whist_lock_mutex(context->congestion_control_mutex);
+
+    static timestamp_us d_first=0;
+    static timestamp_us a_first=0;
+    static double t_first=0;
+    double current_time= get_timestamp_sec();
+    double current_time_ms = current_time*MS_IN_SECOND;
+
+    if(context->first_time)
+    {
+        t_first= current_time;
+        d_first= departure_time;
+        a_first= arrival_time;
+        context->first_time=false;
+    }
+
+    timestamp_us d_relative= departure_time - d_first +t_first*1e6;
+    timestamp_us a_relative= arrival_time - a_first +t_first*1e6;
+
+    {
+        static double last_plot_time_ms=0;
+        if(current_time_ms - last_plot_time_ms > 5)
+        {
+            whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0  -10);
+            whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0- 20);
+            last_plot_time_ms = current_time_ms;
+        }
+    }
+
     // Initialize desired_network_settings if it is not done yet. Also send that starting bitrate
     // setting to server.
     if (context->network_settings.video_bitrate == 0) {
@@ -522,6 +591,90 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         group_stats->departure_time = departure_time;
         group_stats->arrival_time = arrival_time;
     }
+    bool wcc_v2 = !no_wcc_v2;
+    if(wcc_v2)
+    {
+        //double old_bitrate=context->network_settings.video_bitrate;
+        auto cc_controler= (CongestionCongrollerInterface* ) context->congestion_controller;
+        if(true)
+        {
+            CCInput input;
+            input.current_time_ms = get_timestamp_sec()*MS_IN_SECOND;
+
+            double start_rate,min_rate,max_rate;
+            get_bitrates(&start_rate, &min_rate, &max_rate);
+
+
+            static bool global_first_time=true;
+            // the first connection conncection with start_rate
+            if(global_first_time){
+                input.start_bitrate=start_rate;
+                global_first_time=false;
+            }
+            else { //if first conncection fails, start with min rate
+                input.start_bitrate=min_rate;
+            }
+            input.max_bitrate=max_rate;
+            input.min_bitrate=min_rate;
+
+            input.packets.emplace_back();
+            input.packets[0].arrival_time_ms= (a_relative/1000.0);
+            input.packets[0].depature_time_ms= (d_relative/1000.0);
+            input.packets[0].packet_size = packet_size;
+            input.packets[0].group_id= (long long)group_id;
+            FATAL_ASSERT(group_id>=0);
+            FATAL_ASSERT(packet_size>0);
+
+            //input.packets[0].arrival_time_ms= (long long)input.packets[0].arrival_time_ms;
+            //input.packets[0].depature_time_ms= (long long)input.packets[0].depature_time_ms;
+
+            {
+                static double last_plot_time_ms=0;
+                if(current_time_ms - last_plot_time_ms > 50)
+                {
+                    whist_plotter_insert_sample("min_rate", get_timestamp_sec(), min_rate/1000.0/100.0);
+                    whist_plotter_insert_sample("max_rate", get_timestamp_sec(), max_rate/1000.0/100.0);
+                    whist_plotter_insert_sample("start_rate", get_timestamp_sec(), start_rate/1000.0/100.0);
+                    last_plot_time_ms = current_time_ms;
+                }
+            }
+
+            double incoming_rate=get_incoming_bitrate(context);
+            if(incoming_rate>0){
+                input.incoming_bitrate=incoming_rate; //not used anymore, only for debugging
+            }
+
+            input.packet_loss=get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
+                                                             context->short_term_latency);
+
+            FATAL_ASSERT(input.packet_loss>=0 && input.packet_loss<=1);
+
+            if(context->raw_ping_sec>0){
+                input.raw_rtt_ms=context->raw_ping_sec *MS_IN_SECOND;
+            }
+
+            if(context->srtt_sec>0){
+                input.srtt_ms=context->srtt_sec *MS_IN_SECOND;
+            }
+            //=============important call here=============
+            cc_controler->feed_info(input);
+            //CCOutput output=cc_controler->feed_info(input);
+            //context->network_settings.video_bitrate = output.target_bitrate.value();
+            //context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
+        }
+
+        static double last_process_time_ms=0;
+        if( (current_time_ms - last_process_time_ms)> 10) //TODO: review if this is too often
+        {
+            //=============important call here=============
+            CCOutput output= cc_controler->process_interval(current_time_ms);
+            LOG_INFO_RATE_LIMITED(5, 1, "WCC_V2 CURRENT_BITRATE= %f x100kbps; CURRENT_TIME=%f", output.target_bitrate.value()/100.0/1000.0, get_timestamp_sec());
+            context->network_settings.video_bitrate = output.target_bitrate.value();
+            context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
+            send_network_settings=true;
+            last_process_time_ms =current_time_ms;
+        }
+    }
 
     if (group_id > context->curr_group_id) {
         if (context->prev_group_id != 0 &&
@@ -534,9 +687,15 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             int incoming_bitrate = get_incoming_bitrate(context);
             double packet_loss_ratio = get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
                                                              context->short_term_latency);
+
+            whist_plotter_insert_sample("packet_loss_ratio_100", get_timestamp_sec(), packet_loss_ratio*100);
+            whist_plotter_insert_sample("incoming_bitrate", get_timestamp_sec(), incoming_bitrate<0?-1: incoming_bitrate/1000.0/100.0);
+            whist_plotter_insert_sample("short_term_latency", get_timestamp_sec(), context->short_term_latency*1000);
+            whist_plotter_insert_sample("long_term_latency", get_timestamp_sec(), context->long_term_latency*1000);
+
             if (ENABLE_FEC) {
                 // feed current time and latency info into fec controller
-                double current_time = get_timestamp_sec();
+                //double current_time = get_timestamp_sec();
                 fec_controller_feed_latency(context->fec_controller, current_time,
                                             context->short_term_latency);
                 if (LOG_FEC_CONTROLLER) {
@@ -552,10 +711,16 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                     }
                 }
             }
-            send_network_settings = whist_congestion_controller(
+            if(!wcc_v2) {
+                send_network_settings = whist_congestion_controller(
                 curr_group_stats, prev_group_stats, incoming_bitrate, packet_loss_ratio,
                 context->short_term_latency, context->long_term_latency, &context->network_settings,
                 context->fec_controller);
+            }
+
+            whist_plotter_insert_sample("target_bitrate", get_timestamp_sec(), context->network_settings.video_bitrate/1000.0/100.0);
+            //whist_plotter_insert_sample("burst_bitrate", get_timestamp_sec(), context->network_settings.burst_bitrate/1000.0/100.0);
+            whist_plotter_insert_sample("saturate", get_timestamp_sec(), context->network_settings.saturate_bandwidth *100);
         }
         context->prev_group_id = context->curr_group_id;
         context->curr_group_id = group_id;
@@ -570,6 +735,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
 }
 
 static bool udp_update(void* raw_context) {
+    bool wcc_v2 = !no_wcc_v2;
     /*
      * Read a WhistPacket from the socket, decrypt it if necessary, and store the decrypted data for
      * the next get_packet call.
@@ -624,6 +790,9 @@ static bool udp_update(void* raw_context) {
     current_time = last_recv_timer;
 
     if (received_packet) {
+        if(PLOT_UDP_SEQ){
+            whist_plotter_insert_sample("udp_seq", get_timestamp_sec(), (double)udp_packet.seq);
+        }
         // if the packet is a whist_segment, store the data to give later via get_packet
         // Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
@@ -635,11 +804,16 @@ static bool udp_update(void* raw_context) {
                     update_max_unordered_packets(&context->unordered_packet_info,
                                                  udp_packet.udp_whist_segment_data.id,
                                                  udp_packet.udp_whist_segment_data.index);
-                    if (udp_packet.group_id >= context->curr_group_id) {
+                    if (!wcc_v2&&udp_packet.group_id >= context->curr_group_id) {
                         udp_congestion_control(context,
                                                udp_packet.udp_whist_segment_data.departure_time,
-                                               arrival_time, udp_packet.group_id);
+                                               arrival_time, udp_packet.group_id, network_payload_size);
                     }
+                }
+                if (wcc_v2&&udp_packet.group_id >= context->curr_group_id) { //feed everything regardless of nack/dup
+                    udp_congestion_control(context,
+                                           udp_packet.udp_whist_segment_data.departure_time,
+                                           arrival_time, udp_packet.group_id, network_payload_size);
                 }
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
@@ -679,7 +853,7 @@ static bool udp_update(void* raw_context) {
 
     if (context->ring_buffers[PACKET_VIDEO] != NULL) {
         // If no pong is received for UDP_PONG_CONGESTION_SEC, then we signal severe congestion.
-        if (diff_timer(&context->last_pong_timer, &current_time) > UDP_PONG_CONGESTION_SEC &&
+        if (!wcc_v2 && diff_timer(&context->last_pong_timer, &current_time) > UDP_PONG_CONGESTION_SEC &&
             whist_congestion_controller_handle_severe_congestion(&context->network_settings)) {
             send_desired_network_settings(context);
         }
@@ -1049,6 +1223,9 @@ static void udp_destroy_socket_context(void* raw_context) {
     if (context->fec_controller != NULL) {
         destroy_fec_controller(context->fec_controller);
     }
+    if (context->congestion_controller != NULL){
+        destory_congestion_controller(context->congestion_controller);
+    }
     if (context->network_throttler != NULL) {
         network_throttler_destroy(context->network_throttler);
     }
@@ -1130,6 +1307,10 @@ bool create_udp_socket_context(SocketContext* network_context, const char* desti
         ret = create_udp_client_context(context, destination, port, connection_timeout_ms);
         if (ret == 0) {
             context->fec_controller = create_fec_controller(get_timestamp_sec());
+            context->congestion_controller = create_congestion_controller();
+            context->raw_ping_sec=-1;
+            context->srtt_sec=-1;
+            context->first_time=true;
         }
     }
 
@@ -1561,6 +1742,9 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
     }
 }
 
+
+std::atomic<int> g_seq_cnt=0;   //test code
+
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
@@ -1570,7 +1754,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     int udp_packet_size = get_udp_packet_size(udp_packet);
     bool throttle = false;
     if (udp_packet->type == UDP_WHIST_SEGMENT) {
-        udp_packet->udp_whist_segment_data.departure_time = current_time_us();
+        udp_packet->udp_whist_segment_data.departure_time = current_time_us();  //this time is assigned before pacing, it's wrong!!
         // Throttle only video packet. Audio packets are very small and run on reserved bandwidth
         // and ping/pong packets use negligible bandwidth.
         if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
@@ -1580,9 +1764,14 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 
     // NOTE: This doesn't interfere with clientside hotpath,
     // since the throttler only throttles the serverside
+    udp_packet->seq=g_seq_cnt++;
     if (throttle) {
         udp_packet->group_id = network_throttler_wait_byte_allocation(
             context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
+    }
+
+    if (udp_packet->type == UDP_WHIST_SEGMENT) {
+        udp_packet->udp_whist_segment_data.departure_time = get_timestamp_sec()*US_IN_MS*MS_IN_SECOND;
     }
 
     UDPNetworkPacket udp_network_packet;
@@ -1679,9 +1868,9 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
 
         // Tracks arrival time for congestion control algo
         if (arrival_time) {
-            *arrival_time = current_time_us();
+            *arrival_time = get_timestamp_sec()*US_IN_MS*MS_IN_SECOND;
+            //*arrival_time = current_time_us();
         }
-
         // Verify the reported packet length
         // This is before the `decrypt_packet` call, so the packet might be malicious
         // ~ We check recv_len against UDPNETWORKPACKET_HEADER_SIZE first, to ensure that
@@ -2018,6 +2207,15 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     // Calculate latency
     context->short_term_latency = PING_LAMBDA_SHORT_TERM * context->short_term_latency +
                                   (1 - PING_LAMBDA_SHORT_TERM) * ping_time;
+    context->raw_ping_sec= ping_time;
+    if(context->srtt_sec < 0) {
+        context->srtt_sec = ping_time;
+    }else {
+        const double smooth_factor= 0.8;
+        context->srtt_sec = smooth_factor * context->srtt_sec +  + (1-smooth_factor) *ping_time;
+    }
+    whist_plotter_insert_sample("ping_time", get_timestamp_sec(), ping_time*MS_IN_SECOND);
+    whist_plotter_insert_sample("congestion_detected", get_timestamp_sec(), context->network_settings.congestion_detected *150);
     // Don't update long term latency during congestion
     if (!context->network_settings.congestion_detected) {
         context->long_term_latency = PING_LAMBDA_LONG_TERM * context->long_term_latency +
