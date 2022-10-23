@@ -80,6 +80,9 @@ typedef struct {
     UDPPacketType type;
     // id of the group of packets that are sent in one burst.
     int group_id;
+#if ENABLE_UDP_SEQ
+    int seq;
+#endif
     // The data itself
     union {
         // UDP_WHIST_SEGMENT
@@ -1736,6 +1739,9 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
     }
 }
 
+
+std::atomic<int> g_seq_cnt=0;   //test code
+
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
@@ -1756,6 +1762,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     // NOTE: This doesn't interfere with clientside hotpath,
     // since the throttler only throttles the serverside
     if (throttle) {
+        udp_packet->seq=g_seq_cnt++;
         udp_packet->group_id = network_throttler_wait_byte_allocation(
             context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
     }

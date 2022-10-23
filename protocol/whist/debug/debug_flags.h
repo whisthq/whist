@@ -43,3 +43,6 @@ Flags for both client and server
 */
 
 #define PLOT_UDP_RECV_GAP false  // plot the gaps between recvs() are called on hotpath
+
+
+#define ENABLE_UDP_SEQ true
