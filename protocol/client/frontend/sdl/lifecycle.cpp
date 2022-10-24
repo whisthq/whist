@@ -11,12 +11,18 @@ extern "C" {
 
 static bool skip_taskbar;
 static char* icon_png_filename;
+static int starting_width = 0;
+static int starting_height = 0;
 COMMAND_LINE_BOOL_OPTION(
     skip_taskbar, 0, "sdl-skip-taskbar",
     "Launch the protocol without displaying an icon in the taskbar (SDL frontend only).")
 COMMAND_LINE_STRING_OPTION(
     icon_png_filename, 0, "sdl-icon", WHIST_ARGS_MAXLEN,
     "Set the protocol window icon from a 64x64 pixel png file (SDL frontend only).")
+COMMAND_LINE_INT_OPTION(starting_width, 0, "sdl-width", 0, MAX_SCREEN_WIDTH,
+                        "The target width for the window (SDL frontend only).")
+COMMAND_LINE_INT_OPTION(starting_height, 0, "sdl-height", 0, MAX_SCREEN_HEIGHT,
+                        "The target height for the window (SDL frontend only).")
 
 static const char* sdl_render_driver;
 COMMAND_LINE_STRING_OPTION(sdl_render_driver, 0, "sdl-render-driver", 16,
@@ -155,8 +161,8 @@ WhistStatus sdl_init(WhistFrontend* frontend, const WhistRGBColor* color) {
     window_context->window_id = 0;
     window_context->x = SDL_WINDOWPOS_CENTERED;
     window_context->y = SDL_WINDOWPOS_CENTERED;
-    window_context->width = 0;
-    window_context->height = 0;
+    window_context->width = starting_width;
+    window_context->height = starting_height;
     window_context->title = "Whist";
     window_context->color = {17, 24, 39};
     window_context->is_fullscreen = false;

@@ -241,17 +241,15 @@ Public Function Implementations
 ============================
 */
 
-VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, int out_height,
-                                   int bitrate, int vbv_size, CodecType codec_type) {
+VideoEncoder *create_video_encoder(int width, int height, int bitrate, int vbv_size,
+                                   CodecType codec_type) {
     /*
        Create a video encoder with the specified parameters. Try Nvidia first if available, and fall
        back to FFmpeg if not.
 
         Arguments:
-            in_width (int): Width of the frames that the encoder intakes
-            in_height (int): height of the frames that the encoder intakes
-            out_width (int): width of the frames that the encoder outputs
-            out_height (int): Height of the frames that the encoder outputs
+            width (int): Width of the frames that the encoder encodes
+            height (int): height of the frames that the encoder encodes
             bitrate (int): bits per second the encoder will encode to
             codec_type (CodecType): Codec (currently H264 or H265) the encoder will use
 
@@ -259,15 +257,10 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
             (VideoEncoder*): the newly created encoder
      */
 
-    if (!USING_SERVERSIDE_SCALE) {
-        out_width = in_width;
-        out_height = in_height;
-    }
-
     VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
-    encoder->in_width = in_width;
-    encoder->in_height = in_height;
+    encoder->in_width = width;
+    encoder->in_height = height;
     encoder->codec_type = codec_type;
 
     if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
@@ -281,38 +274,29 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         // the expected stream.
     }
 
-#if USING_NVIDIA_ENCODE
-    if (USING_SERVERSIDE_SCALE) {
-        LOG_ERROR(
-            "Cannot create nvidia encoder, does not accept in_width and in_height when using "
-            "serverside scaling");
-        encoder->active_encoder = FFMPEG_ENCODER;
-    } else {
-        LOG_INFO("Creating nvidia encoder...");
-        // find next nonempty entry in nvidia_encoders
-        encoder->nvidia_encoders[0] =
-            create_nvidia_encoder(bitrate, codec_type, out_width, out_height, vbv_size,
-                                  *get_video_thread_cuda_context_ptr());
+#if OS_IS(OS_LINUX) && USING_NVIDIA_ENCODE
+    LOG_INFO("Creating nvidia encoder...");
 
-        if (!encoder->nvidia_encoders[0]) {
-            LOG_ERROR("Failed to create nvidia encoder!");
-            encoder->active_encoder = FFMPEG_ENCODER;
-        } else {
-            LOG_INFO("Created nvidia encoder!");
-            // nvidia creation succeeded!
-            encoder->active_encoder = NVIDIA_ENCODER;
-            encoder->active_encoder_idx = 0;
-            return encoder;
-        }
+    // find next nonempty entry in nvidia_encoders
+    encoder->nvidia_encoders[0] = create_nvidia_encoder(
+        bitrate, codec_type, width, height, vbv_size, *get_video_thread_cuda_context_ptr());
+
+    if (encoder->nvidia_encoders[0]) {
+        LOG_INFO("Created nvidia encoder!");
+        // nvidia creation succeeded!
+        encoder->active_encoder = NVIDIA_ENCODER;
+        encoder->active_encoder_idx = 0;
+        return encoder;
     }
-#else
-    // No nvidia found
+
+    LOG_ERROR("Failed to create nvidia encoder!");
+#endif  // OS_IS(OS_LINUX) && USING_NVIDIA_ENCODE
+
     encoder->active_encoder = FFMPEG_ENCODER;
-#endif  // USING_NVIDIA_ENCODE
 
     LOG_INFO("Creating ffmpeg encoder...");
-    encoder->ffmpeg_encoder = create_ffmpeg_encoder(in_width, in_height, out_width, out_height,
-                                                    bitrate, vbv_size, codec_type);
+    encoder->ffmpeg_encoder =
+        create_ffmpeg_encoder(width, height, width, height, bitrate, vbv_size, codec_type);
     if (!encoder->ffmpeg_encoder) {
         LOG_ERROR("FFmpeg encoder creation failed!");
         return NULL;

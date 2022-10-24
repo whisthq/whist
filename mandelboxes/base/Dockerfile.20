@@ -1,7 +1,7 @@
-############### STAGE 0: build-assets ###############
+################### build-assets ###################
 # EXPOSES the appropriate build-assets package to
 # handle copying files from outside the repo
-#####################################################
+####################################################
 
 # This argument controls whether to copy the protocol
 # in this image or in a child image. In dev mode, we
@@ -17,13 +17,13 @@ ARG DisplayDriver "dummy"
 
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 
-################ STAGE 1: libinput-build ################
+#################### libinput-build ####################
 # - Install build dependencies as per the documentation
 #   at https://wayland.freedesktop.org/libinput/doc/latest/building.html#build-dependencies-per-distribution
 # - Download libinput 1.19
 # - Configure and build libinput
 # EXPOSES .deb build of libinput for later stages
-#########################################################
+########################################################
 FROM ubuntu:20.04 as libinput-build
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -89,7 +89,7 @@ COPY input/libinput/debian/control /libinput-whist/DEBIAN/control
 # Build debian package
 RUN dpkg-deb --build libinput-whist
 
-################ STAGE 2: xf86-input-libinput-build ################
+#################### xf86-input-libinput-build ####################
 # - Install build dependencies as per the documentation
 #   at https://gitlab.freedesktop.org/xorg/driver/xf86-input-libinput
 # - For libinput dependency, copy and install libinput from the
@@ -97,7 +97,7 @@ RUN dpkg-deb --build libinput-whist
 # - Download xf86-input-libinput source
 # - Configure and build xf86-input-libinput
 # EXPOSES build of xf86-input-libinput
-####################################################################
+###################################################################
 FROM ubuntu:20.04 as xf86-input-libinput-build
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -118,14 +118,13 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
 COPY --from=libinput-build libinput-whist.deb /
 
 # Install build dependencies
-# This includes our build of libinput
 RUN apt-get update && apt-get install --no-install-recommends -y \
     xorg-dev \
     xutils-dev \
     libudev-dev \
     wget \
     ca-certificates \
-    make \
+    build-essential \
     automake \
     autoconf \
     libtool \
@@ -133,7 +132,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     ./libinput-whist.deb \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
+    && rm -rf /tmp/* /var/tmp/* /libinput-whist.deb
 
 # Download xorgproto source (xf86-input-libinput dependency)
 RUN wget -qO - https://www.x.org/archive/individual/proto/xorgproto-2021.5.tar.bz2 | tar xj
@@ -146,7 +145,7 @@ RUN cd xorgproto-2021.5 \
     && make -j install
 
 # Download xf86-input-libinput source
-RUN wget -qO - https://xorg.freedesktop.org/releases/individual/driver/xf86-input-libinput-1.2.0.tar.bz2 | tar xj
+RUN wget -qO - https://www.x.org/releases/individual/driver/xf86-input-libinput-1.2.0.tar.bz2 | tar xj
 
 # Configure and build xf86-input-libinput
 RUN cd xf86-input-libinput-1.2.0 \
@@ -167,11 +166,68 @@ COPY input/xf86-input-libinput/debian/control /xf86-input-libinput-whist/DEBIAN/
 # Build debian package
 RUN dpkg-deb --build xf86-input-libinput-whist
 
-################ STAGE 3: nvidia-grid-driver ################
+#################### xf86-video-dummy-build ####################
+# - Install build dependencies
+# - Download xf86-video-dummy source
+# - Configure and build xf86-video-dummy
+# EXPOSES build of xf86-video-dummy
+################################################################
+FROM ubuntu:20.04 as xf86-video-dummy-build
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+# Update apt source list
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    xorg-dev \
+    xutils-dev \
+    wget \
+    ca-certificates \
+    build-essential \
+    automake \
+    autoconf \
+    libtool \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Download xf86-video-dummy source
+RUN wget -qO - https://www.x.org/releases/individual/driver/xf86-video-dummy-0.4.0.tar.gz | tar xz
+
+# Configure and build xf86-video-dummy
+RUN cd xf86-video-dummy-0.4.0 \
+    && autoreconf -vif \
+    && ./configure \
+    --disable-static \
+    --prefix=/usr \
+    && make -j
+
+# Install xf86-video-dummy to package folder
+RUN mkdir /xf86-video-dummy-whist \
+    && cd xf86-video-dummy-0.4.0 \
+    && make DESTDIR=/xf86-video-dummy-whist install
+
+# Setup debian package information
+COPY display/xf86-video-dummy/debian/control /xf86-video-dummy-whist/DEBIAN/control
+
+# Build debian package
+RUN dpkg-deb --build xf86-video-dummy-whist
+
+#################### nvidia-grid-driver ####################
 # - Copy and unpack the nvidia grid driver installer
 # - Install its contents into an output directory
 # EXPOSES the grid driver
-#############################################################
+############################################################
 FROM ubuntu:20.04 as nvidia-grid-driver
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -236,11 +292,11 @@ RUN mkdir /dist /ignore && \
 RUN mkdir /dist/etc && \
     cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
 
-################ STAGE 4: whist-teleport-drag-drop ################
+#################### whist-teleport-drag-drop ####################
 # - Copy and build the FUSE service to handle teleport drag-drop
 #   events
 # EXPOSES the teleport fuse service
-###################################################################
+##################################################################
 FROM ubuntu:20.04 as whist-teleport-drag-drop
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -277,11 +333,11 @@ RUN cd /whist-teleport-drag-drop/src \
     && gcc -Wall -Werror -D _GNU_SOURCE unshare.c -o unshare.o -c \
     && gcc -Wall -Werror unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
 
-################ STAGE 5: whist-spicy-cursors-theme ################
+#################### whist-spicy-cursors-theme ####################
 # - Copy and build the WhistSpicyCursors theme, which encodes
 #   cursor type/ID in the cursor's hot_x and hot_y values.
 # EXPOSES the built cursor theme.
-####################################################################
+###################################################################
 FROM ubuntu:20.04 as whist-spicy-cursors-theme
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -311,13 +367,13 @@ RUN cd /cursor-builder \
     && ./make.sh \
     && mv WhistSpicyCursors /WhistSpicyCursors
 
-################ STAGE 6: hydraulic-press #####################
+#################### hydraulic-press #########################
 # - Copy, set permissions for, and install all base mandelbox
 #   scripts, services, and config files to the hydraulic-squash
 #   directory so that they can be neatly organized here while
 #   only taking up one Docker layer in whist-base
 # EXPOSES the hydraulic-squash directory
-###############################################################
+##############################################################
 FROM ubuntu:20.04 as hydraulic-press
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -370,6 +426,7 @@ COPY input/Xmodmap $HYDRAULIC_ROOT/root/.Xmodmap
 # Display
 #########################
 
+# Redeclare the arg to expose it in this scope
 ARG DisplayDriver "dummy"
 
 # Copy correct configuration for X11 display based on existence of GPU
@@ -465,7 +522,7 @@ COPY --chown=root:root --chmod=600 main/whist-main.service $HYDRAULIC_ROOT/etc/s
 # output path. We do this for the main service which launches after startup.
 RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 
-################ STAGE 7: whist-base ######################
+########################## whist-base ##########################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
@@ -478,7 +535,7 @@ RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 # - Install and configure any necessary packages for
 #   our base mandelbox image
 # EXPOSES all of whist-base as the final image
-#############################################################
+################################################################
 FROM ubuntu:20.04 as whist-base-pre-graphics
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -494,9 +551,10 @@ ENV RUN_LEVEL=1
 ENV init /sbin/init
 ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io/6073955
 
-# Copy libinput and xf86-input-libinput
+# Copy libinput, xf86-input-libinput, and xf86-video-dummy
 COPY --from=libinput-build /libinput-whist.deb /deb/libinput-whist.deb
 COPY --from=xf86-input-libinput-build /xf86-input-libinput-whist.deb /deb/xf86-input-libinput-whist.deb
+COPY --from=xf86-video-dummy-build /xf86-video-dummy-whist.deb /deb/xf86-video-dummy-whist.deb
 
 # Copy protocol dependencies installer
 COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh
@@ -517,10 +575,12 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     # Locales is needed to fix some systemd warnings
     locales \
     locales-all \
-    ### Input Events
-    # Core libraries (remember to delete /deb below this step)
+    ### X11
+    # Up-to-date builds of libraries (remember to delete /deb below this step)
     ./deb/libinput-whist.deb \
     ./deb/xf86-input-libinput-whist.deb \
+    ./deb/xf86-video-dummy-whist.deb \
+    ### Input Events
     keyboard-configuration \
     # Developer utils and dependencies
     libxtst-dev \
@@ -568,7 +628,6 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     libxdamage-dev \
     xclip \
     x11-xserver-utils \
-    xserver-xorg-video-dummy \
     xserver-xorg-core \
     awesome \
     xsettingsd \

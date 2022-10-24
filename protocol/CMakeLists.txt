@@ -55,6 +55,11 @@ if(USE_CCACHE)
     set(CMAKE_OBJCXX_COMPILER_LAUNCHER "ccache")
 endif()
 
+option(NOGPU "Disable GPU acceleration" OFF)
+if(NOGPU)
+    add_compile_definitions(NOGPU=true)
+endif()
+
 # Add our compiler flags
 include(cmake/compiler-options.cmake)
 

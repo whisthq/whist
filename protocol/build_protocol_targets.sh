@@ -21,7 +21,9 @@ build parameter. It defaults to \`Debug\`.
 The optional argument \`--nodownloadbinaries\`, when provided, tells \`cmake\`
 not to download the libraries used to build the Whist protocol from S3.
 The optional argument \`--cmakesetCI\`, if provided, is used to set
-\`-DCI=TRUE\` in the cmake configuration.
+\`-DCI=ON\` in the cmake configuration.
+The optional argument \`--nogpu\`, if provided, is used to set
+\`-DNOGPU=ON\` in the cmake configuration.
 EOF
 
   # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
@@ -30,20 +32,22 @@ EOF
 
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but getopt only uses short arguments
-TEMP=$(getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI,sanitize: -n 'build_protocol_targets.sh' -- "$@")
+TEMP=$(getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI,sanitize:,nogpu -n 'build_protocol_targets.sh' -- "$@")
 eval set -- "$TEMP"
 
 CMAKE_BUILD_TYPE=Debug
 CMAKE_DOWNLOAD_BINARIES=ON
-CMAKE_SET_CI=FALSE
+CMAKE_SET_CI=OFF
 CMAKE_SANITIZE=OFF
+CMAKE_NOGPU=OFF
 while true; do
   case "$1" in
     -h | --help | --usage ) usage ;;
     --cmakebuildtype ) CMAKE_BUILD_TYPE="$2"; shift 2 ;;
     --nodownloadbinaries ) CMAKE_DOWNLOAD_BINARIES=OFF; shift ;;
-    --cmakesetCI ) CMAKE_SET_CI=TRUE; shift ;;
+    --cmakesetCI ) CMAKE_SET_CI=ON; shift ;;
     --sanitize ) CMAKE_SANITIZE="$2"; shift 2 ;;
+    --nogpu ) CMAKE_NOGPU=ON; shift ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
@@ -97,9 +101,10 @@ docker run \
     cmake                                               \
         -S ..                                           \
         -B .                                            \
-        -DDOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES}  \
+        -D DOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES} \
         -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}         \
         -D CHECK_CI=${CMAKE_SET_CI}                     \
-        -D SANITIZE=${CMAKE_SANITIZE} &&                \
+        -D SANITIZE=${CMAKE_SANITIZE}                   \
+        -D NOGPU=${CMAKE_NOGPU} &&                      \
     make -j ${TARGETS}                                  \
   "

@@ -92,7 +92,6 @@ static int32_t multithreaded_encoder_factory(void* opaque) {
 
     state->encoder_factory_result =
         create_video_encoder(state->encoder_factory_server_w, state->encoder_factory_server_h,
-                             state->encoder_factory_client_w, state->encoder_factory_client_h,
                              state->encoder_factory_bitrate, state->encoder_factory_vbv_size,
                              state->encoder_factory_codec_type);
     if (state->encoder_factory_result == NULL) {
