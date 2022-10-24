@@ -495,7 +495,8 @@ int whist_client_main(int argc, const char* argv[]) {
 
     destroy_statistic_logger();
 
-    whist_plotter_destroy();  // it's safe to call, regardless initalized or not
+    // This is safe to call even if the plotter has not been initialized.
+    whist_plotter_destroy();
 
     destroy_logger();
 

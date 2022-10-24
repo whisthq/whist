@@ -72,10 +72,10 @@ void whist_plotter_insert_sample(const char* label, double x, double y);
 int whist_plotter_export_to_file(const char* filename);
 
 /**
- * @brief                          Destory plotter, release resouces
+ * @brief                          Destroy plotter, release resouces
  *
- * @note                           safe to call regardless of whether init() has been called.
- *                                 this function doesn't mean to be thread safe, and should
- *                                 be called at the very end, i.e. before the protocol quits
+ * @note                           This is safe to call regardless of whether init() has been
+ * called. This function is not and need not be thread safe, and should be called at the very end,
+ * i.e. before the protocol quits
  */
 void whist_plotter_destroy(void);

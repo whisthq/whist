@@ -22,10 +22,10 @@ extern "C" {
 #include <sstream>
 #include <fstream>
 
-// the data struct for sampling
+// Data struct to store samples
 typedef std::unordered_map<std::string, std::deque<std::pair<double, double>>> PlotData;
 
-// the interface for plotter implementations
+// Class to manage the plotter implementation
 class PlotterInterface {
    protected:
     std::string type_name;
@@ -46,20 +46,22 @@ class PlotterInterface {
     virtual ~PlotterInterface() {}
 };
 
-// the stream plotter peridically flush samples onto the disk using jsonline format
+// StreamPlotter peridically flushes samples onto the disk using the jsonline format
 class StreamPlotter : public PlotterInterface {
-    PlotData *plot_data_array[2];  // even odd array for storing samples
-                                   // so that insert sample and flushing to disk doesn't
-                                   // block each other
+    // Even-odd array for sample storage so insert and write operations don't block each other
+    PlotData *plot_data_array[2];
+
     WhistMutex plot_mutex;
     std::atomic<bool> running;
 
-    int current_idx;                // the index of current sampling group
-                                    // which maps onto the even odd array
-    double current_idx_start_time;  // start time of current index
+    // Index of current sampling group which maps onto plot_data_array
+    int current_idx;
+
+    // Start time of current index
+    double current_idx_start_time;
 
     std::ofstream plot_file;
-    std::thread periodical_check_thread;
+    std::thread sample_processor_thread;
 
    public:
     StreamPlotter(const std::string &file_name) {
@@ -80,17 +82,15 @@ class StreamPlotter : public PlotterInterface {
             LOG_FATAL("open file %s for saving plotter data failed\n", file_name.c_str());
         }
 
-        // start peridicial checking thread for increasing the current_idx
-        // and flush data of previous group into the file
-        periodical_check_thread = std::thread([&]() {
-            const double k_flush_interval = 2.0;  // flush roughly every 2 seconds
+        // Begin polling for increases in the current index and flushing pending data
+        sample_processor_thread = std::thread([&]() {
+            const double flush_interval_seconds = 2.0;
             while (running) {
                 double current_time = get_timestamp_sec();
-                if (current_time - current_idx_start_time > k_flush_interval) {
-                    int previous_idx;  // just a convenient name for previous idx
+                if (current_time - current_idx_start_time > flush_interval_seconds) {
+                    int previous_idx;
 
-                    // switch current_idx to next
-                    // so that we can safely flush existing data to disk without mutex contention
+                    // Increment current_idx and then begin flushing the old index
                     whist_lock_mutex(plot_mutex);
                     previous_idx = current_idx++;
                     whist_unlock_mutex(plot_mutex);
@@ -100,29 +100,28 @@ class StreamPlotter : public PlotterInterface {
                     plot_data_array[previous_idx % 2]->clear();
 
                 } else {
-                    // the plotter is only for debugging
-                    // a sleeped while loop make the code much simpler
-                    // than a timeout semapthore
+                    // Since this is only for debugging, it's fine to just use a sleep loop
                     whist_sleep(50);
                 }
             }
-            // flush last group (pointed by current_idx) to disk
+            // Flush the last group to disk
             flush_to_file(current_idx);
         });
     }
+
     void insert_sample(const char *label, double x, double y) override {
         if (!running) return;
         whist_lock_mutex(plot_mutex);
         auto &plot_data = *plot_data_array[current_idx % 2];
-        auto &q = plot_data[label];  // get the dataset with specific label
-        q.push_back({x, y});         // insert a sample
+        auto &q = plot_data[label];
+        q.push_back({x, y});
         whist_unlock_mutex(plot_mutex);
     }
 
     ~StreamPlotter() override {
-        running = false;                 // prevent new samples' inserting
-                                         // also tell the peridically thread to quit
-        periodical_check_thread.join();  // wait for quit
+        // Break and join the processor thread
+        running = false;
+        sample_processor_thread.join();
         plot_file.close();
 
         for (int i = 0; i < 2; i++) {
@@ -135,9 +134,10 @@ class StreamPlotter : public PlotterInterface {
     void flush_to_file(int idx) {
         auto &plot_data = *plot_data_array[idx % 2];
         std::stringstream ss;
-        ss.precision(12);  // avoid loss precision
+        // Avoid loss of precision
+        ss.precision(12);
 
-        // export all recorded samples to a json-line formated line
+        // Export all recorded samples to a json-line formated line
         ss << "{";
 
         for (auto it = plot_data.begin(); it != plot_data.end(); it++) {
@@ -164,7 +164,9 @@ class BasicPlotter : public PlotterInterface {
     PlotData *plot_data_ptr;
     WhistMutex plot_mutex;
 
-    std::atomic<bool> in_sampling;  // indicate if in the sampling status
+    // Whether or not we are currently sampling
+    std::atomic<bool> in_sampling;
+
    public:
     BasicPlotter() {
         type_name = "BasicPlotter";
@@ -250,13 +252,13 @@ class BasicPlotter : public PlotterInterface {
     }
 };
 
-// plotter is simliar to logger, which only has a global singleton instance
-// so we use static global
+// The plotter is similar to the logger, which only has a single instance.
+// Hence, we can use a static global singleton.
 
-// this is the pointer holding the long-term ownership of plotter
+// Long-term ownership of the plotter
 std::shared_ptr<PlotterInterface> g_plotter_ptr;
 
-// the weak_ptr which allows us get a copy of the above ptr in a thread safe way
+// Thread-safe access to the above shared_ptr.
 // Note: accessing a single shared_ptr from two threads is not thread-safe,
 // it's thread-safe to get a copy of shared_ptr with weak_ptr's lock() method
 // from another thread, then do concurrent access
@@ -296,13 +298,13 @@ void whist_plotter_stop_sampling() {
     if (!local_ptr) local_ptr->stop_sampling();
 }
 
-// the whist_plotter_insert_sample() uses a string instead a int as label. So that you don't need a
-// centralized logic to manage the mapping of id and string. It's optimized for easily use, instead
-// of max performance.
+// We use a string instead of an int as a lable so that we don't need to build an ID-to-string
+// mapping. This is optimized for ease of use instead of performance, which is fine for a debug
+// tool.
 void whist_plotter_insert_sample(const char *label, double x, double y) {
-    // this function is a heavily called function.
-    // we use the aomic<bool> to quit fast if the plotter is not initalized at all.
-    // since the weak ptr's lock operation might be costly (depend on implementation).
+    // This function is a heavily called function.
+    // we use the atomic<bool> to quit fast if the plotter is not initalized at all.
+    // since the weak ptr's lock operation might be costly (depending on implementation).
     if (!initalized) return;
 
     std::shared_ptr<PlotterInterface> local_ptr = g_plotter_weak_ptr.lock();
@@ -320,6 +322,6 @@ int whist_plotter_export_to_file(const char *filename) {
 void whist_plotter_destroy() {
     initalized = false;
     // release the long-term ownship of plotter. the plotter will be automatically destroyed when
-    // all temp ownership are released.
+    // all temp ownership is released.
     g_plotter_ptr.reset();
 }

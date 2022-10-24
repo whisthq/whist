@@ -241,11 +241,11 @@ void destroy_statistic_logger(void) {
     if (LOG_DATA_FOR_PLOTTER) {
         whist_plotter_stop_sampling();
 
-        LOG_INFO("Saving data for plotter to file...");
+        LOG_INFO("Exporting plot data to file...");
 
         int ret = whist_plotter_export_to_file(PLOT_DATA_FILENAME);
         if (ret) {
-            LOG_ERROR("Export plotting data to file %s failed!", PLOT_DATA_FILENAME);
+            LOG_ERROR("Exporting plot data to file %s failed!", PLOT_DATA_FILENAME);
         }
     }
 }
