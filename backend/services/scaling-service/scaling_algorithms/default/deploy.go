@@ -67,7 +67,8 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// Compute the size of the buffer we want to start. We pass in a current capacity of 0
 	// because we want a full buffer of instances for the new version.
 	// TODO: change to a different instance type once we support more cloud providers/types
-	instancesToScale := helpers.ComputeInstancesToScale(desiredFreeMandelboxesPerRegion[event.Region], 0, instanceCapacity["g4dn.2xlarge"])
+	targetFreeMandelboxes := config.GetTargetFreeMandelboxes(event.Region)
+	instancesToScale := helpers.ComputeInstancesToScale(targetFreeMandelboxes, 0, instanceCapacity["g4dn.2xlarge"])
 
 	// If we are running on a local or testing environment, spinup "fake" instances to avoid
 	// creating them on a cloud provider. In any other case we call the host handler to create

@@ -30,6 +30,18 @@ type serviceConfig struct {
 	// frontendVersion represents the current version of the frontend
 	// (e.g. "2.6.13").
 	frontendVersion string
+
+	// targetFreeMandelboxes maps region names to integers, where the integer
+	// associated with each region is the number of Mandelboxes we want to have
+	// available at all times. This might differ from the actual number number
+	// of Mandelboxes we have available at any given time, but that's what scaling
+	// algorithms are for.
+	//
+	// TODO(owen): It might make more sense to store a mapping from strings to
+	// uint32s because we can't have negative Mandelboxes available. I haven't
+	// done this yet because it will likely require changing a lot of types and
+	// doing a lot of type conversions.
+	targetFreeMandelboxes map[string]int
 }
 
 // config is a singleton that stores service-global configuration values.
@@ -86,4 +98,17 @@ func SetFrontendVersion(newVersion subscriptions.FrontendVersion) {
 
 	version := newVersion.String()
 	config.frontendVersion = version
+}
+
+// GetTargetFreeMandelboxes returns the number of Mandelboxes we want to have
+// available all times in a particular region.
+func GetTargetFreeMandelboxes(r string) int {
+	rw.RLock()
+	defer rw.RUnlock()
+
+	if n, ok := config.targetFreeMandelboxes[r]; ok {
+		return n
+	}
+
+	return 0
 }
