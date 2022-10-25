@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "whist_string.h"
+#include <stdio.h>
 #include "platform.h"
 
 bool safe_strncpy(char* destination, const char* source, size_t num) {
@@ -67,28 +68,26 @@ char* split_string_at(char* str, const char* delim) {
 void trim_newlines(char* str) { split_string_at(str, "\r\n"); }
 
 size_t copy_and_escape(char* dst, size_t dst_size, const char* src) {
-    size_t d, s;
-
     // Table of escape codes.
-    static const unsigned char escape_list[256] = {
+    static const char escape_list[256] = {
         ['\b'] = 'b',
         ['\f'] = 'f',
         ['\r'] = 'r',
         ['\t'] = 't',
     };
 
-    for (d = s = 0; src[s]; s++) {
-        unsigned char esc = escape_list[src[s] & 0xff];
-        if (esc) {
-            if (d >= dst_size - 2) break;
-            dst[d++] = '\\';
-            dst[d++] = esc;
+    char* d = dst;
+    for (const char* s = src; *s != '\0'; ++s) {
+        const char esc = escape_list[(size_t)*s & 0xff];
+        if (esc != '\0') {
+            if (d + 2 >= dst + dst_size) break;
+            *d++ = '\\';
+            *d++ = esc;
         } else {
-            if (d >= dst_size - 1) break;
-            dst[d++] = src[s];
+            if (d + 1 >= dst + dst_size) break;
+            *d++ = *s;
         }
     }
-
-    dst[d] = '\0';
-    return d;
+    *d = '\0';
+    return d - dst;
 }
