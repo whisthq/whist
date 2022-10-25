@@ -35,9 +35,9 @@ var db dbclient.DBClient
 //	}()
 //
 //	wg.Wait()
-func CleanRegion(client subscriptions.WhistGraphQLClient, h hosts.HostHandler) func() {
+func CleanRegion(client subscriptions.WhistGraphQLClient, h hosts.HostHandler, d time.Duration) func() {
 	stop := make(chan struct{})
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(d)
 	var wg sync.WaitGroup
 
 	// Don't bother adding this goroutine to the cleaner's wait group. It will

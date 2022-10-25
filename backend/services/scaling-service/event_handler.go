@@ -28,6 +28,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"os"
 	"os/signal"
 	"strings"
@@ -50,6 +51,15 @@ import (
 )
 
 func main() {
+	var cleanupPeriod time.Duration
+	var noCleanup bool
+
+	flag.DurationVar(&cleanupPeriod, "cleanup", time.Duration(time.Minute),
+		"the amount of time between when each cleanup thread runs")
+	flag.BoolVar(&noCleanup, "nocleanup", false, "disable asynchronous cleanup "+
+		"of unresponsive instances")
+	flag.Parse()
+
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := &sync.WaitGroup{}
 
@@ -138,9 +148,15 @@ func main() {
 		algo.CreateDBClient(dbClient)
 		algo.ProcessEvents(globalCtx, goroutineTracker)
 
-		stop := CleanRegion(graphqlClient, handler)
+		if noCleanup {
+			logger.Infof("Cleanup disabled. Not starting cleanup threads.")
+		} else {
+			stop := CleanRegion(graphqlClient, handler, cleanupPeriod)
+			stopFuncs = append(stopFuncs, stop)
+			logger.Infof("Unresponsive instances will be pruned every %s.",
+				cleanupPeriod)
+		}
 
-		stopFuncs = append(stopFuncs, stop)
 		algorithmByRegionMap.Store(name, algo)
 
 		logger.Infof("There should be as close as possible to %d unassigned "+
