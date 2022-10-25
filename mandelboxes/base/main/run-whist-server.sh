@@ -40,7 +40,13 @@ TELEPORT_OUT_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-out.log
 TELEPORT_ERR_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-err.log
 
 # TODO: set to development flag
+WHIST_PRIVATE_DIR=/usr/share/whist/private
+LOAD_EXTENSION_FILENAME=$WHIST_PRIVATE_DIR/local_client
 LOCAL_CLIENT=false # true if the frontend is being tested manually by a Whist engineer
+# Send in LOAD_EXTENSION and KIOSK_MODE, if set
+if [ -f "$LOCAL_CLIENT_FILENAME" ]; then
+  LOCAL_CLIENT=$(cat $LOCAL_CLIENT_FILENAME)
+fi
 
 # Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
