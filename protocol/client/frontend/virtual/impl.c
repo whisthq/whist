@@ -59,6 +59,15 @@ static bool update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* e
             }
             break;
         }
+        case FRONTEND_EVENT_DEFOCUS: {
+            // If the viewing area has been defocused, we should release all keys
+            // The user must re-press them if they want whist to register them
+            for (int i = 0; i < KEYCODE_UPPERBOUND; i++) {
+                if (context->key_state[i] == 1) {
+                    context->key_state[i] = 0;
+                }
+            }
+        }
         default: {
             break;
         }
