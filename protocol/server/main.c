@@ -626,6 +626,7 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(send_video_thread, NULL);
     whist_wait_thread(send_audio_thread, NULL);
     whist_wait_thread(sync_tcp_packets_thread, NULL);
+    whist_wait_thread(gpu_command_receiver_thread, NULL);
     whist_destroy_dbus_handler(dbus_handler);
 
     ltr_destroy(server_state.ltr_context);

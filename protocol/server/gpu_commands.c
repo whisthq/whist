@@ -59,6 +59,7 @@ int multithreaded_gpu_command_receiver(void *opaque) {
     if (stat(IPC_FILE, &statbuf) == 0) {
         if (unlink(IPC_FILE) == -1) {
             LOG_ERROR("unlink failed for IPC file %s", IPC_FILE);
+            return -1;
         }
     }
 
@@ -66,6 +67,7 @@ int multithreaded_gpu_command_receiver(void *opaque) {
 
     if ((listener = socket(AF_UNIX, SOCK_SEQPACKET, 0)) == -1) {
         LOG_ERROR("AF_UNIX socket creation failed");
+        return -1;
     }
 
     struct sockaddr_un socket_address;
@@ -76,7 +78,9 @@ int multithreaded_gpu_command_receiver(void *opaque) {
 
     if (bind(listener, (const struct sockaddr *)&socket_address, sizeof(struct sockaddr_un)) ==
         -1) {
+        close(listener);
         LOG_ERROR("Could not bind to IPC unix socket");
+        return -1;
     }
 
     // Change the ownership so that the browser which is running as 'whist' user can connect to this
@@ -85,7 +89,9 @@ int multithreaded_gpu_command_receiver(void *opaque) {
 
     // Mark socket for accepting incoming connections using accept
     if (listen(listener, BACKLOG_NEW_CONNECTIONS) == -1) {
+        close(listener);
         LOG_ERROR("Could not listen to IPC unix socket");
+        return -1;
     }
 
     fd_set fds, readfds;
@@ -93,11 +99,22 @@ int multithreaded_gpu_command_receiver(void *opaque) {
     FD_SET(listener, &fds);
     int fdmax = listener;
     bool connected = false;
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
 
-    while (1) {
+    ClientLock* client_lock = client_active_lock(state->client);
+
+    while (client_lock != NULL) {
+        // Refresh the client activation lock, to let the client (re/de)activate if it's trying to
+        client_active_unlock(client_lock);
+        client_lock = client_active_lock(state->client);
+        if (client_lock == NULL) {
+            break;
+        }
         readfds = fds;
         // monitor readfds for readiness for reading
-        if (select(fdmax + 1, &readfds, NULL, NULL, NULL) == -1) {
+        if (select(fdmax + 1, &readfds, NULL, NULL, &timeout) == -1) {
             LOG_ERROR("Select for GPU command receiver returned error");
         }
 
@@ -141,6 +158,8 @@ int multithreaded_gpu_command_receiver(void *opaque) {
             }  // if (fd == ...
         }      // for
     }          // while (1)
+    close(listener);
+    return 0;
 }  // main
 #else
 // Not implemented for other OSes
