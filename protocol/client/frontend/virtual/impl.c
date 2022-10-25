@@ -48,8 +48,6 @@ static bool update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* e
             // chrome doesn't send "KeyUp" event for other keys during key combinations(such as
             // Ctrl + C etc.,).
             if (event->keypress.pressed) {
-                // Track the last key press
-                start_timer(&context->last_key_press[event->keypress.code]);
                 // Update key state
                 if (context->key_state[event->keypress.code] == 1) {
                     // Don't process the event, if the key was already pressed
@@ -71,9 +69,6 @@ static bool update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* e
 WhistStatus virtual_init(WhistFrontend* frontend, const WhistRGBColor* color) {
     frontend->context = safe_zalloc(sizeof(VirtualFrontendContext));
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
-    for (int i = 0; i < KEYCODE_UPPERBOUND; i++) {
-        start_timer(&context->last_key_press[i]);
-    }
     // Note: These defaults are only to prevent FATAL_ERRORs in the case that the main executable
     //       does not submit a resize event before finishing startup of the virtual interface. In
     //       such a case, an extra resize event is sent to the server, harming UX.
@@ -359,26 +354,6 @@ void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_sta
         actual_mod_state |= MOD_NUM;
     }
     *mod_state = actual_mod_state;
-
-    for (int i = 0; i < KEYCODE_UPPERBOUND; i++) {
-        if (i == FK_LGUI || i == FK_RGUI || i == FK_LSHIFT || i == FK_RSHIFT || i == FK_LALT ||
-            i == FK_RALT || i == FK_LCTRL || i == FK_RCTRL || i == FK_CAPSLOCK || i == FK_NUMLOCK) {
-            // Don't update modifier keys in this way
-            continue;
-        }
-        if (context->key_state[i] == 1 &&
-            get_timer(&context->last_key_press[i]) * MS_IN_SECOND > 500) {
-            // Force keystate to 0, if it's been too long since the last keypress registered
-            context->key_state[i] = 0;
-            // Enqueue a keyup event
-            WhistFrontendEvent event = {0};
-            event.type = FRONTEND_EVENT_KEYPRESS;
-            event.keypress.code = i;
-            event.keypress.mod = 0;
-            event.keypress.pressed = false;
-            fifo_queue_enqueue_item(events_queue, &event);
-        }
-    }
 }
 
 void virtual_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size, int x,
