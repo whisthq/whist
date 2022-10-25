@@ -55,6 +55,21 @@ parser.add_argument(
         "certificate '/whist/cert.pem'. By default, this flag is disabled."
     ),
 )
+parser.add_argument(
+    "--no-kiosk",
+    action="store_true",
+    help="This flag launches browser apps in non-kiosk mode.",
+)
+parser.add_argument(
+    "--no-extension",
+    action="store_true",
+    help="This flag launches browser apps without the extension.",
+)
+parser.add_argument(
+    "--local-client",
+    action="store_true",
+    help="This flag indicates the frontend is being tested manually.",
+)
 args = parser.parse_args()
 
 
@@ -122,11 +137,17 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     Args: mandelbox_id: the id of the mandelbox to create
     """
     print("Sending GetMandelbox request to host service!")
-    url = HOST_SERVICE_URL + "json_transport"
+    url = HOST_SERVICE_URL + "json_transport" # TODO: this endpoint will no longer exist, so we need to move the equivalent functionality for local without db to the assign_mandelbox endpoint
+    development_args = {
+        "kiosk_mode": not args.no_kiosk,
+        "load_extension": not args.no_extension,
+        "local_client": args.local_client,
+    }
     payload = {
         "app_name": args.image,
         "jwt_access_token": "bogus_jwt",
         "mandelbox_id": str(mandelbox_id),
+        "json_data": str(development_args), # TODO: change this to be "development_args" or something like that
     }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
     respobj = requests.put(url=url, json=payload, verify=tls_verification, timeout=10)

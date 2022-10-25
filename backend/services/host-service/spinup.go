@@ -34,7 +34,7 @@ import (
 // StartMandelboxSpinUp will create and start a mandelbox, doing all the steps that can be done without the user's config token.
 // Once the mandelbox is started, it effectively waits an infinite time until a user gets assigned to it and the remaining
 // steps can continue.
-func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName, mandelboxDieChan chan bool) (mandelboxData.Mandelbox, error) {
+func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName, mandelboxDieChan chan bool, kioskMode string, loadExtension string, localClient string) (mandelboxData.Mandelbox, error) {
 	incrementErrorRate := func() {
 		metrics.Increment("ErrorRate")
 	}
@@ -163,6 +163,9 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	envs := []string{
 		utils.Sprintf("WHIST_AES_KEY=%s", aesKey),
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
+		utils.Sprintf("KIOSK_MODE=%s", kioskMode),
+		utils.Sprintf("LOAD_EXTENSION=%s", loadExtension),
+		utils.Sprintf("LOCAL_CLIENT=%s", localClient),
 	}
 
 	// Add additional env variables if host is using GPU
