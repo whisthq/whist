@@ -25,7 +25,7 @@ extern "C" {
 // Data struct to store samples
 typedef std::unordered_map<std::string, std::deque<std::pair<double, double>>> PlotData;
 
-// Class to manage the plotter implementation
+// The class which serves as an interface of all plotter implementations
 class PlotterInterface {
    protected:
     std::string type_name;
@@ -61,7 +61,7 @@ class StreamPlotter : public PlotterInterface {
     double current_idx_start_time;
 
     std::ofstream plot_file;
-    std::thread sample_processor_thread;
+    std::thread periodic_flush_thread;
 
    public:
     StreamPlotter(const std::string &file_name) {
@@ -82,8 +82,8 @@ class StreamPlotter : public PlotterInterface {
             LOG_FATAL("open file %s for saving plotter data failed\n", file_name.c_str());
         }
 
-        // Begin polling for increases in the current index and flushing pending data
-        sample_processor_thread = std::thread([&]() {
+        // Start a thread for periodically flushing plot data onto disk
+        periodic_flush_thread = std::thread([&]() {
             const double flush_interval_seconds = 2.0;
             while (running) {
                 double current_time = get_timestamp_sec();
@@ -121,7 +121,7 @@ class StreamPlotter : public PlotterInterface {
     ~StreamPlotter() override {
         // Break and join the processor thread
         running = false;
-        sample_processor_thread.join();
+        periodic_flush_thread.join();
         plot_file.close();
 
         for (int i = 0; i < 2; i++) {
