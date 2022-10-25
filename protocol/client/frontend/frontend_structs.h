@@ -39,6 +39,20 @@ typedef enum FrontendEventType {
      */
     FRONTEND_EVENT_KEYPRESS,
     /**
+     * Focus event.
+     *
+     * The window has been focused,
+     * and the user is now viewing the whist stream
+     */
+    FRONTEND_EVENT_FOCUS,
+    /**
+     * Defocus event
+     *
+     * The window has been defocused,
+     * and the user is no longer viewing the whist stream
+     */
+    FRONTEND_EVENT_DEFOCUS,
+    /**
      * Mouse motion event.
      */
     FRONTEND_EVENT_MOUSE_MOTION,

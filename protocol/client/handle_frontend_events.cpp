@@ -365,6 +365,12 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
             handle_keypress_event(&event->keypress);
             break;
         }
+        case FRONTEND_EVENT_FOCUS: {
+            break;
+        }
+        case FRONTEND_EVENT_DEFOCUS: {
+            break;
+        }
         case FRONTEND_EVENT_MOUSE_MOTION: {
             handle_mouse_motion_event(&event->mouse_motion);
             break;

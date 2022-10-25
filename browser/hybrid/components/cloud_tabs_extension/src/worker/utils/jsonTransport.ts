@@ -40,7 +40,7 @@ const keyboardRepeatRate = async () => {
     case "darwin":
       return await new Promise((resolve) =>
         (chrome as any).whist.getKeyboardRepeatRate((rate: number) => {
-          resolve(Math.round((1.0 - (rate - 2) / 128) * 29 + 1))
+          resolve(Math.round(2.5 * rate))
         })
       )
     default:
@@ -55,7 +55,7 @@ const keyboardRepeatInitialDelay = async () => {
     case "darwin":
       return await new Promise((resolve) =>
         (chrome as any).whist.getKeyboardRepeatInitialDelay((delay: number) => {
-          resolve(Math.round((1000 / 60) * 1.2 * delay))
+          resolve(Math.round(((1000 / 60) * delay) / 2.5))
         })
       )
     default:

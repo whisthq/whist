@@ -370,10 +370,16 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
     }
     SendFileDropEvent({}, true, drag_event);
     drag_event->SetDefaultHandled();
-  } else if (event_type == event_type_names::kFocus || event_type == event_type_names::kBlur) {
-    // Stub for now -- we might instead just use whistPause() and whistPlay from the WebUI
-    // Javascript to manage the "pause on blur, play on focus, most-recently-active tab"
-    // functionality.
+  } else if (event_type == event_type_names::kFocus) {
+    WhistClient::WhistFrontendEvent frontend_event;
+    frontend_event.type = WhistClient::FRONTEND_EVENT_FOCUS;
+    WHIST_VIRTUAL_INTERFACE_CALL(events.send, &frontend_event);
+    event.SetDefaultHandled();
+  } else if (event_type == event_type_names::kBlur) {
+    WhistClient::WhistFrontendEvent frontend_event;
+    frontend_event.type = WhistClient::FRONTEND_EVENT_DEFOCUS;
+    WHIST_VIRTUAL_INTERFACE_CALL(events.send, &frontend_event);
+    event.SetDefaultHandled();
   } else if (event_type == whist_event_type_names::kGesturepinchbegin) {
     // Pinch Begin does not have an WhistFrontEnd equivalent. So just mark is as handled.
     event.SetDefaultHandled();

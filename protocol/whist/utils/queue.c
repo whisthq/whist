@@ -129,10 +129,12 @@ int fifo_queue_dequeue_item(QueueContext *context, void *item) {
         return -1;
     }
     whist_lock_mutex(context->mutex);
+    // If nothing's in the queue, exit with -1
     if (context->num_items <= 0) {
         whist_unlock_mutex(context->mutex);
         return -1;
     }
+    // Otherwise, grab and return the top of the queue
     dequeue_item(context, item);
     whist_unlock_mutex(context->mutex);
     return 0;
@@ -142,29 +144,38 @@ int fifo_queue_dequeue_item_timeout(QueueContext *context, void *item, int timeo
     if (context == NULL) {
         return -1;
     }
+    // Default to untimed no-wait dequeue, if timeout is 0ms
+    if (timeout_ms == 0) {
+        return fifo_queue_dequeue_item(context, item);
+    }
+    // Using a timer,
     WhistTimer timer;
     start_timer(&timer);
     int current_timeout_ms = timeout_ms;
     whist_lock_mutex(context->mutex);
+    // We wait while the queue is empty,
     while (context->num_items <= 0) {
         if (context->destroying) {
             whist_unlock_mutex(context->mutex);
             return -1;
         }
         if (timeout_ms >= 0) {
+            // We wait timeout_ms and only wakeup if something was added to the queue
             bool res =
                 whist_timedwait_cond(context->avail_items_cond, context->mutex, current_timeout_ms);
-            if (res == false) {  // In case of a timeout simply exit
+            // If the timeout elapsed before anything was added to the queue, we just exit
+            if (res == false) {
                 whist_unlock_mutex(context->mutex);
                 return -1;
             }
             int elapsed_ms = (int)(get_timer(&timer) * MS_IN_SECOND);
             current_timeout_ms = max(timeout_ms - elapsed_ms, 0);
         } else {
-            // Negative timeout_ms indicates block until available, not timeout
+            // Negative timeout_ms indicates block until available, no timeout
             whist_wait_cond(context->avail_items_cond, context->mutex);
         }
     }
+    // If the queue was discovered to be non-empty, we grab the top of the queue and return it
     dequeue_item(context, item);
     whist_unlock_mutex(context->mutex);
     return 0;

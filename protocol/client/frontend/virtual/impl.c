@@ -31,7 +31,7 @@ extern OnNotificationCallback on_notification_callback_ptr;
 extern GetModifierKeyState get_modifier_key_state;
 extern OnWhistError on_whist_error;
 
-static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
+static bool update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
     switch (event->type) {
         case FRONTEND_EVENT_RESIZE: {
@@ -47,19 +47,32 @@ static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* e
             // keyboard states. This method of maintaining states works only for modifier keys, as
             // chrome doesn't send "KeyUp" event for other keys during key combinations(such as
             // Ctrl + C etc.,).
-            if (event->keypress.code >= FK_LCTRL && event->keypress.code <= FK_RGUI) {
-                if (event->keypress.pressed) {
-                    context->key_state[event->keypress.code] = 1;
-                } else {
-                    context->key_state[event->keypress.code] = 0;
+            if (event->keypress.pressed) {
+                // Update key state
+                if (context->key_state[event->keypress.code] == 1) {
+                    // Don't process the event, if the key was already pressed
+                    return false;
                 }
+                context->key_state[event->keypress.code] = 1;
+            } else {
+                context->key_state[event->keypress.code] = 0;
             }
             break;
+        }
+        case FRONTEND_EVENT_DEFOCUS: {
+            // If the viewing area has been defocused, we should release all keys
+            // The user must re-press them if they want whist to register them
+            for (int i = 0; i < KEYCODE_UPPERBOUND; i++) {
+                if (context->key_state[i] == 1) {
+                    context->key_state[i] = 0;
+                }
+            }
         }
         default: {
             break;
         }
     }
+    return true;
 }
 
 WhistStatus virtual_init(WhistFrontend* frontend, const WhistRGBColor* color) {
@@ -202,26 +215,28 @@ void virtual_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscr
 
 void virtual_resize_window(WhistFrontend* frontend, int id, int width, int height) {}
 
-bool virtual_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
-    if (fifo_queue_dequeue_item(events_queue, event) == 0) {
-        update_internal_state(frontend, event);
-        return true;
-    } else {
-        return false;
-    }
+bool virtual_poll_event(WhistFrontend* frontend, WhistFrontendEvent* p_event) {
+    return virtual_wait_event(frontend, p_event, 0);
 }
 
-bool virtual_wait_event(WhistFrontend* frontend, WhistFrontendEvent* event, int timeout_ms) {
-    if (fifo_queue_dequeue_item_timeout(events_queue, event, timeout_ms) == 0) {
-        update_internal_state(frontend, event);
-        return true;
+bool virtual_wait_event(WhistFrontend* frontend, WhistFrontendEvent* p_event, int timeout_ms) {
+    memset(p_event, 0, sizeof(*p_event));
+
+    WhistFrontendEvent local_event;
+    if (fifo_queue_dequeue_item_timeout(events_queue, &local_event, timeout_ms) == 0) {
+        bool result = update_internal_state(frontend, &local_event);
+        if (result == true) {
+            // Only populate when result is true
+            memcpy(p_event, &local_event, sizeof(*p_event));
+        }
+        return result;
     } else {
         return false;
     }
 }
 
 void virtual_interrupt(WhistFrontend* frontend) {
-    WhistFrontendEvent event;
+    WhistFrontendEvent event = {0};
     event.type = FRONTEND_EVENT_INTERRUPT;
     if (fifo_queue_enqueue_item(events_queue, &event) != 0) {
         LOG_ERROR("Virtual frontend interrupt failed");
