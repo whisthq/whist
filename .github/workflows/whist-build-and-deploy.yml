@@ -1021,19 +1021,16 @@ jobs:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
         uses: ./.github/actions/db-migration
 
-      - uses: actions/checkout@v2
       - name: Write heroku.yml with yq
-        working-directory: backend/services
         uses: mikefarah/yq@master
         with:
           cmd: |
-            yq -n  '
-            .build.config.GIT_COMMIT = ${{ github.sha }} |
-            .build.config.HEROKU_USER = ${{ developers@whist.com }} |
-            .build.config.HEROKU_API_KEY = ${{ secrets.HEROKU_DEVELOPER_API_KEY }} |
-            .build.config.REGION_IMAGHE_MAP = ${{  needs.amis-publish-aws.outputs.region_to_ami_map }} |
-            .build.docker.web = "Dockerfile"'
-
+            yq '
+            .build.config.GIT_COMMIT = "${{ github.sha }}" |
+            .build.config.HEROKU_USER = "developers@whist.com" |
+            .build.config.HEROKU_API_KEY = "${{ secrets.HEROKU_DEVELOPER_API_KEY }}" |
+            .build.config.REGION_IMAGE_MAP = "${{  needs.amis-publish-aws.outputs.region_to_ami_map }}" |
+            .build.docker.web = "Dockerfile"' backend/services/heroku.yml
 
       - name: Deploy the Scaling Service, Start image upgrade and Migrate database schema
         if: needs.whist-publish-build-config.outputs.publish == 'true'
