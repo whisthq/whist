@@ -37,6 +37,7 @@ struct CCInput
 struct CCOutput
 {
     std::optional<double> target_bitrate;
+    bool bandwitdth_saturation;
 };
 
 

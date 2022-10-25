@@ -38,7 +38,7 @@ namespace {
 
 constexpr TimeDelta kDefaultRtt = TimeDelta::Millis(200);
 #if ENABLE_WHIST_CHANGE
-constexpr double kDefaultBackoffFactor = 0.90;
+constexpr double kDefaultBackoffFactor = 0.88;
 #else
 constexpr double kDefaultBackoffFactor = 0.85;
 #endif
@@ -317,7 +317,11 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
       // bitrate increases. We allow a bit more lag at very low rates to not too
       // easily get stuck if the encoder produces uneven outputs.
       DataRate increase_limit =
+#if ENABLE_WHIST_CHANGE
+          1.2 * estimated_throughput + DataRate::KilobitsPerSec(10);
+#else
           1.5 * estimated_throughput + DataRate::KilobitsPerSec(10);
+#endif
       if (ignore_throughput_limit_if_network_estimate_ && network_estimate_ &&
           network_estimate_->link_capacity_upper.IsFinite()) {
         // If we have a Network estimate, we do allow the estimate to increase.

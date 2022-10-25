@@ -671,6 +671,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             LOG_INFO_RATE_LIMITED(5, 1, "WCC_V2 CURRENT_BITRATE= %f x100kbps; CURRENT_TIME=%f", output.target_bitrate.value()/100.0/1000.0, get_timestamp_sec());
             context->network_settings.video_bitrate = output.target_bitrate.value();
             context->network_settings.burst_bitrate =context->network_settings.video_bitrate;
+            context->network_settings.saturate_bandwidth = output.bandwitdth_saturation;
             send_network_settings=true;
             last_process_time_ms =current_time_ms;
         }

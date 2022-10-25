@@ -262,6 +262,18 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       cc_shared_state.current_bitrate = loss_based_target_rate;
       //whist_plotter_insert_sample("current_bitrate_ratio", get_timestamp_sec(), cc_shared_state.current_bitrate_ratio*100);
 
+      if(current_time - cc_shared_state.first_process_time > webrtc::TimeDelta::Seconds(10)){
+        int sec= (current_time - cc_shared_state.first_process_time).seconds();
+        if(sec%10==0||sec%10==1)
+          output.bandwitdth_saturation = true;
+        else output.bandwitdth_saturation = false;
+      } else{
+        output.bandwitdth_saturation = true;
+      }
+
+      whist_plotter_insert_sample("saturate", get_timestamp_sec(), output.bandwitdth_saturation *-5);
+
+      output.bandwitdth_saturation = true;
       return output;
   }
 };
