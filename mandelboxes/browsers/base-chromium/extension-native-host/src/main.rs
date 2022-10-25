@@ -7,8 +7,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::process::Command;
-use std::process::Stdio;
-use std::os::unix::io::FromRawFd;
 use triggers::{trigger_path, write_trigger, write_trigger_sequential, Trigger};
 
 // If the extension hasn't tried updating yet, then tell the
@@ -95,15 +93,9 @@ fn handle_keyboard_repeat_rate_change(msg: NativeHostMessage) -> Result<(), Stri
 fn handle_timezone_change(msg: NativeHostMessage) -> Result<(), String> {
     match msg.value.as_str() {
         Some(timezone) => {
-            // Command::new("timedatectl").args(
-            // ["set-timezone", timezone]).spawn();
             let set_timezone_cmd = Command::new("/usr/bin/sudo-set-timezone.sh")
                 .arg(timezone)
-                .stdout(Stdio::from_raw_fd(2))
-                .stderr(Stdio::piped())
                 .spawn();
-            let ecode = set_timezone_cmd.map_err(|e| e.to_string())?.wait().expect("failed to wait on set-timezone child");
-            eprintln!("set-timezone result {}", ecode);
         },
         None => {
             eprintln!("Timezone message did not contain timezone");
