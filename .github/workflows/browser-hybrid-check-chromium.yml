@@ -11,6 +11,7 @@ on:
       - "browser/hybrid/**/**.h"
       - "browser/hybrid/**/**.hpp"
       - ".github/workflows/browser-hybrid-check-chromium.yml"
+      - "!browser/hybrid/src/third_party/skia" # We exclude Skia as it is a third_party project with different linting rules
   workflow_dispatch:
 
 # This guarantees that if you push many commits to the same PR, only the latest
