@@ -129,7 +129,7 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 	for i := int32(0); i < instanceCapacity; i++ {
 		mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
 		var appName mandelboxtypes.AppName = mandelboxtypes.AppName(utils.MandelboxApp)
-		zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan)
+		zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan, "true", "true", "false")
 
 		// If we fail to create a zygote mandelbox, it indicates a problem with the instance, or the Docker
 		// images. Its not safe to assign users to it, so we cancel the global context and shut down the instance
@@ -695,8 +695,20 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
 					req, appName := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 
+					var reqJsonData map[string]interface{}
+					err := json.Unmarshal(req.JSONData, &reqJsonData)
+					var kioskMode, loadExtension, localClient string
+					kioskMode = "true"
+					loadExtension = "true"
+					localClient = "false"
+					if err != nil {
+						kioskMode = reqJsonData["kiosk_mode"]
+						loadExtension = reqJsonData["load_extension"]
+						localClient = reqJsonData["local_client"]
+					}
+
 					// For local development, we start and finish the mandelbox spin up back to back
-					zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName, mandelboxDieEvents)
+					zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName, mandelboxDieEvents, kioskMode, loadExtension, localClient)
 					if err != nil {
 						logger.Errorw(utils.Sprintf("failed to start waiting mandelbox: %s", err), []interface{}{
 							zap.String("mandelbox_id", zygote.GetID().String()),
