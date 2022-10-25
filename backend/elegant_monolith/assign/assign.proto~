@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package assign;
+
+service AssignService {
+  rpc MandelboxAssign(MandelboxAssignRequest) returns (MandelboxAssignResponse) {}
+}
+
+message MandelboxAssignRequest {
+  repeated string regions = 1;
+}
+
+message MandelboxAssignResponse {
+  string mandelbox_id = 1;
+  string ip = 2;
+  string err = 3;
+}
