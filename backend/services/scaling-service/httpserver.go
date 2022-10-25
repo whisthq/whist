@@ -169,44 +169,14 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 
 // processJSONTransportRequest processes an HTTP request to receive data
 // directly from the frontend.
-func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
-	// Verify that it is an PUT request
-	if httputils.VerifyRequestType(w, r, http.MethodPut) != nil {
-		http.Error(w, "", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Extract access token from request header to pass to host service
-	accessToken, err := httputils.GetAccessToken(r)
-	if err != nil {
-		logger.Error(err)
-		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
-		return
-	}
-
-	// Verify authorization and unmarshal into the right object type
-	var reqdata httputils.JSONTransportRequest
-	if _, err := httputils.AuthenticateRequest(w, r, &reqdata); err != nil {
-		logger.Error(err)
-		return
-	}
-
+func getMandelboxInfo(ip string, mandelboxID string, accessToken string) error {
 	// Send the request to the instance and then return the response
-	url := utils.Sprintf("https://%s:%v/json_transport", reqdata.IP, HostServicePort)
-
-	jsonBody, err := json.Marshal(reqdata)
-	if err != nil {
-		logger.Errorf("error marshalling body for host service: %s", err)
-		return
-	}
+	url := utils.Sprintf("https://%s:%v/mandelbox/%s", ip, HostServicePort, mandelboxID)
 
 	// Create a new request
-	bodyReader := bytes.NewReader(jsonBody)
-	hostReq, err := http.NewRequest("PUT", url, bodyReader)
+	hostReq, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		logger.Errorf("failed to create JSON transport request for host service: %s", err)
-		http.Error(w, "", http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	// Add necessary headers to host request
@@ -227,20 +197,12 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	defer hostReq.Body.Close()
 
 	if err != nil {
-		logger.Errorf("failed to send JSON transport request to instance: %s", err)
-		http.Error(w, "", http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	hostBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		logger.Errorf("could not read host response body: %s", err)
-		http.Error(w, "", http.StatusInternalServerError)
-		return
-	}
+	logger.Infof("response is %v", res)
 
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(hostBody)
+	return nil
 }
 
 // throttleMiddleware will limit requests on the endpoint using the provided rate limiter.

@@ -6,9 +6,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/httputils"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -26,9 +29,9 @@ func init() {
 	portbindings.Reserve(PortToListen, portbindings.TransportProtocolTCP)
 }
 
-// processJSONDataRequest processes an HTTP request to receive data
+// mandelboxInfoHandler processes an HTTP request to receive data
 // directly from the Whist frontend. It is handled in host-service.go
-func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<- httputils.ServerRequest) {
+func mandelboxInfoHandler(w http.ResponseWriter, r *http.Request, queue chan<- httputils.ServerRequest) {
 	// Start timer to measure average time processing http requests.
 	start := time.Now()
 
@@ -38,12 +41,42 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 		return
 	}
 
-	var reqdata httputils.MandelboxInfoRequest
-	_, err := httputils.AuthenticateRequest(w, r, &reqdata)
+	// Extract access token from request header
+	accessToken, err := httputils.GetAccessToken(r)
 	if err != nil {
-		logger.Errorf("failed while authenticating request: %s", err)
+		logger.Error(err)
+		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
 		return
 	}
+
+	// Validate access token
+	_, err = auth.ParseToken(accessToken)
+	if err != nil {
+		logger.Errorf("received an unpermissioned backend request on %s to URL %s: %s", r.Host, r.URL, err)
+		http.Error(w, "Invalid access token", http.StatusUnauthorized)
+		return
+	}
+
+	query := r.URL.Query()
+	mandelboxIDString := query.Get("mandelbox_id")
+	if mandelboxIDString == "" {
+		logger.Errorf("no mandelbox id in query parameters")
+		http.Error(w, "Mandelbox id is not present", http.StatusBadRequest)
+		return
+	}
+
+	mandelboxID, err := uuid.Parse(mandelboxIDString)
+	if err != nil {
+		logger.Errorf("malformed mandelbox id: %s", err)
+		http.Error(w, "Mandelbox id has an incorrect format", http.StatusBadRequest)
+		return
+	}
+
+	reqdata := httputils.MandelboxInfoRequest{
+		MandelboxID: types.MandelboxID(mandelboxID),
+		ResultChan:  make(chan httputils.RequestResult),
+	}
+
 	// Send request to queue, then wait for result
 	queue <- &reqdata
 	res := <-reqdata.ResultChan
@@ -75,11 +108,11 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}
 
-	jsonTransportHandler := httputils.EnableCORS(createHandler(processJSONDataRequest))
+	mandelboxInfo := httputils.EnableCORS(createHandler(mandelboxInfoHandler))
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
-	mux.HandleFunc("/json_transport", jsonTransportHandler)
+	mux.HandleFunc("/mandelbox", mandelboxInfo)
 
 	// Create the server itself
 	server := &http.Server{
