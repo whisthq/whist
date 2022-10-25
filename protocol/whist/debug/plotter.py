@@ -48,12 +48,31 @@ parser.add_option(
 )
 
 parser.add_option(
+    "",
+    "--figsize",
+    action="store",
+    dest="figsize",
+    type="string",
+    help='size of figure, e.g. "16x8"',
+)
+
+parser.add_option(
     "-w",
     "--weight",
     action="store",
     type="float",
     default=0.5,
     help="weight of the line or point, default: 0.5",
+)
+
+parser.add_option(
+    "-t",
+    "--tail",
+    type="int",
+    action="store",
+    dest="tail_n",
+    default=0,
+    help="parse only last n lines, only for stream format",
 )
 
 # parse options by the optparse lib
@@ -70,6 +89,15 @@ if range_x:
         parser.error("invalid format: %s" % (rang_x))
     range_x_min = float(range_x.split("~")[0])
     range_x_max = float(range_x.split("~")[1])
+
+figsize = options.figsize
+figsize_x = -1
+figsize_y = -1
+if figsize:
+    if len(figsize.split("x")) != 2:
+        parser.error("invalid format: %s" % (figsize))
+    figsize_x = int(figsize.split("x")[0])
+    figsize_y = int(figsize.split("x")[1])
 
 
 # need at least 1 input file to plot
@@ -107,12 +135,53 @@ def draw(label, arr):
         plt.plot(x, y, label=label, linewidth=options.weight)
 
 
+# load data from file
+# the file format might be:
+# 1. whole file as a single json with pretty print
+# 2. jsonline, with each line as a seperated json
+# this function automatically detects the two format, and
+# turn the file to a unified python data structure
+def load_from_file(file_name):
+    s = open(file_name).read()
+    if len(s) < 2:
+        print("invalid file:", file_name)
+        os.exit(-1)
+    # if it's json with pretty print, the first line
+    # must be  "{\n".
+    if s[0] == "{" and s[1] == "\n":
+        # load whole content as json
+        data = json.loads(s)
+        return data
+    else:  # otherwise we try to parse it as jsonline
+        lines = s.split("\n")
+        # each completed line should finish with a '\n'
+        # if there are <= 1 line, then no data to parse
+        if len(lines) <= 1:
+            print("no valid data")
+            os.exit(-1)
+        lines = lines[0:-1]
+        if options.tail_n > 0:  # support the --tail option
+            lines = lines[-options.tail_n :]
+        data = {}
+        # we merge all data in each line of jsonline
+        # into a single structure
+        for i in range(0, len(lines)):
+            tmp_data = json.loads(lines[i])
+            for label in tmp_data.keys():
+                if not label in data:
+                    data[label] = []
+                data[label].extend(tmp_data[label])
+        return data
+
+
+if figsize_x > 0 and figsize_y > 0:
+    plt.figure(figsize=(figsize_x, figsize_y))
+
 # handle input of multiple files
 for file_name in args:
     # read in the file
     s = open(file_name).read()
-    # load in the content as json
-    data = json.loads(s)
+    data = load_from_file(file_name)
     # handle each lables in one file
     for i in data.keys():
         if options.filter_pattern:
