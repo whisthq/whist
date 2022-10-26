@@ -16,10 +16,8 @@ scaling service and host service.
 package main
 
 import (
-	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"io"
 	"net/http"
 	"os"
 	"time"
@@ -289,14 +287,12 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 
 	// Create the final handlers, with the necessary middleware
 	assignHandler := throttleMiddleware(limiter, httputils.EnableCORS(createHandler(mandelboxAssignHandler)))
-	jsonTransportHandler := httputils.EnableCORS(processJSONTransportRequest)
 	paymentsHandler := httputils.EnableCORS(paymentSessionHandler)
 
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.Handle("/mandelbox/assign", http.HandlerFunc(assignHandler))
-	mux.Handle("/json_transport", http.HandlerFunc(jsonTransportHandler))
 	mux.Handle("/payment_portal_url", http.HandlerFunc(paymentsHandler))
 
 	// The PORT env var will be automatically set by Heroku.
