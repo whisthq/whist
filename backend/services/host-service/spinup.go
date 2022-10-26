@@ -163,9 +163,9 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	envs := []string{
 		utils.Sprintf("WHIST_AES_KEY=%s", aesKey),
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
-		utils.Sprintf("KIOSK_MODE=%s", kioskMode),
-		utils.Sprintf("LOAD_EXTENSION=%s", loadExtension),
-		utils.Sprintf("LOCAL_CLIENT=%s", localClient),
+		utils.Sprintf("KIOSK_MODE=%t", kioskMode),
+		utils.Sprintf("LOAD_EXTENSION=%t", loadExtension),
+		utils.Sprintf("LOCAL_CLIENT=%t", localClient),
 	}
 
 	// Add additional env variables if host is using GPU
