@@ -1,7 +1,8 @@
 #!/bin/bash
 
+WHIST_PRIVATE_DIR=/usr/share/whist/private
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
-SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
+SENTRY_ENV_FILENAME=$WHIST_PRIVATE_DIR/sentry_env
 case $(cat $SENTRY_ENV_FILENAME) in
   dev|staging|prod)
     export SENTRY_ENVIRONMENT=${SENTRY_ENV}
@@ -24,8 +25,18 @@ CLIENT_OS="darwin"
 SYSTEM_LANGUAGES="en_US"
 
 # TODO: set the following to development flags
+LOAD_EXTENSION_FILENAME=$WHIST_PRIVATE_DIR/load_extension
+KIOSK_MODE_FILENAME=$WHIST_PRIVATE_DIR/kiosk_mode
+
 LOAD_EXTENSION=true
 KIOSK_MODE=true
+# Send in LOAD_EXTENSION and KIOSK_MODE, if set
+if [ -f "$LOAD_EXTENSION_FILENAME" ]; then
+  LOAD_EXTENSION=$(cat $LOAD_EXTENSION_FILENAME)
+fi
+if [ -f "$KIOSK_MODE_FILENAME" ]; then
+  KIOSK_MODE=$(cat $KIOSK_MODE_FILENAME)
+fi
 
 # Set keyboard repeat to "on"
 xset r on

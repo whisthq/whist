@@ -130,20 +130,6 @@ flags+=("--enable-features=$features")
 flags+=("--disable-features=$antifeatures")
 flags+=("--flag-switches-end")
 
-WHIST_PRIVATE_DIR=/usr/share/whist/private
-LOAD_EXTENSION_FILENAME=$WHIST_PRIVATE_DIR/load_extension
-KIOSK_MODE_FILENAME=$WHIST_PRIVATE_DIR/kiosk_mode
-
-LOAD_EXTENSION=true
-KIOSK_MODE=true
-# Send in LOAD_EXTENSION and KIOSK_MODE, if set
-if [ -f "$LOAD_EXTENSION_FILENAME" ]; then
-  LOAD_EXTENSION=$(cat $LOAD_EXTENSION_FILENAME)
-fi
-if [ -f "$KIOSK_MODE_FILENAME" ]; then
-  KIOSK_MODE=$(cat $KIOSK_MODE_FILENAME)
-fi
-
 # Start the server-side extension if the client requests it
 if [[ "$LOAD_EXTENSION" == true ]]; then
   flags+=(  "--load-extension=/opt/teleport/chrome-extension")
