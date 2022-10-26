@@ -59,6 +59,7 @@ endif()
 option(NOGPU "Disable GPU acceleration" OFF)
 if(NOGPU)
     add_compile_definitions(NOGPU=true)
+endif()
 
 # Add our compiler flags
 include(cmake/compiler-options.cmake)
