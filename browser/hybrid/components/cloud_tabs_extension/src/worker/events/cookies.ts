@@ -1,5 +1,5 @@
 import { fromEventPattern, fromEvent } from "rxjs"
-import { filter, map, switchMap, share } from "rxjs/operators"
+import { filter, map, switchMap } from "rxjs/operators"
 import { Socket } from "socket.io-client"
 import find from "lodash.find"
 import isEqual from "lodash.isequal"
