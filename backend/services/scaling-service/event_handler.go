@@ -47,8 +47,9 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
-func main() {
+func run() int {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
+	defer globalCancel()
 	goroutineTracker := &sync.WaitGroup{}
 
 	// Add some additional fields for Logz.io
@@ -90,7 +91,7 @@ func main() {
 
 	if err := config.Initialize(globalCtx, configGraphqlClient); err != nil {
 		logger.Errorf("Failed to retrieve configuration values: %s", err)
-		return
+		return 1
 	}
 
 	// Start database subscriptions
@@ -156,6 +157,8 @@ func main() {
 		logger.Infof("Global context cancelled!")
 		logger.Sync()
 	}
+
+	return 0
 }
 
 // StartDatabaseSubscriptions sets up the database subscriptions and starts the subscription client.
@@ -410,4 +413,8 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 			return
 		}
 	}
+}
+
+func main() {
+	os.Exit(run())
 }
