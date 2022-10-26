@@ -598,13 +598,6 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		Filters: filters,
 	}
 
-	// We use this lock to protect the transportRequestMap
-	transportMapLock := &sync.Mutex{}
-
-	// Note: If a mandelbox suffers a bug, or fails to start correctly
-	// these channels will become a memory leak.
-	transportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.MandelboxInfoRequest)
-
 	// In the following loop, this var determines whether to re-initialize the
 	// Docker event stream. This is necessary because the Docker event stream
 	// needs to be reopened after any error is sent over the error channel.
@@ -648,7 +641,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		case dockerevent := <-dockerevents:
 			logger.Infof("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 			if dockerevent.Action == "die" {
-				mandelboxDieHandler(dockerevent.ID, transportRequestMap, transportMapLock, dockerClient)
+				mandelboxDieHandler(dockerevent.ID, dockerClient)
 			}
 		case <-mandelboxDieEvents:
 			monitorWaitingMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxDieEvents)

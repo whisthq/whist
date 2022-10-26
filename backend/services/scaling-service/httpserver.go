@@ -50,6 +50,15 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 		return
 	}
 
+	
+	// Extract access token from request header
+	accessToken, err := httputils.GetAccessToken(r)
+	if err != nil {
+		logger.Error(err)
+		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
+		return
+	}
+
 	var reqdata httputils.MandelboxAssignRequest
 	claims, err := httputils.AuthenticateRequest(w, r, &reqdata)
 	if err != nil {
@@ -85,6 +94,7 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 	} else {
 		// Send a 200 code
 		status = http.StatusOK
+		getMandelboxInfo(assignResult.IP, assignResult.MandelboxID.String(), accessToken)
 	}
 
 	buf, err = json.Marshal(assignResult)
