@@ -702,7 +702,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					kioskMode = true
 					loadExtension = true
 					localClient = false
-					if err != nil {
+					if err == nil {
 						kioskMode = reqJsonData["kiosk_mode"]
 						loadExtension = reqJsonData["load_extension"]
 						localClient = reqJsonData["local_client"]
