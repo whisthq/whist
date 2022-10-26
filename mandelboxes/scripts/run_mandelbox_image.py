@@ -157,7 +157,14 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     url = HOST_SERVICE_URL + "mandelbox" + "/" + str(mandelbox_id)
 >>>>>>> 029d16e3e (Update run.py, updatee mandelboxDieHandler)
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
-    respobj = requests.get(url=urlverify=tls_verification, timeout=10)
+
+    try:
+        respobj = requests.get(url=url, verify=tls_verification, timeout=10)
+        respobj.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"host service returned error: {e}")
+        return
+
     response = respobj.json()
     print(f"Response from host service: {response}")
     respobj.raise_for_status()
