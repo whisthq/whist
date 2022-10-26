@@ -34,7 +34,7 @@ import (
 // StartMandelboxSpinUp will create and start a mandelbox, doing all the steps that can be done without the user's config token.
 // Once the mandelbox is started, it effectively waits an infinite time until a user gets assigned to it and the remaining
 // steps can continue.
-func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName, mandelboxDieChan chan bool, kioskMode string, loadExtension string, localClient string) (mandelboxData.Mandelbox, error) {
+func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName, mandelboxDieChan chan bool, kioskMode bool, loadExtension bool, localClient bool) (mandelboxData.Mandelbox, error) {
 	incrementErrorRate := func() {
 		metrics.Increment("ErrorRate")
 	}
