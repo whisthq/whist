@@ -28,6 +28,9 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
+	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -38,16 +41,37 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
+	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/config"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
+	"github.com/whisthq/whist/backend/services/scaling-service/internal"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
-func run() int {
+func run(args internal.Args) int {
+	var cfg internal.Config
+	var client *http.Client
+
+	if secret := os.Getenv("CONFIG_HASURA_SECRET"); secret != "" {
+		client = internal.AdminSecretClient(secret)
+	}
+
+	gql := graphql.NewClient(args.ConfigGraphQLEndpoint, client)
+
+	if err := internal.PopulateConfig(gql, &cfg); err != nil {
+		fmt.Fprint(os.Stderr, "error:", err)
+		return 1
+	}
+
+	if err := internal.ValidateConfig(cfg); err != nil {
+		fmt.Fprint(os.Stderr, "error:", err)
+		return 1
+	}
+
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	defer globalCancel()
 	goroutineTracker := &sync.WaitGroup{}
@@ -416,5 +440,14 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 }
 
 func main() {
-	os.Exit(run())
+	var args internal.Args
+
+	flag.StringVar(&args.GraphQLEndpoint, "graphql",
+		os.Getenv("GRAPHQL_ENDPOINT"), "the URL of the database's Hasura engine")
+	flag.StringVar(&args.ConfigGraphQLEndpoint, "config",
+		os.Getenv("CONFIG_GRAPHQL_ENDPOINT"), "the URL of the configuration "+
+			"database's Hasura engine")
+	flag.Parse()
+
+	os.Exit(run(args))
 }
