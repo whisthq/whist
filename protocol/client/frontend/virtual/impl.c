@@ -103,6 +103,7 @@ WhistStatus virtual_init(WhistFrontend* frontend, const WhistRGBColor* color) {
     } else {
         LOG_WARNING("Could not initialize SDL, Audio will not be played - %s", SDL_GetError());
         context->sdl_initialized = false;
+        virtual_send_error_notification(frontend, WHIST_AUDIO_ERROR);
     }
 
     return WHIST_SUCCESS;
@@ -140,6 +141,7 @@ void virtual_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigne
     context->sdl_audio_device = SDL_OpenAudioDevice(NULL, 0, &desired_spec, &obtained_spec, 0);
     if (context->sdl_audio_device == 0) {
         LOG_WARNING("Could not open audio device - %s", SDL_GetError());
+        virtual_send_error_notification(frontend, WHIST_AUDIO_ERROR);
         return;
     }
 
@@ -163,6 +165,7 @@ void virtual_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigne
         // Close the incorrect audio devide, and return
         SDL_CloseAudioDevice(context->sdl_audio_device);
         context->sdl_audio_device = 0;
+        virtual_send_error_notification(frontend, WHIST_AUDIO_ERROR);
         return;
     }
 

@@ -8,6 +8,7 @@ typedef struct WhistFrontend WhistFrontend;
 typedef enum WhistError {
     WHIST_DISCONNECT_ERROR,
     WHIST_DIMENSION_ERROR,
+    WHIST_AUDIO_ERROR,
 } WhistError;
 
 typedef enum FrontendEventType {
