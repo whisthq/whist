@@ -165,7 +165,7 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(buf)
 }
 
-// processJSONTransportRequest processes an HTTP request to receive data
+// getMandelboxInfo processes an HTTP request to receive data
 // directly from the frontend.
 func getMandelboxInfo(ip string, mandelboxID string, accessToken string) error {
 	// Send the request to the instance and then return the response

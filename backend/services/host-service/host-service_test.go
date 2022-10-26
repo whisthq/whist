@@ -129,24 +129,14 @@ func TestMandelboxDieHandler(t *testing.T) {
 		browserImage: "whisthq",
 	}
 
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
 	testMux := &sync.Mutex{}
 	tracker := &sync.WaitGroup{}
-
-	testMux.Lock()
-	testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())] = make(chan *httputils.JSONTransportRequest)
-	testMux.Unlock()
 
 	mandelboxDieChan := make(chan bool, 10)
 	m := mandelbox.New(ctx, tracker, mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()), mandelboxDieChan)
 	m.RegisterCreation(mandelboxtypes.DockerID("test-docker-id"))
 
 	mandelboxDieHandler("test-docker-id", testTransportRequestMap, testMux, &dockerClient)
-
-	// Check transport map to verify mandelbox key was removed.
-	testMux.Lock()
-	request := testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())]
-	testMux.Unlock()
 
 	if request != nil {
 		t.Errorf("Expected mandelbox %v to be removed from JSON transport map, but it still exists.", utils.PlaceholderTestUUID())
