@@ -698,10 +698,10 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 					var reqJsonData map[string]bool
 					err := json.Unmarshal([]byte(req.JSONData), &reqJsonData)
-					var kioskMode, loadExtension, localClient string
-					kioskMode = "true"
-					loadExtension = "true"
-					localClient = "false"
+					var kioskMode, loadExtension, localClient bool
+					kioskMode = true
+					loadExtension = true
+					localClient = false
 					if err != nil {
 						kioskMode = reqJsonData["kiosk_mode"]
 						loadExtension = reqJsonData["load_extension"]
