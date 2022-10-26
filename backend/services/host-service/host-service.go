@@ -36,11 +36,6 @@ import (
 	"syscall"
 	"time"
 
-	// We use this package instead of the standard library log so that we never
-	// forget to send a message via Sentry. For the same reason, we make sure not
-	// to import the fmt package either, instead separating required
-	// functionality in this imported package as well.
-
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/httputils"

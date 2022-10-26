@@ -57,8 +57,7 @@ func mandelboxInfoHandler(w http.ResponseWriter, r *http.Request, queue chan<- h
 		return
 	}
 
-	query := r.URL.Query()
-	mandelboxIDString := query.Get("mandelbox_id")
+	mandelboxIDString := r.URL.Path
 	if mandelboxIDString == "" {
 		logger.Errorf("no mandelbox id in query parameters")
 		http.Error(w, "Mandelbox id is not present", http.StatusBadRequest)
