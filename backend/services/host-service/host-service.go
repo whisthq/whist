@@ -650,11 +650,33 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			// TODO: actually handle panics in these goroutines
 
 			case *httputils.MandelboxInfoRequest:
-				mandelbox, err := mandelboxData.LookUpByMandelboxID(serverevent.MandelboxID)
-				if err != nil {
-					logger.Errorf("did not find mandelbox %s: %s", serverevent.MandelboxID.String(), err)
-					serverevent.ReturnResult(nil, err)
-					return
+				var (
+					mandelbox mandelboxData.Mandelbox
+					err       error
+				)
+
+				if metadata.IsLocalEnvWithoutDB() {
+					mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
+					var appName mandelboxtypes.AppName = mandelboxtypes.AppName(utils.MandelboxApp)
+					mandelbox, err = SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieEvents)
+
+					// If we fail to create a mandelbox, it indicates a problem with the instance, or the Docker images
+					// Its not safe to assign users to it, so we cancel the global context and shut down the instance
+					if mandelbox == nil || err != nil {
+						logger.Errorw(utils.Sprintf("failed to start mandelbox: %s", err), []interface{}{
+							zap.String("mandelbox_id", mandelbox.GetID().String()),
+							zap.Time("updated_at", mandelbox.GetLastUpdatedTime()),
+						})
+						return
+					}
+				} else {
+					mandelbox, err = mandelboxData.LookUpByMandelboxID(serverevent.MandelboxID)
+					if err != nil {
+						logger.Errorf("did not find mandelbox %s: %s", serverevent.MandelboxID.String(), err)
+						serverevent.ReturnResult(nil, err)
+						return
+					}
+
 				}
 
 				// Request port bindings for the mandelbox.

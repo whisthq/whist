@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/httputils"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -41,23 +43,25 @@ func mandelboxInfoHandler(w http.ResponseWriter, r *http.Request, queue chan<- h
 		return
 	}
 
-	// Extract access token from request header
-	accessToken, err := httputils.GetAccessToken(r)
-	if err != nil {
-		logger.Error(err)
-		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
-		return
+	if !metadata.IsLocalEnv() {
+		// Extract access token from request header
+		accessToken, err := httputils.GetAccessToken(r)
+		if err != nil {
+			logger.Error(err)
+			http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
+			return
+		}
+
+		// Validate access token
+		_, err = auth.ParseToken(accessToken)
+		if err != nil {
+			logger.Errorf("received an unpermissioned backend request on %s to URL %s: %s", r.Host, r.URL, err)
+			http.Error(w, "Invalid access token", http.StatusUnauthorized)
+			return
+		}
 	}
 
-	// Validate access token
-	_, err = auth.ParseToken(accessToken)
-	if err != nil {
-		logger.Errorf("received an unpermissioned backend request on %s to URL %s: %s", r.Host, r.URL, err)
-		http.Error(w, "Invalid access token", http.StatusUnauthorized)
-		return
-	}
-
-	mandelboxIDString := r.URL.Path
+	mandelboxIDString := strings.Trim(r.URL.Path, "/mandelbox/")
 	if mandelboxIDString == "" {
 		logger.Errorf("no mandelbox id in query parameters")
 		http.Error(w, "Mandelbox id is not present", http.StatusBadRequest)
@@ -111,7 +115,7 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
-	mux.HandleFunc("/mandelbox", mandelboxInfo)
+	mux.HandleFunc("/mandelbox/", mandelboxInfo)
 
 	// Create the server itself
 	server := &http.Server{
