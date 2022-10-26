@@ -696,7 +696,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
 					req, appName := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 
-					var reqJsonData map[string]string
+					var reqJsonData map[string]bool
 					err := json.Unmarshal([]byte(req.JSONData), &reqJsonData)
 					var kioskMode, loadExtension, localClient string
 					kioskMode = "true"

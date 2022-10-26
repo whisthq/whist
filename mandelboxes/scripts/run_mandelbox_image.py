@@ -4,6 +4,7 @@
 
 import argparse
 from collections import namedtuple
+import json
 import os
 import sys
 import uuid
@@ -147,7 +148,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
         "app_name": args.image,
         "jwt_access_token": "bogus_jwt",
         "mandelbox_id": str(mandelbox_id),
-        "json_data": str(development_args), # TODO: change this to be "development_args" or something like that
+        "json_data": json.dumps(development_args), # TODO: change this to be "development_args" or something like that
     }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
     respobj = requests.put(url=url, json=payload, verify=tls_verification, timeout=10)
