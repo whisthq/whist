@@ -982,13 +982,6 @@ jobs:
           GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
         run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
 
-      - name: Build Backend Services
-        working-directory: backend/services
-        env:
-          HEROKU_USER: developers@whist.com
-          HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-        run: make build
-
       - name: Add Heroku Remote
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
@@ -1028,11 +1021,22 @@ jobs:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
         uses: ./.github/actions/db-migration
 
+      - name: Write heroku.yml with yq
+        uses: mikefarah/yq@master
+        with:
+          cmd: |
+            yq '
+            .build.config.GIT_COMMIT = "${{ github.sha }}" |
+            .build.config.HEROKU_USER = "developers@whist.com" |
+            .build.config.HEROKU_API_KEY = "${{ secrets.HEROKU_DEVELOPER_API_KEY }}" |
+            .build.config.REGION_IMAGE_MAP = "${{  needs.amis-publish-aws.outputs.region_to_ami_map }}" |
+            .build.docker.web = "Dockerfile"' backend/services/heroku.yml
+
       - name: Deploy the Scaling Service, Start image upgrade and Migrate database schema
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: bash --noprofile --norc -eo pipefail {0}
         working-directory: backend/services/scaling-service
-        run: ./deploy.sh "${{ needs.amis-publish-aws.outputs.region_to_ami_map }}" ${{ env.HEROKU_APP_NAME }} ${{ github.sha }} '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
+        run: ./deploy.sh '${{ env.HEROKU_APP_NAME }}' '${{ github.sha }}' '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
 
       - name: Notify Slack on Database Migration Performed
         shell: python3 {0}

@@ -30,10 +30,11 @@ import (
 	"encoding/json"
 	"os"
 	"os/signal"
-	"path"
 	"sync"
 	"syscall"
 	"time"
+
+	"path"
 
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
@@ -239,18 +240,25 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 // getRegionImageMap tries to read and parse the contents of the `images.json` file
 // which is written by the Github deploy workflow.
 func getRegionImageMap() (map[string]interface{}, error) {
-	var regionImageMap map[string]interface{}
-
-	// Get current working directory to read images file.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return nil, utils.MakeError("failed to get working directory: %s", err)
-	}
+	var (
+		regionImageMap map[string]interface{}
+		filename       string
+	)
 
 	// Read file which contains the region to image on JSON format. This file will
 	// be read by the binary generated during deploy, located in the `bin` directory.
-	// The file is also generated during deploy and lives in the scaling service directory.
-	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "images.json"))
+	// The file is written to /etc/whist/images.json when building the Docker container.
+	if metadata.IsLocalEnv() {
+		// Get current working directory to read images file.
+		currentWorkingDirectory, err := os.Getwd()
+		if err != nil {
+			return nil, utils.MakeError("failed to get working directory: %s", err)
+		}
+		filename = path.Join(currentWorkingDirectory, "images.json")
+	} else {
+		filename = "/etc/whist/images.json"
+	}
+	content, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, utils.MakeError("failed to read region to image map from file: %s", err)
 	}

@@ -1,0 +1,8 @@
+build:
+  config:
+    GIT_COMMIT:
+    HEROKU_USER:
+    HEROKU_API_KEY:
+    REGION_IMAGE_MAP:
+  docker:
+    web: Dockerfile

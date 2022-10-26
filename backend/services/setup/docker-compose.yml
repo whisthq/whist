@@ -1,29 +1,29 @@
-version: '3.6'
+version: "3.6"
 services:
   postgres:
     image: postgres
     restart: always
     ports:
-    - "5432:5432"
+      - "5432:5432"
     volumes:
-    - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: whistpass
   postgres-config:
     image: postgres
     restart: always
     ports:
-    - "9999:5432"
+      - "9999:5432"
     volumes:
-    - db_data_config:/var/lib/postgresql/config-data
+      - db_data_config:/var/lib/postgresql/config-data
     environment:
       POSTGRES_PASSWORD: whistpass
   graphql-engine:
     image: hasura/graphql-engine
     ports:
-    - "8080:8080"
+      - "8080:8080"
     depends_on:
-    - "postgres"
+      - "postgres"
     restart: always
     environment:
       ## postgres database to store Hasura metadata
@@ -41,9 +41,9 @@ services:
   graphql-config-engine:
     image: hasura/graphql-engine
     ports:
-    - "8082:8080"
+      - "8082:8080"
     depends_on:
-    - "postgres"
+      - "postgres"
     restart: always
     environment:
       ## postgres database to store Hasura metadata
@@ -61,4 +61,3 @@ services:
 volumes:
   db_data:
   db_data_config:
-
