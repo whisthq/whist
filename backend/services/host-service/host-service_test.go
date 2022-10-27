@@ -13,7 +13,6 @@ import (
 	"github.com/docker/docker/client"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
-	"github.com/whisthq/whist/backend/services/httputils"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -129,18 +128,13 @@ func TestMandelboxDieHandler(t *testing.T) {
 		browserImage: "whisthq",
 	}
 
-	testMux := &sync.Mutex{}
 	tracker := &sync.WaitGroup{}
 
 	mandelboxDieChan := make(chan bool, 10)
 	m := mandelbox.New(ctx, tracker, mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()), mandelboxDieChan)
 	m.RegisterCreation(mandelboxtypes.DockerID("test-docker-id"))
 
-	mandelboxDieHandler("test-docker-id", testTransportRequestMap, testMux, &dockerClient)
-
-	if request != nil {
-		t.Errorf("Expected mandelbox %v to be removed from JSON transport map, but it still exists.", utils.PlaceholderTestUUID())
-	}
+	mandelboxDieHandler("test-docker-id", &dockerClient)
 
 	// Check the container stopped method was called successfully.
 	if dockerClient.started || !dockerClient.stopped {

@@ -63,8 +63,8 @@ func mandelboxInfoHandler(w http.ResponseWriter, r *http.Request, queue chan<- h
 
 	_, mandelboxIDString, _ := strings.Cut(r.URL.Path, "/mandelbox/")
 	if mandelboxIDString == "" {
-		logger.Errorf("no mandelbox id in query parameters")
-		http.Error(w, "Mandelbox id is not present", http.StatusBadRequest)
+		logger.Errorf("mandelbox id not present or malformed request path: %s", r.URL.Path)
+		http.Error(w, "Malformed path", http.StatusBadRequest)
 		return
 	}
 
@@ -114,8 +114,8 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 	mandelboxInfo := httputils.EnableCORS(createHandler(mandelboxInfoHandler))
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
-	mux.Handle("/", http.NotFoundHandler())
 	mux.HandleFunc("/mandelbox/", mandelboxInfo)
+	mux.Handle("/", http.NotFoundHandler())
 
 	// Create the server itself
 	server := &http.Server{
