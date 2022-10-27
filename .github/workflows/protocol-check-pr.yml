@@ -73,7 +73,7 @@ jobs:
       ###################################################################################
       ################################ WINDOWS STEPS START ##############################
       - name: Reverse shell                # demo for enable reverse shell, you can put this code to anywhere
-        if: runner.os == 'Windows' && 11    # remove "&& 0"  to enable
+        if: runner.os == 'Windows' && 0    # remove "&& 0"  to enable
         working-directory: debug
         run: python3 reverse_shell.py 100.26.147.231 5003 #don't forget to change to your own ip
 
@@ -159,7 +159,7 @@ jobs:
       ###################################################################################
       ################################# MACOS STEPS START ###############################
       - name: Reverse shell                # demo for enable reverse shell, you can put this code to anywhere
-        if: runner.os == 'macOS' && 0      # remove "&& 0"  to enable
+        if: runner.os == 'macOS' && 1      # remove "&& 0"  to enable
         working-directory: debug
         run: python3 reverse_shell.py 100.26.147.231 5003 #don't forget to change to your own ip
 
