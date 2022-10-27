@@ -1,0 +1,14 @@
+{
+  "whist": [
+    {
+      "channel": "stable",
+      "contexts": ["blessed_extension"],
+      "allowlist": ["D23823CF81E8D385B4DB3EC1EAD9BA666F035A3D"]
+    },
+    {
+      "channel": "stable",
+      "contexts": ["webui"],
+      "matches": ["cloud:*", "chrome://welcome/*"]
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+[
+  {
+    "namespace": "whist",
+    "description": "The <code>chrome.whist</code> API is used to pass Whist-related messages between Chromium & the extension.",
+    "compiler_options": {
+      "implemented_in": "brave/browser/extensions/api/whist_api.h"
+    },
+    "events": [
+      {
+        "name": "onMessage",
+        "type": "function",
+        "description": "Fired when we want to send a message (to a webUI or another extension)",
+        "parameters": [
+          {
+            "name": "message",
+            "type": "string",
+            "description": "Stringified message"
+          }
+        ]
+      }
+    ],
+    "functions": [
+      {
+        "name": "broadcastWhistMessage",
+        "type": "function",
+        "description": "Sends message to a webUI or another extension",
+        "parameters": [
+          {
+            "name": "message",
+            "type": "string",
+            "description": "Stringified message"
+          },
+          {
+            "name": "callback",
+            "type": "function",
+            "description": "Callback fired when the function has completed.",
+            "parameters": [],
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "getKeyboardRepeatRate",
+        "type": "function",
+        "description": "Get the Keyboard repeat rate",
+        "parameters": [
+          {
+            "name": "callback",
+            "type": "function",
+            "description": "Function called when the repeat rate is fetched",
+            "parameters": [
+              {
+                "name": "repeatRate",
+                "type": "integer",
+                "description": "Returns the keyboard repeat rate"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "getKeyboardRepeatInitialDelay",
+        "type": "function",
+        "description": "Get the Keyboard repeat initial delay",
+        "parameters": [
+          {
+            "name": "callback",
+            "type": "function",
+            "description": "Function called when the initial delay is fetched",
+            "parameters": [
+              {
+                "name": "initialDelay",
+                "type": "integer",
+                "description": "Returns the keyboard repeat initial delay"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "getSystemLanguage",
+        "type": "function",
+        "description": "Get the user's system language",
+        "parameters": [
+          {
+            "name": "callback",
+            "type": "function",
+            "description": "Function called when the user system language is fetched",
+            "parameters": [
+              {
+                "name": "systemLanguage",
+                "type": "string",
+                "description": "Returns the user's system language"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "getUserLocale",
+        "type": "function",
+        "description": "Get the user's locale",
+        "parameters": [
+          {
+            "name": "callback",
+            "type": "function",
+            "description": "Function called when the user locale is fetched",
+            "parameters": [
+              {
+                "name": "userLocale",
+                "type": "any",
+                "description": "Returns the user's locale"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
