@@ -34,6 +34,7 @@ DEPLOY_DIR="./deploy"
 # Args: none
 deploy_scaling_service() {
   mkdir -p "$DEPLOY_DIR" && cp -r "$SERVICES_DIR"/* "$DEPLOY_DIR"
+  rm "$SERVICES_DIR"/heroku.yml
 
   # Populate the deploy/ directory
   mv "$DEPLOY_DIR" ..
