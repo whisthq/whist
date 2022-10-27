@@ -98,6 +98,7 @@ docker run \
     cd protocol &&                                      \
     mkdir -p build-docker &&                            \
     cd build-docker &&                                  \
+    export ASAN_OPTIONS=fast_unwind_on_malloc=0 &&      \
     cmake                                               \
         -S ..                                           \
         -B .                                            \
