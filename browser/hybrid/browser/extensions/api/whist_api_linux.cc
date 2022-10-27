@@ -1,4 +1,4 @@
-
+// Copyright 2022 Whist Technologies, Inc. All rights reserved.
 extern "C" {
 #include <windows.h>
 #include <winreg.h>

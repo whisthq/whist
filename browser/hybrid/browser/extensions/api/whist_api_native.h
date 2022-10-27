@@ -1,7 +1,7 @@
-/* Copyright (c) 2022 Whist Technologies, Inc. All rights reserved. */
+// Copyright 2022 Whist Technologies, Inc. All rights reserved.
 
-#ifndef BRAVE_BROWSER_EXTENSIONS_API_WHIST_API_NATIVE_H_
-#define BRAVE_BROWSER_EXTENSIONS_API_WHIST_API_NATIVE_H_
+#ifndef WHIST_BROWSER_HYBRID_BROWSER_EXTENSIONS_API_WHIST_API_NATIVE_H_
+#define WHIST_BROWSER_HYBRID_BROWSER_EXTENSIONS_API_WHIST_API_NATIVE_H_
 
 // The initial keyboard repeat delay, in ms
 int native_get_keyboard_repeat_initial_delay(void);
@@ -14,4 +14,4 @@ int native_get_keyboard_repeat_rate(void);
 // A length-zero string will be returned if a locale could not be found
 void native_get_system_language(char* locale_str_buffer, int buffer_size);
 
-#endif  // BRAVE_BROWSER_EXTENSIONS_API_WHIST_API_MAC_H_
+#endif  // WHIST_BROWSER_HYBRID_BROWSER_EXTENSIONS_API_WHIST_API_NATIVE_H_

@@ -1,5 +1,4 @@
-/* Copyright (c) 2022 Whist Technologies, Inc. All rights reserved. */
-
+// Copyright 2022 Whist Technologies, Inc. All rights reserved.
 #ifndef WHIST_BROWSER_HYBRID_BROWSER_EXTENSIONS_API_WHIST_API_H_
 #define WHIST_BROWSER_HYBRID_BROWSER_EXTENSIONS_API_WHIST_API_H_
 
