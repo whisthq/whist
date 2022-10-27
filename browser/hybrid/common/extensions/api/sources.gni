@@ -1,0 +1,5 @@
+whist_extensions_api_schema_sources =
+    [ "//whist/browser/hybrid/common/extensions/api/whist.json" ]
+
+whist_extensions_api_features_sources =
+    [ "//whist/browser/hybrid/common/extensions/api/_api_features.json" ]

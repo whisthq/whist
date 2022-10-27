@@ -2,12 +2,25 @@ source_set("extensions") {
   sources = [
     "//whist/browser/hybrid/browser/extensions/whist_component_loader.cc",
     "//whist/browser/hybrid/browser/extensions/whist_component_loader.h",
+    "api/whist_api.cc",
+    "api/whist_api.h",
+    "api/whist_api_native.h",
   ]
+  if (is_mac) {
+    sources += [ "api/whist_api_mac.mm" ]
+  }
+  if (is_win) {
+    sources += [ "api/whist_api_windows.cc" ]
+  }
+  if (is_linux) {
+    sources += [ "api/whist_api_linux.cc" ]
+  }
 
   deps = [
     ":resources",
     "//base",
     "//brave/browser/extensions",
+    "//ui/base",
   ]
 }
 
