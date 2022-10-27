@@ -229,7 +229,7 @@ jobs:
       - name: Run Protocol Tests on Ubuntu Linux
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI --sanitize=address+undefined test
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI --sanitize=address+undefined --nogpu test
 
       # Verify clang-format on Linux
       - name: Verify Builds with clang-format
