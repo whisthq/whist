@@ -35,32 +35,19 @@ const platform = async () => {
 // See https://github.com/whisthq/whist/blob/81c6c4430ea661b757a8079d86018bb1a66dca87/frontend/client-applications/src/main/utils/keyRepeat.ts
 // for explanations of these magic numbers
 const keyboardRepeatRate = async () => {
-  const os = await platform()
-  switch (os) {
-    case "darwin":
-      return await new Promise((resolve) =>
-        (chrome as any).whist.getKeyboardRepeatRate((rate: number) => {
-          resolve(Math.round(2.5 * rate))
-        })
-      )
-    default:
-      return 40 // 40 is the fastest repeat rate on Linux
-  }
+  return await new Promise((resolve) =>
+    (chrome as any).whist.getKeyboardRepeatRate((rate: number) => {
+      resolve(rate)
+    })
+  )
 }
 
 const keyboardRepeatInitialDelay = async () => {
-  const os = await platform()
-
-  switch (os) {
-    case "darwin":
-      return await new Promise((resolve) =>
-        (chrome as any).whist.getKeyboardRepeatInitialDelay((delay: number) => {
-          resolve(Math.round(((1000 / 60) * delay) / 2.5))
-        })
-      )
-    default:
-      return 27 // 27 is the lowest delay on Linux
-  }
+  return await new Promise((resolve) =>
+    (chrome as any).whist.getKeyboardRepeatInitialDelay((delay: number) => {
+      resolve(delay)
+    })
+  )
 }
 
 const userLocale = async () => {
