@@ -268,7 +268,7 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, maxWaitTim
 	defer cancel()
 
 	waiter := ec2.NewInstanceRunningWaiter(host.EC2, func(*ec2.InstanceRunningWaiterOptions) {
-		logger.Infof("Waiting for instances to be ready", instanceIds)
+		logger.Infof("Waiting for instances to be ready: %s", instanceIds)
 	})
 
 	waitParams := &ec2.DescribeInstancesInput{
