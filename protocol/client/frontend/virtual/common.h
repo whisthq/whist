@@ -11,6 +11,8 @@ typedef struct VirtualFrontendContext {
     int dpi;
     bool dimensions_set;
     uint8_t key_state[KEYCODE_UPPERBOUND];
+
+    bool sdl_initialized;
     int sdl_audio_device;
 } VirtualFrontendContext;
 

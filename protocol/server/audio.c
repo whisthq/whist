@@ -70,7 +70,7 @@ int32_t multithreaded_send_audio(void* opaque) {
         LOG_ERROR("Failed to create audio device...");
         return -1;
     }
-    LOG_INFO("Created audio device! (Audio Frequency: %d", audio_device->sample_rate);
+    LOG_INFO("Created audio device! (Audio Frequency: %d)", audio_device->sample_rate);
     start_audio_device(audio_device);
     AudioEncoder* audio_encoder = create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
     if (!audio_encoder) {

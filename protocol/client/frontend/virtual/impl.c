@@ -92,17 +92,20 @@ WhistStatus virtual_init(WhistFrontend* frontend, const WhistRGBColor* color) {
     // Ensure that SDL doesn't override our signal handlers
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     // We only need to initialize SDL for the audio system
-    if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        LOG_ERROR("Could not initialize SDL - %s", SDL_GetError());
-        return WHIST_ERROR_UNKNOWN;
-    }
+    if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER) == 0) {
+        context->sdl_initialized = true;
 
-    // We only need to SDL_Quit once, regardless of the subsystem refcount.
-    // SDL_QuitSubSystem() would require us to register an atexit for each
-    // call.
-    if (atomic_fetch_or(&sdl_atexit_initialized, 1) == 0) {
-        // If we have initialized SDL, then on exit we should clean up.
-        atexit(SDL_Quit);
+        // We only need to SDL_Quit once, regardless of the subsystem refcount.
+        // SDL_QuitSubSystem() would require us to register an atexit for each
+        // call.
+        if (atomic_fetch_or(&sdl_atexit_initialized, 1) == 0) {
+            // If we have initialized SDL, then on exit we should clean up.
+            atexit(SDL_Quit);
+        }
+    } else {
+        LOG_WARNING("Could not initialize SDL, Audio will not be played - %s", SDL_GetError());
+        context->sdl_initialized = false;
+        virtual_send_error_notification(frontend, WHIST_AUDIO_ERROR);
     }
 
     return WHIST_SUCCESS;
@@ -122,6 +125,9 @@ void virtual_destroy(WhistFrontend* frontend) {
 // audio using the virtual interface, similar to video.
 void virtual_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned int channels) {
     VirtualFrontendContext* context = frontend->context;
+    if (!context->sdl_initialized) {
+        return;
+    }
     SDL_AudioSpec desired_spec = {
         .freq = (int)frequency,
         .format = AUDIO_F32SYS,
@@ -136,15 +142,37 @@ void virtual_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigne
     SDL_AudioSpec obtained_spec;
     context->sdl_audio_device = SDL_OpenAudioDevice(NULL, 0, &desired_spec, &obtained_spec, 0);
     if (context->sdl_audio_device == 0) {
-        LOG_ERROR("Could not open audio device - %s", SDL_GetError());
+        LOG_WARNING("Could not open audio device - %s", SDL_GetError());
+        virtual_send_error_notification(frontend, WHIST_AUDIO_ERROR);
         return;
     }
 
     // Verify that the obtained spec matches the desired spec, as
     // we currently do not perform resampling on ingress.
-    FATAL_ASSERT(obtained_spec.freq == desired_spec.freq);
-    FATAL_ASSERT(obtained_spec.format == desired_spec.format);
-    FATAL_ASSERT(obtained_spec.channels == desired_spec.channels);
+    bool incorrect_spec = false;
+    if (obtained_spec.freq != desired_spec.freq) {
+        LOG_WARNING("Audio: Obtained freq %d did not match desired freq %d", obtained_spec.freq,
+                    desired_spec.freq);
+        incorrect_spec = true;
+    }
+    if (obtained_spec.format != desired_spec.format) {
+        LOG_WARNING("Audio: Obtained format %d did not match desired format %d",
+                    obtained_spec.format, desired_spec.format);
+        incorrect_spec = true;
+    }
+    if (obtained_spec.channels != desired_spec.channels) {
+        LOG_WARNING("Audio: Obtained channels %d did not match desired channels %d",
+                    obtained_spec.channels, desired_spec.channels);
+        incorrect_spec = true;
+    }
+
+    if (incorrect_spec) {
+        // Close the incorrect audio devide, and return
+        SDL_CloseAudioDevice(context->sdl_audio_device);
+        context->sdl_audio_device = 0;
+        virtual_send_error_notification(frontend, WHIST_AUDIO_ERROR);
+        return;
+    }
 
     // Start the audio device.
     SDL_PauseAudioDevice(context->sdl_audio_device, 0);
@@ -169,7 +197,7 @@ WhistStatus virtual_queue_audio(WhistFrontend* frontend, const uint8_t* data, si
         return WHIST_ERROR_NOT_FOUND;
     }
     if (SDL_QueueAudio(context->sdl_audio_device, data, (int)size) < 0) {
-        LOG_ERROR("Could not queue audio - %s", SDL_GetError());
+        LOG_WARNING("Could not queue audio - %s", SDL_GetError());
         return WHIST_ERROR_UNKNOWN;
     }
     return WHIST_SUCCESS;
