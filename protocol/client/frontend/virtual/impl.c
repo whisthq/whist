@@ -148,16 +148,19 @@ void virtual_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigne
     // Verify that the obtained spec matches the desired spec, as
     // we currently do not perform resampling on ingress.
     bool incorrect_spec = false;
-    if(obtained_spec.freq != desired_spec.freq) {
-        LOG_WARNING("Audio: Obtained freq %d did not match desired freq %d", obtained_spec.freq, desired_spec.freq);
+    if (obtained_spec.freq != desired_spec.freq) {
+        LOG_WARNING("Audio: Obtained freq %d did not match desired freq %d", obtained_spec.freq,
+                    desired_spec.freq);
         incorrect_spec = true;
     }
-    if(obtained_spec.format != desired_spec.format) {
-        LOG_WARNING("Audio: Obtained format %d did not match desired format %d", obtained_spec.format, desired_spec.format);
+    if (obtained_spec.format != desired_spec.format) {
+        LOG_WARNING("Audio: Obtained format %d did not match desired format %d",
+                    obtained_spec.format, desired_spec.format);
         incorrect_spec = true;
     }
-    if(obtained_spec.channels != desired_spec.channels) {
-        LOG_WARNING("Audio: Obtained channels %d did not match desired channels %d", obtained_spec.channels, desired_spec.channels);
+    if (obtained_spec.channels != desired_spec.channels) {
+        LOG_WARNING("Audio: Obtained channels %d did not match desired channels %d",
+                    obtained_spec.channels, desired_spec.channels);
         incorrect_spec = true;
     }
 
