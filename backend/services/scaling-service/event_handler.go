@@ -30,6 +30,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -263,8 +264,12 @@ func getRegionImageMap() (map[string]interface{}, error) {
 		return nil, utils.MakeError("failed to read region to image map from file: %s", err)
 	}
 
+	// We have to remove the back slashes from the escaped json string
+	// before unmarshalling.
+	jsonString := strings.ReplaceAll(string(content), `\`, "")
+
 	// Try to unmarshal contents of file into a map
-	err = json.Unmarshal(content, &regionImageMap)
+	err = json.Unmarshal([]byte(jsonString), &regionImageMap)
 	if err != nil {
 		return nil, utils.MakeError("failed to unmarshal region to image map: %s", err)
 	}
