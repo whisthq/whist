@@ -4,6 +4,18 @@ import os, threading
 import subprocess as sp
 import signal
 
+# See https://github.com/whisthq/whist/pull/7474 for usage
+
+# See https://github.com/whisthq/whist/wiki/upgrade_shell for upgrade the shell
+# e.g. make Ctrl-C, TAB completion, ls color print, ... work
+
+# WARNING: this rever shell doesn't have encrpytion.
+# Don't enable it on CI by default,
+# Don't try to use it as an alternative of SSH for daily use,
+# Only enable when needed, e.g. debug tough CI/workflow problems.
+
+
+# the seconds for an idle quit
 IDLE_DISCONNECT_TIME_SEC = 600
 
 if sys.version_info.major < 3:
