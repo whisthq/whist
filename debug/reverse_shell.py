@@ -2,10 +2,13 @@ import sys, platform
 import socket, select, time
 import os, threading
 import subprocess as sp
+import signal
 
 if sys.version_info.major < 3:
     print("need python3 to run")
     exit(0)
+
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 if len(sys.argv) != 3:
     print("invalid argument", sys.argv)
