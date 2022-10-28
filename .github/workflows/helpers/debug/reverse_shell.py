@@ -24,6 +24,7 @@ if sys.version_info.major < 3:
 
 if len(sys.argv) != 3:
     print("invalid argument", sys.argv)
+    print("USAGE: python3 ./this_program IP port")
     exit(0)
 
 # allow quit this program by signal
