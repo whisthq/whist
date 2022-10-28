@@ -82,7 +82,7 @@ def stdin_thread():
         # a zero recv of TCP indicates EOF
         if len(i) == 0:
             print("quit by EOF")
-            exit(0)
+            os._exit(0)
         last_active_time = time.time()
         os.write(p.stdin.fileno(), i)
 
