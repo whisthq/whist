@@ -78,7 +78,7 @@ jobs:
         id: services-diff
         run: |
           git diff --no-index whist/backend/services/build/docs docs/backend/services && echo "No changes detected"
-          echo "::set-output name=changed::$?"
+          echo "changed=$?" >> $GITHUB_OUTPUT
 
       - name: Copy New Core Go Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.services-diff.outputs.changed == true }}
@@ -104,7 +104,7 @@ jobs:
         run: |
           # Since the protocol is built inside a docker container, the folder is build-docker
           git diff --no-index whist/protocol/build-docker/docs/html docs/protocol && echo "No changes detected"
-          echo "::set-output name=changed::$?"
+          echo "changed=$?" >> $GITHUB_OUTPUT
 
       - name: Copy New Protocol Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.protocol-diff.outputs.changed == true }}
