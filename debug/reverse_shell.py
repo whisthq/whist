@@ -63,6 +63,7 @@ threading.Thread(target=stdin_thread, daemon=True).start()
 
 while True:
     print("current_time:", time.time(), ",  last active time:", last_active_time)
+    sys.stdout.flush()
     if time.time() - last_active_time > IDLE_DISCONNECT_TIME_SEC:
         print("quit by idle")
         exit(0)
