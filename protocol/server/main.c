@@ -22,6 +22,7 @@ Includes
 #include "handle_client_message.h"
 #include "dbus.h"
 #include "whist/debug/plotter.h"
+#include "whist/utils/command_line.h"
 #include "whist/utils/clock.h"
 #include "gpu_commands.h"
 
@@ -48,6 +49,10 @@ WhistServerState server_state;
 
 // TODO: Remove, needed by udp.c temporarily
 volatile bool connected = false;
+
+static bool enable_gpu_command_streaming = false;
+COMMAND_LINE_BOOL_OPTION(enable_gpu_command_streaming, 0, "--enable-gpu-command-streaming",
+                         "Set whether to enable GPU command(Skia) streaming")
 
 /*
 ============================
@@ -460,8 +465,12 @@ int main(int argc, char* argv[]) {
     WhistThread sync_tcp_packets_thread = whist_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &server_state);
 
-    WhistThread gpu_command_receiver_thread = whist_create_thread(
-        multithreaded_gpu_command_receiver, "multithreaded_gpu_command_receiver", &server_state);
+    WhistThread gpu_command_receiver_thread = NULL;
+    if (enable_gpu_command_streaming) {
+        gpu_command_receiver_thread =
+            whist_create_thread(multithreaded_gpu_command_receiver,
+                                "multithreaded_gpu_command_receiver", &server_state);
+    }
 
     LOG_INFO("Sending video, audio, and D-Bus handler...");
 
@@ -626,7 +635,9 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(send_video_thread, NULL);
     whist_wait_thread(send_audio_thread, NULL);
     whist_wait_thread(sync_tcp_packets_thread, NULL);
-    whist_wait_thread(gpu_command_receiver_thread, NULL);
+    if (gpu_command_receiver_thread) {
+        whist_wait_thread(gpu_command_receiver_thread, NULL);
+    }
     whist_destroy_dbus_handler(dbus_handler);
 
     ltr_destroy(server_state.ltr_context);

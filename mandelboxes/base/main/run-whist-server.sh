@@ -157,6 +157,8 @@ if [ "$ENABLE_GPU_COMMAND_STREAMING" == 0 ]; then
   done
   echo "Done sleeping until there are X clients..."
   echo "done" > $WHIST_MAPPINGS_DIR/done_sleeping_until_X_clients
+else
+OPTIONS="$OPTIONS --enable-gpu-command-streaming"
 fi
 
 sync # Necessary so that even if the container exits very soon the host service sees the file written.

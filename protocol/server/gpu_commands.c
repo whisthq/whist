@@ -103,7 +103,7 @@ int multithreaded_gpu_command_receiver(void *opaque) {
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
 
-    ClientLock* client_lock = client_active_lock(state->client);
+    ClientLock *client_lock = client_active_lock(state->client);
 
     while (client_lock != NULL) {
         // Refresh the client activation lock, to let the client (re/de)activate if it's trying to
