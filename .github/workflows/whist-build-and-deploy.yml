@@ -643,7 +643,7 @@ jobs:
           # {'key': "value"}
           # if I did not add the \, then the json library would get confused by trying to read this:
           # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
-          region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\"')
+          region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\\"')
 
           print(f"Region to AMI map is set to {region_to_ami_map_str}")
           print(f"::set-output name=region_to_ami_map::{region_to_ami_map_str}")
@@ -1036,7 +1036,7 @@ jobs:
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: bash --noprofile --norc -eo pipefail {0}
         working-directory: backend/services/scaling-service
-        run: ./deploy.sh '${{ env.HEROKU_APP_NAME }}' '${{ github.sha }}' '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
+        run: ./deploy.sh '${{ needs.amis-publish-aws.outputs.region_to_ami_map }}' '${{ env.HEROKU_APP_NAME }}' '${{ github.sha }}' '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
 
       - name: Notify Slack on Database Migration Performed
         shell: python3 {0}

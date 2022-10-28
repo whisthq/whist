@@ -16,10 +16,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Working directory is monorepo root
 cd "$DIR/../../.."
 
-HEROKU_APP_NAME=${1}
-MONOREPO_COMMIT_HASH=${2}
-MIGRA_EXIT_CODE=${3}
-SQL_DIFF_STRING=${4}
+REGION_IMAGE_MAP=${1}
+HEROKU_APP_NAME=${2}
+MONOREPO_COMMIT_HASH=${3}
+MIGRA_EXIT_CODE=${4}
+SQL_DIFF_STRING=${5}
 
 SERVICES_DIR="./backend/services"
 DEPLOY_DIR="./deploy"
@@ -41,6 +42,10 @@ deploy_scaling_service() {
   git switch --orphan deploy-branch
   git clean -dfx # remove any .gitignored files that might remain
   mv ../deploy/* .
+
+  # Write images.json file so it can be copied to the Docker container
+  echo "$REGION_IMAGE_MAP" > images.json
+
   git add .
   git commit -m "scaling-service deploy for $MONOREPO_COMMIT_HASH"
 

@@ -22,11 +22,10 @@ RUN go build -ldflags "\
 
 # Create another stage to avoid copying the source code
 FROM alpine:3.16
-ARG REGION_IMAGE_MAP
 
 COPY --from=build /app/build/scaling-service /usr/local/bin/scaling-service
 
 RUN mkdir -p /etc/whist
-RUN echo $REGION_IMAGE_MAP > /etc/whist/images.json
+COPY --from=build /app/images.json /etc/whist/images.json
 
 CMD ["scaling-service"]
