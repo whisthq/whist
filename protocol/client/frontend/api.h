@@ -30,6 +30,7 @@
     GENERATOR(void, file_download_update, WhistFrontend* frontend, void* opaque,                   \
               int64_t bytes_so_far, int64_t bytes_per_sec)                                         \
     GENERATOR(void, file_download_complete, WhistFrontend* frontend, void* opaque)                 \
+    GENERATOR(void, send_gpu_command, WhistFrontend* frontend, void* buffer, int size)             \
     GENERATOR(void, set_cursor, WhistFrontend* frontend, WhistCursorInfo* cursor)                  \
     GENERATOR(void, get_keyboard_state, WhistFrontend* frontend, const uint8_t** key_state,        \
               int* key_count, int* mod_state)                                                      \

@@ -48,6 +48,7 @@ extern "C" {
 QueueContext* events_queue = NULL;
 
 void* callback_context = NULL;
+void* gpu_context = NULL;
 OnCursorChangeCallback on_cursor_change = on_cursor_change_handler;
 OnFileUploadCallback on_file_upload = NULL;
 OnFileDownloadStart on_file_download_start = NULL;
@@ -56,6 +57,7 @@ OnFileDownloadComplete on_file_download_complete = NULL;
 OnNotificationCallback on_notification_callback_ptr = NULL;
 GetModifierKeyState get_modifier_key_state = NULL;
 OnWhistError on_whist_error = NULL;
+OnGpuCommandCallback on_gpu_command = NULL;
 }
 
 static WhistSemaphore connection_semaphore = whist_create_semaphore(0);
@@ -319,6 +321,11 @@ static void* virtual_malloc(size_t size) { return safe_malloc(size); }
 
 static void virtual_free(void* ptr) { free(ptr); }
 
+static void vi_api_set_gpu_command_callback(void* opaque, OnGpuCommandCallback cb) {
+    gpu_context = opaque;
+    on_gpu_command = cb;
+}
+
 static const VirtualInterface vi = {
     .lifecycle =
         {
@@ -363,6 +370,10 @@ static const VirtualInterface vi = {
         {
             .malloc = virtual_malloc,
             .free = virtual_free,
+        },
+    .gpu =
+        {
+            .set_on_gpu_command_callback = vi_api_set_gpu_command_callback,
         },
 };
 

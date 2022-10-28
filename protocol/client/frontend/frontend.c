@@ -144,6 +144,11 @@ void whist_frontend_file_download_complete(WhistFrontend* frontend, void* opaque
     frontend->call->file_download_complete(frontend, opaque);
 }
 
+void whist_frontend_send_gpu_command(WhistFrontend* frontend, void* buffer, int size) {
+    FRONTEND_ENTRY();
+    frontend->call->send_gpu_command(frontend, buffer, size);
+}
+
 void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     FRONTEND_ENTRY();
     frontend->call->set_cursor(frontend, cursor);

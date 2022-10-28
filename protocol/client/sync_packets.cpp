@@ -84,6 +84,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     // the connection is considered lost.
     udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 256);
     udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 256);
+    udp_register_ring_buffer(udp_context, PACKET_GPU, LARGEST_GPUFRAME_SIZE, 256);
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 
@@ -124,7 +125,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         }
 
         // Loop over both VIDEO and AUDIO
-        static const WhistPacketType packet_types[] = {PACKET_VIDEO, PACKET_AUDIO};
+        static const WhistPacketType packet_types[] = {PACKET_VIDEO, PACKET_AUDIO, PACKET_GPU};
         for (int i = 0; i < (int)ARRAY_LENGTH(packet_types); i++) {
             WhistPacketType packet_type = packet_types[i];
             // If the renderer wants the frame of that type,
@@ -141,7 +142,8 @@ static int multithreaded_sync_udp_packets(void* opaque) {
                 // And pass it to the renderer if one exists
                 WhistPacket* whist_packet = (WhistPacket*)get_packet(udp_context, packet_type);
                 if (whist_packet) {
-                    renderer_receive_frame(whist_renderer, packet_type, whist_packet->data);
+                    renderer_receive_frame(whist_renderer, packet_type, whist_packet->data,
+                                           whist_packet->payload_size);
                     // Store the pointer so we can free it later,
                     // While still keeping it alive for the renderer to render it
                     last_whist_packet[packet_type] = whist_packet;

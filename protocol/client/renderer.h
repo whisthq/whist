@@ -75,7 +75,9 @@ bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type,
  *
  * @param packet_type              Packet type, either Video or Audio
  *
- * @param frame                    The VideoFrame* / AudioFrame*
+ * @param frame                    The VideoFrame* / AudioFrame* / GPU packet *
+ *
+ * @param size                     The size of the data pointed by frame
  *
  * @note                           This function is guaranteed to return virtually instantly.
  *                                 It may be used in any hotpaths.
@@ -86,7 +88,8 @@ bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type,
  * one
  *                                 TODO: Use a memcpy to simplify this logic
  */
-void renderer_receive_frame(WhistRenderer* renderer, WhistPacketType packet_type, void* frame);
+void renderer_receive_frame(WhistRenderer* renderer, WhistPacketType packet_type, void* frame,
+                            int size);
 
 /**
  * @brief                          Destroy the given whist renderer

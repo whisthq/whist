@@ -188,3 +188,5 @@ void sdl_file_download_update(WhistFrontend* frontend, void* opaque, int64_t byt
 void sdl_file_download_complete(WhistFrontend* frontend, void* opaque) {
     sdl_native_file_download_notify_finished((const char*)opaque);
 }
+
+void sdl_send_gpu_command(WhistFrontend* frontend, void* buffer, int size) { return; }

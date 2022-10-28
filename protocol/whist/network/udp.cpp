@@ -903,6 +903,15 @@ static void* udp_get_packet(void* raw_context, WhistPacketType type) {
             }
             break;
         }
+        case PACKET_GPU: {
+            if (ring_buffer->last_rendered_id == -1) {
+                ring_buffer->last_rendered_id = 0;
+            }
+            int next_to_render_id = ring_buffer->last_rendered_id + 1;
+            is_ready_to_render(ring_buffer, next_to_render_id);
+            break;
+        }
+
         case PACKET_AUDIO: {
             if (ring_buffer->last_rendered_id == -1) {
                 // INITIAL_FRAMES is the maximum number of frames
