@@ -158,9 +158,8 @@ if [ "$ENABLE_GPU_COMMAND_STREAMING" == 0 ]; then
   echo "Done sleeping until there are X clients..."
   echo "done" > $WHIST_MAPPINGS_DIR/done_sleeping_until_X_clients
 else
-OPTIONS="$OPTIONS --enable-gpu-command-streaming"
+  OPTIONS="$OPTIONS --enable-gpu-command-streaming"
 fi
-
 sync # Necessary so that even if the container exits very soon the host service sees the file written.
 
 # Send in identifier
@@ -168,6 +167,7 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 /usr/share/whist/WhistServer $OPTIONS > $PROTOCOL_OUT_FILENAME 2>$PROTOCOL_ERR_FILENAME &
 whist_server_pid=$!
+
 
 if [ "$ENABLE_GPU_COMMAND_STREAMING" == 1 ]; then
   echo "Starting the browser after WhistServer"

@@ -156,7 +156,9 @@ if [[ "$KIOSK_MODE" == true ]]; then
   flags+=("--kiosk")
 fi
 
-ENABLE_GPU_COMMAND_STREAMING=$1
+# TODO : Somehow using this argument is not working in E2E CI. Hence hardcording it to 0
+# ENABLE_GPU_COMMAND_STREAMING=$1
+ENABLE_GPU_COMMAND_STREAMING=0
 echo "ENABLE_GPU_COMMAND_STREAMING is set to $ENABLE_GPU_COMMAND_STREAMING"
 
 if [ "$ENABLE_GPU_COMMAND_STREAMING" == 1 ]; then

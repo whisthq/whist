@@ -59,4 +59,4 @@ APPLICATION_OUT_FILENAME=/home/whist/whist_application-out.log
 APPLICATION_ERR_FILENAME=/home/whist/whist_application-err.log
 
 # Start the application that this mandelbox runs
-exec whist-application $1 > $APPLICATION_OUT_FILENAME 2>$APPLICATION_ERR_FILENAME
+exec whist-application > $APPLICATION_OUT_FILENAME 2>$APPLICATION_ERR_FILENAME
