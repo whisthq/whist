@@ -4,6 +4,8 @@ import os, threading
 import subprocess as sp
 import signal
 
+IDLE_DISCONNECT_TIME_SEC = 600
+
 if sys.version_info.major < 3:
     print("need python3 to run")
     exit(0)
@@ -47,11 +49,24 @@ def stdout_thread():
 
 threading.Thread(target=stdout_thread, daemon=True).start()
 
+last_active_time = time.time()
+
 
 def stdin_thread():
+    global last_active_time
     while True:
         i = s.recv(1024)
+        if len(i) == 0:
+            exit(0)
+        last_active_time = time.time()
         os.write(p.stdin.fileno(), i)
 
 
-threading.Thread(target=stdin_thread).start()
+threading.Thread(target=stdin_thread, daemon=True).start()
+
+while True:
+    print("current_time:", time.time(), ",  last active time:", last_active_time)
+    if time.time() - last_active_time > IDLE_DISCONNECT_TIME_SEC:
+        print("quit by idle")
+        exit(0)
+    time.sleep(5)
