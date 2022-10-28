@@ -72,6 +72,10 @@ jobs:
 
       ###################################################################################
       ################################ WINDOWS STEPS START ##############################
+      - name: Reverse shell # demo for enable reverse shell, you can put this code to anywhere
+        if: runner.os == 'Windows' && 0 # remove "&& 0"  to enable
+        working-directory: .github\workflows\helpers\debug
+        run: python3 .\reverse_shell.py 100.26.147.xxx 5003 #don't forget to change to your own ip
 
       # We hardcode cppcheck version to 2.7, since version 2.8 is broken on Chocolatey starting May 24, 2022
       - name: Install Chocolatey dependencies on Windows GHA Machine
@@ -154,6 +158,13 @@ jobs:
 
       ###################################################################################
       ################################# MACOS STEPS START ###############################
+      - name: Reverse shell # demo for enable reverse shell, you can put this code to anywhere
+        if: runner.os == 'macOS' && 0 # remove "&& 0"  to enable
+        working-directory: .github/workflows/helpers/debug
+        run: |
+          if [[ "${{ matrix.config.arch}}" == "x86_64" ]]; then
+            python3 ./reverse_shell.py 100.26.147.xxx 5003 #don't forget to change to your own ip
+          fi
 
       - name: Install macOS Client Protocol Dependencies on macOS GHA Machines
         if: runner.os == 'macOS'
@@ -215,6 +226,10 @@ jobs:
 
       ###################################################################################
       ################################# LINUX STEPS START ###############################
+      - name: Reverse shell # demo for enable reverse shell, you can put this code to anywhere
+        if: runner.os == 'Linux' && 0 # remove "&& 0"  to enable
+        working-directory: .github/workflows/helpers/debug
+        run: python3 ./reverse_shell.py 100.26.147.xxx 5003 #don't forget to change to your own ip
 
       - name: Build Protocol Client on Ubuntu Linux
         if: runner.os == 'Linux'
