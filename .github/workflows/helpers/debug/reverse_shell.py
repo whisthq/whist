@@ -20,12 +20,12 @@ IDLE_DISCONNECT_TIME_SEC = 600
 
 if sys.version_info.major < 3:
     print("need python3 to run")
-    exit(0)
+    sys.exit(0)
 
 if len(sys.argv) != 3:
     print("invalid argument", sys.argv)
     print("USAGE: python3 ./this_program IP port")
-    exit(0)
+    sys.exit(0)
 
 # allow quit this program by signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -52,7 +52,7 @@ try:
     s.connect((ip, port))
 except:
     print("failed to connect")
-    exit(0)
+    sys.exit(0)
 
 print("connected")
 
@@ -96,5 +96,5 @@ while True:
     sys.stdout.flush()
     if time.time() - last_active_time > IDLE_DISCONNECT_TIME_SEC:
         print("quit by idle")
-        exit(0)
+        sys.exit(0)
     time.sleep(5)
