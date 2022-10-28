@@ -634,16 +634,16 @@ jobs:
           # export REGION_TO_AMI_MAP
           # the .replace(...) makes all occurrences of a double quote " be prefixed by a \
           # it is best to explain via example:
-          # >>> data = {'key': "val'ue"} # tricky example because we have single and double quotes
+          # >>> data = {'key': "value"} # tricky example because we have single and double quotes
           # >>> print(json.dumps(data).replace('"', '\\"'))
           # {\"key\": \"val'ue\"} # this is saved as an output
           # LATER, when we need to use this output
-          # >>> data = json.loads("{{ OUTPUT }}") # OUTPUT expands to {\"key\": \"val'ue\"}
+          # >>> data = json.loads("{{ OUTPUT }}") # OUTPUT expands to {\"key\": \"value\"}
           # >>> print(data)
-          # {'key': "val'ue"}
+          # {'key': "value"}
           # if I did not add the \, then the json library would get confused by trying to read this:
           # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
-          region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\\"')
+          region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\"')
 
           print(f"Region to AMI map is set to {region_to_ami_map_str}")
           print(f"::set-output name=region_to_ami_map::{region_to_ami_map_str}")
