@@ -22,10 +22,10 @@ from rich import traceback
 traceback.install()
 
 
-def actionify(name, data):
-    """Given a string name and any type of data, return a string
-    formatted for printing to a GitHub runner's a Workflow or Action
-    output.
+def write_output(name, data):
+    """Given a string name and any type of data, write the data to
+    the $GITHUB_OUTPUT file that the runner expects for Action output.
+
     The name will become the name of the output, and the data will
     be coerced to a string and become the value. Note that for the
     value to be accessible from a Workflow, it must be registered in
@@ -41,7 +41,8 @@ def actionify(name, data):
     # this script is sent to the deployment script, via GHA, wrapped in single
     # quotes.
     escaped = re.sub("'", "'\\''", escaped)
-    return f"::set-output name={name}::{escaped}"
+    with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+        out.write(f"{name}='{escaped}'\n")
 
 
 # We're installing postgres-13 in our docker file. The version in the
@@ -60,15 +61,13 @@ diff = result.stdout
 
 if os.environ.get("CI"):
     # We're running in CI through a GitHub Action, which means we
-    # won't be using the stdout from this process. We need to
-    # print the special set-output string to use the result.
-    # This can also be done in a post-entrypoint.sh if these
-    # headers ever get in the way, but we keep it here now for
-    # simplicity.
+    # won't be using the stdout from this process. This can also be
+    # done in a post-entrypoint.sh if these headers ever get in the way,
+    # but we keep it here now for simplicity.
     print("MIGRA CODE:", code)
     print("MIGRA DIFF:\n", diff)
-    print(actionify("code", code))
-    print(actionify("diff", diff))
+    write_output("code", code)
+    write_output("diff", diff)
 else:
     # If we're not in CI, we may want to use the stdout directy,
     # so we won't print any headers.

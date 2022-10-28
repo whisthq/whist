@@ -2,24 +2,26 @@
 
 """entrypoint.py
 
-Print environment configuration values based on the context in which the code is being run. The
-context is specified in the form of a git ref that is passed as a command line argument.
+Write environment configuration values to the $GITHUB_OUTPUT file based on the context in which
+the code is being run. The context is specified in the form of a git ref that is passed as a
+command line argument.
 
 Example usage:
 
     $ ./entrypoint.py dev
-    ::set-output name=environment::dev
+    # Writes environment=dev to $GITHUB_OUTPUT
     ...
     $ ./entrypoint.py refs/heads/my-feature
-    ::set-output name=environment::dev
+    # Writes environment=dev to $GITHUB_OUTPUT
     ...
     $ ./entrypoint.py refs/heads/prod
-    ::set-output name=environment::prod
+    # Writes environment=prod to $GITHUB_OUTPUT
     ...
 
 """
 
 import sys
+import os
 
 
 def set_environment(ref: str) -> None:
@@ -47,10 +49,11 @@ def set_environment(ref: str) -> None:
         domain = "fractal-dev.us.auth0.com"
         client_id = "zfNXAien2yNOJBKaxcVu7ngWfwr6l2eP"
 
-    print(f"::set-output name=environment::{environment}")
-    print(f"::set-output name=auth0-domain::{domain}")
-    print(f"::set-output name=auth0-client-id::{client_id}")
-    print(f"::set-output name=auth0-client-secret-key::auth0_gha_client_secret_{environment}")
+    with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+        out.write(f"environment={environment}\n")
+        out.write(f"auth0-domain={domain}\n")
+        out.write(f"auth0-client-id={client_id}\n")
+        out.write(f"auth0-client-secret-key=auth0_gha_client_secret_{environment}\n")
 
 
 if __name__ == "__main__":

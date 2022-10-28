@@ -528,9 +528,11 @@ jobs:
         if: ${{ inputs.publish }}
         run: |
           S3_BUCKET_URI="${{ env.s3-bucket-uri }}"
-          echo "::set-output name=bucket-name::${S3_BUCKET_URI##*/}"
-          echo "::set-output name=object-key::$current_app_version_executable"
-          echo "::set-output name=sparkle-sig-file::$(pwd)/brave-browser/src/out/$BUILD_OUTPUT_FOLDER/${executable_name##*/}.eddsa"
+          cat >> $GITHUB_OUTPUT << EOF
+          bucket-name=${S3_BUCKET_URI##*/}
+          object-key=$current_app_version_executable
+          sparkle-sig-file=$(pwd)/brave-browser/src/out/$BUILD_OUTPUT_FOLDER/${executable_name##*/}.eddsa
+          EOF
 
       - name: Update appcast to publish macOS browser update
         if: ${{ inputs.publish }}

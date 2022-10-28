@@ -32,6 +32,7 @@ runs:
       shell: python3 {0}
       run: |
         import requests
+        import os
 
         # The API request is documented here: https://auth0.com/docs/flows/call-your-api-using-the-client-credentials-flow
         response = requests.post(
@@ -48,4 +49,5 @@ runs:
 
         access_token = response.json()["access_token"]
 
-        print(f"::set-output name=token::{access_token}")
+        with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+            out.write(f"token={access_token}\n")
