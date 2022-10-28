@@ -16,7 +16,7 @@ COPY . .
 RUN go build -ldflags "\
 		-X 'github.com/whisthq/whist/backend/services/metadata.gitCommit=$GIT_COMMIT'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.email=$HEROKU_USER'\
-		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.apiKey=$HEROKU_API_USER'\
+		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.apiKey=$HEROKU_API_KEY'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.appNameOverride=$HEROKU_APP_NAME_OVERRIDE'\
     " -v -o ./build/scaling-service ./scaling-service
 
