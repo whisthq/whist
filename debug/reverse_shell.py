@@ -40,7 +40,6 @@ print("connected")
 s.settimeout(None)
 s.send("hello message from client!!!!\n".encode())
 
-
 def stdout_thread():
     while True:
         o = os.read(p.stdout.fileno(), 1024)
@@ -51,7 +50,6 @@ threading.Thread(target=stdout_thread, daemon=True).start()
 
 last_active_time = time.time()
 
-
 def stdin_thread():
     global last_active_time
     while True:
@@ -60,7 +58,6 @@ def stdin_thread():
             exit(0)
         last_active_time = time.time()
         os.write(p.stdin.fileno(), i)
-
 
 threading.Thread(target=stdin_thread, daemon=True).start()
 
