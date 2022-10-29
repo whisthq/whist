@@ -24,20 +24,24 @@ type MandelboxInfoResult struct {
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
 	var tests = []struct {
-		name string
-		r    httputils.MandelboxInfoRequest
+		name     string
+		r        httputils.MandelboxInfoRequest
 		expected httputils.MandelboxInfoRequestResult
 	}{
 		{"Valid mandelbox info request", httputils.MandelboxInfoRequest{
 			MandelboxID: types.MandelboxID(utils.PlaceholderTestUUID()),
 			ResultChan:  make(chan httputils.RequestResult),
 		}, httputils.MandelboxInfoRequestResult{
-					HostPortForTCP32261: 32261,
-					HostPortForTCP32262: 32262,
-					HostPortForUDP32263: 32263,
-					HostPortForTCP32273: 32273,
-					AesKey:              "aes_key",
+			HostPortForTCP32261: 32261,
+			HostPortForTCP32262: 32262,
+			HostPortForUDP32263: 32263,
+			HostPortForTCP32273: 32273,
+			AesKey:              "aes_key",
 		}},
+		{"Empty mandelbox info request", httputils.MandelboxInfoRequest{
+			MandelboxID: types.MandelboxID{},
+			ResultChan:  make(chan httputils.RequestResult),
+		}, httputils.MandelboxInfoRequestResult{}},
 	}
 
 	q := make(chan httputils.ServerRequest, 5)
@@ -56,10 +60,10 @@ func TestSpinUpHandler(t *testing.T) {
 			go func() {
 				serverEvent := <-q
 				t.Logf("Got server event request in queue: %v", serverEvent)
-
 				serverEvent.ReturnResult(tt.expected, nil)
 			}()
 
+			// Make test request
 			res, err := ts.Client().Do(req)
 			if err != nil {
 				t.Fatal(err)
@@ -71,21 +75,17 @@ func TestSpinUpHandler(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			t.Logf("%s", body)
-			
 			type MandelboxInfoResult struct {
-				info httputils.MandelboxInfoRequestResult `json:"result"`
+				Info httputils.MandelboxInfoRequestResult `json:"result"`
 			}
 
-			var  result MandelboxInfoResult
+			var result MandelboxInfoResult
 			err = json.Unmarshal(body, &result)
 			if err != nil {
 				t.Error(err)
 			}
 
-			t.Log(result)
-
-			if ok := reflect.DeepEqual(result.info, tt.expected); !ok {
+			if ok := reflect.DeepEqual(result.Info, tt.expected); !ok {
 				t.Errorf("got %v, expected %v", result, tt.expected)
 			}
 
