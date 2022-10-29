@@ -147,18 +147,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	if string(paramsReadyFileContents) != ".paramsReady" {
 		t.Errorf("Params ready file contains invalid contents: %s", string(paramsReadyFileContents))
 	}
-
-	var jsonData map[string]interface{}
-	jsonFile := path.Join(resourceMappingDir, "config.json")
-	jsonFileContents, err := os.ReadFile(jsonFile)
-	if err != nil {
-		t.Fatalf("Failed to read resource file %s: %v", jsonFile, err)
-	}
-	err = json.Unmarshal(jsonFileContents, &jsonData)
-	if err != nil {
-		t.Errorf("JSON data file contains invalid contents: %s", string(jsonFileContents))
-	}
-
+	
 	// Verify that the mandelbox has the connected status to false
 	if testMandelbox.GetStatus() != dbdriver.MandelboxStatusWaiting {
 		t.Errorf("Mandelbox has invalid connected status: got %v, want %v", testMandelbox.GetStatus(), dbdriver.MandelboxStatusWaiting)
