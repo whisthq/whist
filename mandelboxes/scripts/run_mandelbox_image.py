@@ -138,28 +138,17 @@ def send_spin_up_mandelbox_request(mandelbox_id):
 
     Args: mandelbox_id: the id of the mandelbox to create
     """
-<<<<<<< HEAD
     print("Sending GetMandelbox request to host service!")
-    url = HOST_SERVICE_URL + "json_transport" # TODO: this endpoint will no longer exist, so we need to move the equivalent functionality for local without db to the assign_mandelbox endpoint
+    url = HOST_SERVICE_URL + "mandelbox" + "/" + str(mandelbox_id)
     development_args = {
         "kiosk_mode": not args.no_kiosk,
         "load_extension": not args.no_extension,
         "local_client": args.local_client,
     }
-    payload = {
-        "app_name": args.image,
-        "jwt_access_token": "bogus_jwt",
-        "mandelbox_id": str(mandelbox_id),
-        "json_data": json.dumps(development_args), # TODO: change this to be "development_args" or something like that
-    }
-=======
-    print("Sending SpinUpMandelbox request to host service!")
-    url = HOST_SERVICE_URL + "mandelbox" + "/" + str(mandelbox_id)
->>>>>>> 029d16e3e (Update run.py, updatee mandelboxDieHandler)
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
 
     try:
-        respobj = requests.get(url=url, verify=tls_verification, timeout=10)
+        respobj = requests.get(url=url, params=development_args, verify=tls_verification, timeout=10)
         respobj.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"host service returned error: {e}")

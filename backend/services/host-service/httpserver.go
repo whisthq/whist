@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -75,9 +76,19 @@ func mandelboxInfoHandler(w http.ResponseWriter, r *http.Request, queue chan<- h
 		return
 	}
 
+	// Parse the query parameters for localdev. Since these values only really affect
+	// local development, we ignore any errors parsing them.
+	query := r.URL.Query()
+	kioskMode, _ := strconv.ParseBool(query["kiosk_mode"][0])
+	loadExtension, _ := strconv.ParseBool(query["load_extension"][0])
+	localClient, _ := strconv.ParseBool(query["local_client"][0])
+
 	reqdata := httputils.MandelboxInfoRequest{
-		MandelboxID: types.MandelboxID(mandelboxID),
-		ResultChan:  make(chan httputils.RequestResult),
+		MandelboxID:   types.MandelboxID(mandelboxID),
+		KioskMode:     kioskMode,
+		LoadExtension: loadExtension,
+		LocalClient:   localClient,
+		ResultChan:    make(chan httputils.RequestResult),
 	}
 
 	// Send request to queue, then wait for result

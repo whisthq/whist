@@ -125,7 +125,7 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 	for i := int32(0); i < instanceCapacity; i++ {
 		mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
 		var appName mandelboxtypes.AppName = mandelboxtypes.AppName(utils.MandelboxApp)
-		mandelbox, err := SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan)
+		mandelbox, err := SpinUpMandelbox(globalCtx, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan, false, false, false)
 
 		// If we fail to create a mandelbox, it indicates a problem with the instance, or the Docker images
 		// Its not safe to assign users to it, so we cancel the global context and shut down the instance
@@ -646,7 +646,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		// in this package, and the low-level authentication, parsing, etc. of
 		// requests in `httpserver`.
 		case serverevent := <-httpServerEvents:
-			switch serverevent := serverevent.(type) {
+			switch serverEvent := serverevent.(type) {
 			// TODO: actually handle panics in these goroutines
 
 			case *httputils.MandelboxInfoRequest:
@@ -658,7 +658,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				if metadata.IsLocalEnvWithoutDB() {
 					mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
 					var appName mandelboxtypes.AppName = mandelboxtypes.AppName(utils.MandelboxApp)
-					mandelbox, err = SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieEvents)
+					mandelbox, err = SpinUpMandelbox(globalCtx, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieEvents, serverEvent.KioskMode, serverEvent.LoadExtension, serverEvent.LocalClient)
 
 					// If we fail to create a mandelbox, it indicates a problem with the instance, or the Docker images
 					// Its not safe to assign users to it, so we cancel the global context and shut down the instance
@@ -670,13 +670,12 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 						return
 					}
 				} else {
-					mandelbox, err = mandelboxData.LookUpByMandelboxID(serverevent.MandelboxID)
+					mandelbox, err = mandelboxData.LookUpByMandelboxID(serverEvent.MandelboxID)
 					if err != nil {
-						logger.Errorf("did not find mandelbox %s: %s", serverevent.MandelboxID.String(), err)
-						serverevent.ReturnResult(nil, err)
+						logger.Errorf("did not find mandelbox %s: %s", serverEvent.MandelboxID.String(), err)
+						serverEvent.ReturnResult(nil, err)
 						return
 					}
-
 				}
 
 				// Request port bindings for the mandelbox.
@@ -691,11 +690,11 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				hostPortForTCP32273, err32273 = mandelbox.GetHostPort(32273, portbindings.TransportProtocolTCP)
 				if err32261 != nil || err32262 != nil || err32263 != nil || err32273 != nil {
 					logger.Errorf("couldn't get host ports: %s", err)
-					serverevent.ReturnResult(nil, err)
+					serverEvent.ReturnResult(nil, err)
 					return
 				}
 
-				serverevent.ReturnResult(httputils.MandelboxInfoRequestResult{
+				serverEvent.ReturnResult(httputils.MandelboxInfoRequestResult{
 					HostPortForTCP32261: hostPortForTCP32261,
 					HostPortForTCP32262: hostPortForTCP32262,
 					HostPortForUDP32263: hostPortForUDP32263,
@@ -704,10 +703,10 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				}, nil)
 
 			default:
-				if serverevent != nil {
-					err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
+				if serverEvent != nil {
+					err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverEvent, serverEvent)
 					logger.Error(err)
-					serverevent.ReturnResult("", err)
+					serverEvent.ReturnResult("", err)
 				}
 			}
 

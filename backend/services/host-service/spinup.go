@@ -30,7 +30,7 @@ import (
 )
 
 // SpinUpMandelbox will create and start a mandelbox. Once the mandelbox is started, it effectively waits an infinite time until a user gets assigned to it.
-func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName, mandelboxDieChan chan bool) (mandelboxData.Mandelbox, error) {
+func SpinUpMandelbox(globalCtx context.Context, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName, mandelboxDieChan chan bool, kioskMode bool, loadExtension bool, localClient bool) (mandelboxData.Mandelbox, error) {
 	incrementErrorRate := func() {
 		metrics.Increment("ErrorRate")
 	}

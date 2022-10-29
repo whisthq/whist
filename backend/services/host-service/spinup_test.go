@@ -33,7 +33,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	mandelboxID := types.MandelboxID(uuid.New())
 	mandelboxDieChan := make(chan bool, 10)
 
-	testMandelbox, _ := SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, types.AppName(utils.MandelboxApp), mandelboxDieChan)
+	testMandelbox, _ := SpinUpMandelbox(ctx, &goroutineTracker, &dockerClient, mandelboxID, types.AppName(utils.MandelboxApp), mandelboxDieChan, false, false, false)
 	defer cancelMandelboxContextByID(testMandelbox.GetID())
 
 	// Check that container would have been started

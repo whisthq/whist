@@ -9,8 +9,11 @@ import (
 // MandelboxInfoRequest defines the (unauthenticated) `json_transport`
 // endpoint.
 type MandelboxInfoRequest struct {
-	MandelboxID mandelboxtypes.MandelboxID `json:"mandelbox_id"` // MandelboxID, used for the json transport request map
-	ResultChan  chan RequestResult         `json:"-"`            // Channel to pass the request result between goroutines
+	MandelboxID   mandelboxtypes.MandelboxID // MandelboxID, used for the json transport request map
+	KioskMode     bool                       // Enable or disable kiosk mode in chromium
+	LoadExtension bool                       // If the Whist extension should be loaded
+	LocalClient   bool                       // Indicates if the request comes from a local client
+	ResultChan    chan RequestResult         // Channel to pass the request result between goroutines
 }
 
 // MandelboxInfoRequestResult defines the data returned by the
