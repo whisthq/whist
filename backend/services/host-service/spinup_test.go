@@ -146,7 +146,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	if string(paramsReadyFileContents) != ".paramsReady" {
 		t.Errorf("Params ready file contains invalid contents: %s", string(paramsReadyFileContents))
 	}
-	
+
 	// Verify that the mandelbox has the connected status to false
 	if testMandelbox.GetStatus() != dbdriver.MandelboxStatusWaiting {
 		t.Errorf("Mandelbox has invalid connected status: got %v, want %v", testMandelbox.GetStatus(), dbdriver.MandelboxStatusWaiting)

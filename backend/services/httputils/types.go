@@ -9,8 +9,8 @@ import (
 // MandelboxInfoRequest defines the (unauthenticated) `json_transport`
 // endpoint.
 type MandelboxInfoRequest struct {
-	MandelboxID    mandelboxtypes.MandelboxID `json:"mandelbox_id"`       // MandelboxID, used for the json transport request map
-	ResultChan     chan RequestResult         `json:"-"`                  // Channel to pass the request result between goroutines
+	MandelboxID mandelboxtypes.MandelboxID `json:"mandelbox_id"` // MandelboxID, used for the json transport request map
+	ResultChan  chan RequestResult         `json:"-"`            // Channel to pass the request result between goroutines
 }
 
 // MandelboxInfoRequestResult defines the data returned by the

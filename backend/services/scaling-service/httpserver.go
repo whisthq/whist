@@ -50,7 +50,6 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 		return
 	}
 
-	
 	// Extract access token from request header
 	accessToken, err := httputils.GetAccessToken(r)
 	if err != nil {
