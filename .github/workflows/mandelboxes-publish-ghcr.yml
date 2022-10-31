@@ -103,31 +103,17 @@ jobs:
         if: ${{ inputs.publish }}
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ inputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ inputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           TITLE = ":whale: Mandelboxes Deployed :whale:"
           BODY = "Mandelboxes deployed to GHCR on branch: `${{ inputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', inputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
         if: failure()
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ inputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ inputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           BODY = "@releases :rotating_light: Deployment failed: could not deploy mandelboxes in the `mandelboxes-publish-ghcr.yml` workflow, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', inputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)

@@ -143,16 +143,9 @@ jobs:
         if: failure()
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ steps.set-deploy-environment.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ steps.set-deploy-environment.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `whist-publish-build-config` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', steps.set-deploy-environment.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
@@ -222,15 +215,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in "${{ steps.set-deploy-environment.outputs.environment }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ steps.set-deploy-environment.outputs.environment }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           BODY = f"@releases :rotating_light: Failed to deploy `${{ matrix.project.sentry-project }}` Sentry release on branch: `${{ steps.set-deploy-environment.outputs.environment }}`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', steps.set-deploy-environment.outputs.environment)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   sentry-deploy-sentry-releases-notify-slack:
@@ -249,17 +236,10 @@ jobs:
       - name: Notify Slack on Success
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.sentry-deploy-sentry-releases.outputs.sentry-deploy-environment }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.sentry-deploy-sentry-releases.outputs.sentry-deploy-environment }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           TITLE = ":sentry: Sentry Releases Deployed :sentry:"
           BODY = f"Sentry Releases for Whist Sentry Projects `host-service`, `mandelboxes`, `protocol`, and `scaling-service` deployed to Sentry on branch: `${{ needs.sentry-deploy-sentry-releases.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.sentry-deploy-sentry-releases.outputs.sentry-deploy-environment)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
   #######################################################################################
@@ -304,33 +284,19 @@ jobs:
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           TITLE = ":auth0: Auth0 Rules Deployed :auth0:"
           BODY = f"Auth0 Rules deployed to Auth0 Tenant on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
         if: failure()
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Rules in `auth0-deploy-rules` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
@@ -376,34 +342,20 @@ jobs:
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           TITLE = ":earth_americas: Infrastructure successfully deployed :earth_americas:"
           BODY = f"Infrastructure deployed with Terraform: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
         if: failure()
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           SCALING_SERVICE_URL = "${{ needs.whist-publish-build-config.outputs.scaling_service_url }}"
           BODY = f"@releases :rotating_light: Infrastructure failed to deploy, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
@@ -422,269 +374,20 @@ jobs:
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
-    secrets:
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      GHA_USERNAME: ${{ secrets.GHA_USERNAME }}
-      GHA_PERSONAL_ACCESS_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-      AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-      AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-      SLACK_HOOKS_ENDPOINT_DEV: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
-      SLACK_HOOKS_ENDPOINT_STAGING: ${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}
-      SLACK_HOOKS_ENDPOINT_PROD: ${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}
+    secrets: inherit
 
   #######################################################################################
   #######################################################################################
 
-  # AMIs: Build & Publish Whist AMIs
-  # This job builds and publishes the Whist Linux AMI, containing the pre-built Whist Host service,
-  # to all supported AWS EC2 regions.
-  #
-  # Runs if config succeeds, terraform has deployed, and branch is in ["dev", "staging", "prod"]
   amis-publish-aws:
     name: "AMIs: Publish to AWS"
-    runs-on: ubuntu-20.04
     concurrency: amis-publish-aws-${{ github.ref }}
     needs: [whist-publish-build-config, terraform-deploy]
-    outputs:
-      region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
-
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-
-      - name: Configure AWS CLI # To get and install GRID driver
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Set up Python Environment
-        uses: actions/setup-python@v4.2.0
-        with:
-          python-version: "3.10.4"
-
-      - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh "true"
-
-      ##########################################################################################
-      ########################### Stage 1 - Build Backend Services #############################
-
-      - name: Set up Go Environment
-        uses: actions/setup-go@v3.3.0
-        with:
-          go-version: "1.19"
-
-      - name: Authenticate Go commands with GitHub
-        env:
-          GH_USERNAME: ${{ secrets.GHA_USERNAME }}
-          GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-        run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
-
-      - name: Build Backend Services
-        working-directory: backend/services
-        env:
-          HEROKU_USER: developers@whist.com
-          HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-        run: make build
-
-      ##########################################################################################
-      ####################### Stage 2 - Build & Publish AMIs to AWS EC2 ########################
-
-      - name: Set Host Service APP_ENV based on Git Branch (File gets read by host-service.service)
-        working-directory: host-setup
-        run: |
-          BRANCH_NAME="${{ needs.whist-publish-build-config.outputs.branch }}"
-
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            echo 'APP_ENV=PROD' > app_env.env
-            echo 'LOGZIO_SHIPPING_TOKEN=${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}' >> app_env.env
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            echo 'APP_ENV=STAGING' > app_env.env
-            echo 'LOGZIO_SHIPPING_TOKEN=${{ secrets.LOGZ_SHIPPING_TOKEN_STAGING }}' >> app_env.env
-          else
-            echo 'APP_ENV=DEV' > app_env.env
-            echo 'LOGZIO_SHIPPING_TOKEN=${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}' >> app_env.env
-          fi
-          echo 'SENTRY_DSN=https://774bb2996acb4696944e1c847c41773c@o400459.ingest.sentry.io/5461239' >> app_env.env
-          echo 'USE_PROD_LOGGING=true' >> app_env.env
-
-          # Enable GPU instances by default
-          echo 'GPU=true' >> app_env.env
-          cat app_env.env
-
-      - name: Set Github account, PAT and commit hash (File gets read by userdata script)
-        working-directory: host-setup
-        run: |
-          echo 'GH_USERNAME=${{ secrets.GHA_USERNAME }}' >> app_env.env
-          echo 'GH_PAT=${{ secrets.GHCR_PACKAGES_READ_ONLY_PAT }}' >> app_env.env
-          echo 'GIT_BRANCH=${{ needs.whist-publish-build-config.outputs.branch }}' >> app_env.env
-          echo 'GIT_HASH=${{ github.sha }}' >> app_env.env
-
-      # This spins up an AWS EC2 instance to create the AMI, and then deletes it
-      # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
-      - name: Generate Packer Configuration, Create New AMI, Update Region, and Update Appropriate Database
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
-        id: build-new-amis
-        working-directory: host-setup
-        shell: python3 {0}
-        run: |
-          import os, json, datetime, subprocess
-
-          # Get the current date and time
-          date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
-
-          # Generate the Packer configuration variables
-          data = {}
-          data["git_branch"] = "${{ needs.whist-publish-build-config.outputs.branch }}"
-          data["git_hash"] = "${{ github.sha }}"
-          data["access_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}"
-          data["secret_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}"
-          data["ami_name"] = f"whist-ami-${{ needs.whist-publish-build-config.outputs.branch }}-${{ github.sha }}-{date_str}"
-
-          # List all AWS regions we support
-          supported_aws_regions = [
-            "us-east-1",
-            "us-east-2",
-            "us-west-1",
-            "us-west-2",
-            "ca-central-1",
-            "sa-east-1",
-            "eu-north-1",
-            "eu-south-1",
-            "eu-west-1",
-            "eu-west-2",
-            "eu-west-3",
-            "eu-central-1",
-            "me-south-1",
-            "ap-east-1",
-            "ap-south-1",
-            "ap-southeast-1",
-            "ap-southeast-2",
-            "ap-southeast-3",
-            "ap-northeast-1",
-            "ap-northeast-2",
-            "ap-northeast-3",
-            "af-south-1",
-          ]
-
-          # Set Logz.io shipping token and regions to which to deploy the new AMI based on the environment.
-          # For internal environments (dev, staging), we only clone our new AMI to us-east-1 and us-west-1, to save on
-          # costs since we don't have/need test users in other regions.
-          if data["git_branch"] == "prod":
-            data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
-            data["destination_regions"] = supported_aws_regions
-          elif data["git_branch"] == "staging":
-            data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_STAGING }}"
-            data["destination_regions"] = ["us-east-1", "us-west-1"]
-          elif data["git_branch"] == "dev":
-            data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
-            data["destination_regions"] = ["us-east-1", "us-west-1"]
-          else:
-            raise Exception(f"Invalid environment/git branch: {data['git_branch']}")
-
-          # Packer isn't able to loop over AWS Regions by itself. To work around this, we need to loop over all AWS regions
-          # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
-          # regions). We could eventually also manually loop over availability zones, but this is probably not necessary as
-          # Packer will attempt to autoassign the most optimal availibity zone for the Packer instance.
-          for aws_region in supported_aws_regions:
-            data["initial_region"] = aws_region
-
-            # Write the generated Packer variables to a file
-            fp = open("packer_vars.json", "w")
-            json.dump(data, fp)
-            fp.close()
-
-            # Display file content, for debugging purposes
-            subprocess.run("cat packer_vars.json && echo '\n\n'", shell=True)
-
-            # Validate the Packer variables file for syntax errors
-            subprocess.run("packer validate -var-file=packer_vars.json ami_config.pkr.hcl && echo '\n\n'", shell=True)
-
-            # Generate AMIs via Packer
-            # Stdout will be shared with the subprocess so that we can see what is happening
-            # If you need to debug Packer, add `PACKER_LOG=1` before `packer build ...` in the subprocess.run command
-            subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
-
-            # If Packer succeeds, it will create `manifest.json`, which is our cue to stop trying other regions
-            if os.path.exists("manifest.json"):
-              print("Packer succeeded, exiting AWS Regions zones loop...")
-              break
-
-          # Assert that `manifest.json` exists after looping over all AWS Regions to fail the workflow in the event that
-          # we couldn't get capacity in any of the AWS regions
-          assert os.path.exists("manifest.json")
-
-          # Save Packer output to a JSON, to use for creating new instances with the newly created AMI
-          fp = open("manifest.json", "r")
-          data = json.load(fp)
-          fp.close()
-          print("Printing Packer output: " + str(data))
-
-          # Extract relevant data for creating new instances with this AMI
-          new_ami_ids = data["builds"][0]["artifact_id"]
-          region_ami_pairs = new_ami_ids.split(",")
-
-          REGION_TO_AMI_MAP = dict()
-          for region_ami_pair in region_ami_pairs:
-            region_name, ami = region_ami_pair.split(":")
-            REGION_TO_AMI_MAP[region_name] = ami
-
-          # export REGION_TO_AMI_MAP
-          # the .replace(...) makes all occurrences of a double quote " be prefixed by a \
-          # it is best to explain via example:
-          # >>> data = {'key': "value"} # tricky example because we have single and double quotes
-          # >>> print(json.dumps(data).replace('"', '\\"'))
-          # {\"key\": \"val'ue\"} # this is saved as an output
-          # LATER, when we need to use this output
-          # >>> data = json.loads("{{ OUTPUT }}") # OUTPUT expands to {\"key\": \"value\"}
-          # >>> print(data)
-          # {'key': "value"}
-          # if I did not add the \, then the json library would get confused by trying to read this:
-          # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
-          region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\\"')
-
-          print(f"Region to AMI map is set to {region_to_ami_map_str}")
-          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-            out.write(f"region_to_ami_map={region_to_ami_map_str}\n")
-
-      ##########################################################################################
-      ############################# Stage 3 - Slack Notifications ##############################
-
-      # Notify Slack after building and deploying the Whist AMI to all supported AWS regions.
-      - name: Notify Slack on Job Successs
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
-        shell: python3 {0}
-        run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
-          from notifications.slack_bot import slack_post
-          TITLE = ":package: AMIs Deployed :package:"
-          BODY = "AMIs deployed to all supported AWS regions on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
-
-      - name: Notify Slack on Job Error
-        if: failure()
-        shell: python3 {0}
-        run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
-          from notifications.slack_bot import slack_post
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy AMIs in the `amis-publish-aws` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
+    uses: ./.github/workflows/backend-amis-publish-aws.yml
+    with:
+      branch: ${{ needs.whist-publish-build-config.outputs.branch }}
+      publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
+    secrets: inherit
 
   # Whist Browser: Retrieve Version Number
   # Retrieve the current Whist version number from our configuration database, through Hasura
@@ -732,15 +435,8 @@ jobs:
           --data "{ \"query\": \"query { desktop_app_version { major minor micro dev_rc staging_rc } }\" }" \
           https://config-database.whist.com/v1/graphql > response.json
 
-          # Check if we actually got back valid json. If not, we should
-          # throw a human-readable error because the config DB might be
-          # down.
-          if cat response.json | jq -e . > /dev/null 2>&1; then
-            echo "Got some valid JSON from the config DB:"
-            cat response.json
-            echo
-            echo "Continuing..."
-          else
+          # Check if parseable JSON was returned
+          if ! cat response.json | jq -e . > /dev/null 2>&1; then
             echo "Failed to parse the JSON from the config DB. Is it up?" && false
           fi
 
@@ -836,27 +532,7 @@ jobs:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       release_version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}
       publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
-    secrets:
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      GHA_USERNAME: ${{ secrets.GHA_USERNAME }}
-      GHA_PERSONAL_ACCESS_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-      AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-      AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-      APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-      MACOS_SIGNING_KEYCHAIN_PASSWORD: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
-      MACOS_SIGNING_NOTARYTOOL_PASSWORD: ${{ secrets.MACOS_SIGNING_NOTARYTOOL_PASSWORD }}
-      MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
-      MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
-      MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED: ${{ secrets.MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
-      MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
-      WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY: ${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }}
-      WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY: ${{ secrets.WHIST_CHROMIUM_BROWSER_BRAVE_SERVICES_KEY }}
-      SPARKLE_EDDSA_PRIVATE_KEY: ${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }}
-      GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-      GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}
-      SLACK_HOOKS_ENDPOINT_DEV: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
-      SLACK_HOOKS_ENDPOINT_STAGING: ${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}
-      SLACK_HOOKS_ENDPOINT_PROD: ${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}
+    secrets: inherit
 
   #######################################################################################
   #######################################################################################
@@ -919,20 +595,17 @@ jobs:
         shell: python3 {0}
         if: needs.whist-browser-publish-build-s3.result == 'success'
         run: |
-          # Retrieve Slack webhook
           if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
             WEBSITE_URL = "https://whist.com"
           elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
             WEBSITE_URL = "https://staging.whist.com"
           else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
             WEBSITE_URL = "https://dev.whist.com"
 
           from notifications.slack_bot import slack_post
           TITLE = ":chromium: Windows & macOS Whist Desktop Browser Deployed :chromium:"
           BODY = f"Windows & macOS Whist Desktop Browser deployed via upload to AWS S3 on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` - You can download them from {WEBSITE_URL} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
   #######################################################################################
@@ -1053,51 +726,30 @@ jobs:
           if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
             sys.exit(0)
 
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           TITLE = ":construction: Database Migration Performed :construction:"
           BODY = f"Database Schema Migration performed on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Successful Scaling Service Deploy
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           SCALING_SERVICE_URL = "${{ needs.whist-publish-build-config.outputs.scaling_service_url }}"
           TITLE = ":party_parrot: Scaling Service Successfully Deployed :party_parrot:"
           BODY = f"Scaling Service at {SCALING_SERVICE_URL} deployed and started image upgrade on: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
         if: failure()
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           SCALING_SERVICE_URL = "${{ needs.whist-publish-build-config.outputs.scaling_service_url }}"
           BODY = f"@releases :rotating_light: Scaling Service at {SCALING_SERVICE_URL} failed to deploy, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
@@ -1147,31 +799,17 @@ jobs:
       - name: Notify Slack on Job Success
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           TITLE = ":github: Whist GitHub Release Completed :github:"
           BODY = "Deployment of Whist Version `v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.whist-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/whisthq/whist/releases/tag/v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
         if: failure()
         shell: python3 {0}
         run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
           from notifications.slack_bot import slack_post
           BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `whist-create-github-release-tag` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)

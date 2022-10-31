@@ -1,0 +1,256 @@
+name: "Hybrid Browser: Publish to S3"
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
+      release_version:
+        required: true
+        type: string
+      publish:
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      region_to_ami_map: ${{ jobs.main.outputs.region_to_ami_map }}
+    secrets:
+      GHA_USERNAME:
+        required: true
+      GHA_PERSONAL_ACCESS_TOKEN:
+        required: true
+      GHCR_PACKAGES_READ_ONLY_PAT:
+        required: true
+      AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID:
+        required: true
+      AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY:
+        required: true
+      SLACK_HOOKS_ENDPOINT_DEV:
+        required: true
+      SLACK_HOOKS_ENDPOINT_STAGING:
+        required: true
+      SLACK_HOOKS_ENDPOINT_PROD:
+        required: true
+      HEROKU_DEVELOPER_API_KEY:
+        required: true
+      LOGZ_SHIPPING_TOKEN_PROD:
+        required: true
+      LOGZ_SHIPPING_TOKEN_STAGING:
+        required: true
+      LOGZ_SHIPPING_TOKEN_DEV:
+        required: true
+
+jobs:
+  main:
+    name: "Build & Deploy AMIs to AWS"
+    runs-on: ubuntu-20.04
+    outputs:
+      region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS CLI # To get and install GRID driver
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v4.2.0
+        with:
+          python-version: "3.10.4"
+
+      - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh "true"
+
+      ##########################################################################################
+      ########################### Stage 1 - Build Backend Services #############################
+
+      - name: Set up Go Environment
+        uses: actions/setup-go@v3.3.0
+        with:
+          go-version: "1.19"
+
+      - name: Authenticate Go commands with GitHub
+        env:
+          GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+          GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+        run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
+
+      - name: Build Backend Services
+        working-directory: backend/services
+        env:
+          HEROKU_USER: developers@whist.com
+          HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+        run: make build
+
+      ##########################################################################################
+      ####################### Stage 2 - Build & Publish AMIs to AWS EC2 ########################
+
+      - name: Set Host Service APP_ENV based on Git Branch (File gets read by host-service.service)
+        working-directory: host-setup
+        run: |
+          # Note: We enable GPU instances by default
+          cat > app_env.env << EOF
+          APP_ENV=${{ inputs.branch }}
+          LOGZIO_SHIPPING_TOKEN=${{ secrets[format('LOGZ_SHIPPING_TOKEN_{0}', inputs.branch)] }}
+          SENTRY_DNS=https://774bb2996acb4696944e1c847c41773c@o400459.ingest.sentry.io/5461239
+          USE_PROD_LOGGING=true
+          GPU=true
+          EOF
+          cat app_env.env
+
+      - name: Set Github account, PAT and commit hash (File gets read by userdata script)
+        working-directory: host-setup
+        run: |
+          echo 'GH_USERNAME=${{ secrets.GHA_USERNAME }}' >> app_env.env
+          echo 'GH_PAT=${{ secrets.GHCR_PACKAGES_READ_ONLY_PAT }}' >> app_env.env
+          echo 'GIT_BRANCH=${{ inputs.branch }}' >> app_env.env
+          echo 'GIT_HASH=${{ github.sha }}' >> app_env.env
+
+      # This spins up an AWS EC2 instance to create the AMI, and then deletes it
+      # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
+      - name: Generate Packer Configuration, Create New AMI, Update Region, and Update Appropriate Database
+        if: ${{ inputs.publish }}
+        id: build-new-amis
+        working-directory: host-setup
+        shell: python3 {0}
+        run: |
+          import os, json, datetime, subprocess
+
+          # Get the current date and time
+          date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+
+          # Generate the Packer configuration variables
+          data = {}
+          data["git_branch"] = "${{ inputs.branch }}"
+          data["git_hash"] = "${{ github.sha }}"
+          data["access_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}"
+          data["secret_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}"
+          data["ami_name"] = f"whist-ami-${{ inputs.branch }}-${{ github.sha }}-{date_str}"
+
+          # List all AWS regions we support
+          supported_aws_regions_prod = [
+            "us-east-1",
+            "us-east-2",
+            "us-west-1",
+            "us-west-2",
+            "ca-central-1",
+            "sa-east-1",
+            "eu-north-1",
+            "eu-south-1",
+            "eu-west-1",
+            "eu-west-2",
+            "eu-west-3",
+            "eu-central-1",
+            "me-south-1",
+            "ap-east-1",
+            "ap-south-1",
+            "ap-southeast-1",
+            "ap-southeast-2",
+            "ap-southeast-3",
+            "ap-northeast-1",
+            "ap-northeast-2",
+            "ap-northeast-3",
+            "af-south-1",
+          ]
+
+          # For internal environments (dev, staging), we only clone our new AMI to us-east-1 and us-west-1, to save on
+          # costs since we don't have/need test users in other regions.
+          supported_aws_regions_dev = ["us-east-1", "us-west-1"]
+          supported_aws_regions_staging = supported_aws_regions_dev
+
+          data["mandelbox_logz_shipping_token"] = "${{ secrets[format('LOGZ_SHIPPING_TOKEN_{0}', inputs.branch)] }}"
+          data["destination_regions"] = supported_aws_regions_${{ inputs.branch }}
+
+          # Packer isn't able to loop over AWS Regions by itself. To work around this, we need to loop over all AWS regions
+          # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
+          # regions). We could eventually also manually loop over availability zones, but this is probably not necessary as
+          # Packer will attempt to autoassign the most optimal availibity zone for the Packer instance.
+          for aws_region in supported_aws_regions:
+            data["initial_region"] = aws_region
+
+            # Write the generated Packer variables to a file
+            fp = open("packer_vars.json", "w")
+            json.dump(data, fp)
+            fp.close()
+
+            # Display file content, for debugging purposes
+            subprocess.run("cat packer_vars.json && echo '\n\n'", shell=True)
+
+            # Validate the Packer variables file for syntax errors
+            subprocess.run("packer validate -var-file=packer_vars.json ami_config.pkr.hcl && echo '\n\n'", shell=True)
+
+            # Generate AMIs via Packer
+            # Stdout will be shared with the subprocess so that we can see what is happening
+            # If you need to debug Packer, add `PACKER_LOG=1` before `packer build ...` in the subprocess.run command
+            subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+
+            # If Packer succeeds, it will create `manifest.json`, which is our cue to stop trying other regions
+            if os.path.exists("manifest.json"):
+              print("Packer succeeded, exiting AWS Regions zones loop...")
+              break
+
+          # Assert that `manifest.json` exists after looping over all AWS Regions to fail the workflow in the event that
+          # we couldn't get capacity in any of the AWS regions
+          assert os.path.exists("manifest.json")
+
+          # Save Packer output to a JSON, to use for creating new instances with the newly created AMI
+          fp = open("manifest.json", "r")
+          data = json.load(fp)
+          fp.close()
+          print("Printing Packer output: " + str(data))
+
+          # Extract relevant data for creating new instances with this AMI
+          new_ami_ids = data["builds"][0]["artifact_id"]
+          region_ami_pairs = new_ami_ids.split(",")
+
+          REGION_TO_AMI_MAP = dict()
+          for region_ami_pair in region_ami_pairs:
+            region_name, ami = region_ami_pair.split(":")
+            REGION_TO_AMI_MAP[region_name] = ami
+
+          # export REGION_TO_AMI_MAP
+          # the .replace(...) makes all occurrences of a double quote " be prefixed by a \
+          # it is best to explain via example:
+          # >>> data = {'key': "value"} # tricky example because we have single and double quotes
+          # >>> print(json.dumps(data).replace('"', '\\"'))
+          # {\"key\": \"val'ue\"} # this is saved as an output
+          # LATER, when we need to use this output
+          # >>> data = json.loads("{{ OUTPUT }}") # OUTPUT expands to {\"key\": \"value\"}
+          # >>> print(data)
+          # {'key': "value"}
+          # if I did not add the \, then the json library would get confused by trying to read this:
+          # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
+          region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\\"')
+
+          print(f"Region to AMI map is set to {region_to_ami_map_str}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+            out.write(f"region_to_ami_map={region_to_ami_map_str}\n")
+
+      ##########################################################################################
+      ############################# Stage 3 - Slack Notifications ##############################
+
+      # Notify Slack after building and deploying the Whist AMI to all supported AWS regions.
+      - name: Notify Slack on Job Successs
+        if: ${{ inputs.publish }}
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          TITLE = ":package: AMIs Deployed :package:"
+          BODY = "AMIs deployed to all supported AWS regions on branch: `${{ inputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', inputs.branch)] }}"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
+
+      - name: Notify Slack on Job Error
+        if: failure()
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy AMIs in the `amis-publish-aws` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', inputs.branch)] }}"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
