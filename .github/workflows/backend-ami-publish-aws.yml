@@ -6,9 +6,6 @@ on:
       branch:
         required: true
         type: string
-      release_version:
-        required: true
-        type: string
       publish:
         required: false
         default: false
