@@ -148,7 +148,9 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
 
     try:
-        respobj = requests.get(url=url, params=development_args, verify=tls_verification, timeout=10)
+        respobj = requests.get(
+            url=url, params=development_args, verify=tls_verification, timeout=10
+        )
         respobj.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"host service returned error: {e}")
