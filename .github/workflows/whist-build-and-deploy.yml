@@ -383,7 +383,7 @@ jobs:
     name: "AMIs: Publish to AWS"
     concurrency: amis-publish-aws-${{ github.ref }}
     needs: [whist-publish-build-config, terraform-deploy]
-    uses: ./.github/workflows/backend-amis-publish-aws.yml
+    uses: ./.github/workflows/backend-ami-publish-aws.yml
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
