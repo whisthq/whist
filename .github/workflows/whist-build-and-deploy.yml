@@ -769,11 +769,12 @@ jobs:
             NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
 
             # store NEW_MICRO in GITHUB_ENV to push to GraphQL API, and reset STAGING_RC and DEV_RC to 0
+            # The spacing looks weird because the written file shouldn't respect the if-block indentation.
             cat >> $GITHUB_OUTPUT << EOF
-            new_micro_version=${NEW_MICRO}
-            new_staging_rc_version=0
-            new_dev_rc_version=0
-            EOF
+          new_micro_version=${NEW_MICRO}
+          new_staging_rc_version=0
+          new_dev_rc_version=0
+          EOF
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
             echo 'Using staging configuration...'
 
