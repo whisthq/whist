@@ -76,12 +76,16 @@ func mandelboxInfoHandler(w http.ResponseWriter, r *http.Request, queue chan<- h
 		return
 	}
 
+	var kioskMode, loadExtension, localClient bool
+
 	// Parse the query parameters for localdev. Since these values only really affect
 	// local development, we ignore any errors parsing them.
 	query := r.URL.Query()
-	kioskMode, _ := strconv.ParseBool(query["kiosk_mode"][0])
-	loadExtension, _ := strconv.ParseBool(query["load_extension"][0])
-	localClient, _ := strconv.ParseBool(query["local_client"][0])
+	if len(query) != 0 {
+		kioskMode, _ = strconv.ParseBool(query.Get("kiosk_mode"))
+		loadExtension, _ = strconv.ParseBool(query.Get("load_extension"))
+		localClient, _ = strconv.ParseBool(query.Get("local_client"))
+	}
 
 	reqdata := httputils.MandelboxInfoRequest{
 		MandelboxID:   types.MandelboxID(mandelboxID),
