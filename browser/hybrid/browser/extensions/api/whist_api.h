@@ -57,6 +57,16 @@ class WhistGetUserLocaleFunction : public ExtensionFunction {
   ResponseAction Run() override;
 };
 
+class WhistIsGPUCommandStreamingFunction : public ExtensionFunction {
+ public:
+  DECLARE_EXTENSION_FUNCTION("whist.isGPUCommandStreaming", UNKNOWN)
+
+ protected:
+  ~WhistIsGPUCommandStreamingFunction() override {}
+
+  ResponseAction Run() override;
+};
+
 }  // namespace api
 }  // namespace extensions
 

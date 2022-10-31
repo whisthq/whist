@@ -10,6 +10,7 @@
 #include <string>
 #include <locale.h>
 
+#include "base/command_line.h"
 #include "base/environment.h"
 #include "brave/common/extensions/api/whist.h"
 #include "brave/common/pref_names.h"
@@ -19,6 +20,7 @@
 #include "chrome/browser/ui/browser.h"
 #include "components/prefs/pref_service.h"
 #include "extensions/browser/event_router.h"
+#include "gpu/command_buffer/service/gpu_switches.h"
 
 #include "whist_api_native.h"
 
@@ -79,6 +81,11 @@ ExtensionFunction::ResponseAction WhistGetUserLocaleFunction::Run() {
 #endif
 
   return RespondNow(OneArgument(base::Value(std::move(locale_dict))));
+}
+
+ExtensionFunction::ResponseAction WhistIsGPUCommandStreamingFunction::Run() {
+  const base::CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
+  return RespondNow(OneArgument(base::Value(command_line.HasSwitch(switches::kEnableGpuCommandStreaming))));
 }
 
 }  // namespace api
