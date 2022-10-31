@@ -114,6 +114,25 @@
             ]
           }
         ]
+      },
+      {
+        "name": "isGPUCommandStreaming",
+        "type": "function",
+        "description": "Get whether the GPU command streaming is enabled",
+        "parameters": [
+          {
+            "name": "callback",
+            "type": "function",
+            "description": "Function called when the GPU command streaming mode is fetched",
+            "parameters": [
+              {
+                "name": "isEnabled",
+                "type": "boolean",
+                "description": "Returns whether the GPU command streaming is enabled"
+              }
+            ]
+          }
+        ]
       }
     ]
   }

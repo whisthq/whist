@@ -51,7 +51,7 @@ WhistServerState server_state;
 volatile bool connected = false;
 
 static bool enable_gpu_command_streaming = false;
-COMMAND_LINE_BOOL_OPTION(enable_gpu_command_streaming, 0, "--enable-gpu-command-streaming",
+COMMAND_LINE_BOOL_OPTION(enable_gpu_command_streaming, 0, "enable-gpu-command-streaming",
                          "Set whether to enable GPU command(Skia) streaming")
 
 /*
