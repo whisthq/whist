@@ -326,17 +326,17 @@ jobs:
         uses: hashicorp/setup-terraform@v2
 
       - name: Initialize Terraform
-        working-directory: backend/infrastructure
-        run: cd "$GITHUB_REF_NAME" && terraform init -input=false
+        working-directory: backend/infrastructure/${{ needs.whist-publish-build-config.outputs.branch }}
+        run: terraform init -input=false
 
       - name: Terraform Plan
-        working-directory: backend/infrastructure
-        run: cd "$GITHUB_REF_NAME" && terraform plan -input=false -out=tfplan
+        working-directory: backend/infrastructure/${{ needs.whist-publish-build-config.outputs.branch }}
+        run: terraform plan -input=false -out=tfplan
 
       - name: Terraform Apply
         if: needs.whist-publish-build-config.outputs.publish == 'true'
-        working-directory: backend/infrastructure
-        run: cd "$GITHUB_REF_NAME" && terraform apply -input=false -auto-approve tfplan
+        working-directory: backend/infrastructure/${{ needs.whist-publish-build-config.outputs.branch }}
+        run: terraform apply -input=false -auto-approve tfplan
 
       - name: Notify Slack on Successful Terraform Apply
         if: needs.whist-publish-build-config.outputs.publish == 'true'
