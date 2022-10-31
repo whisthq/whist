@@ -14,7 +14,8 @@ on:
         default: false
         type: boolean
     outputs:
-      region_to_ami_map: ${{ jobs.main.outputs.region_to_ami_map }}
+      region_to_ami_map:
+        value: ${{ jobs.main.outputs.region_to_ami_map }}
     secrets:
       GHA_USERNAME:
         required: true
