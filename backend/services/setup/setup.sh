@@ -5,33 +5,33 @@ set -Eeuo pipefail
 # Setup local database and Hasura servers for local scaling service testing.
 
 function usage() {
-    cat <<USAGE
+  cat <<USAGE
 
     Usage: $0 [--config]
 
     Options:
-        --config:  Setup the configuration database for local testing and development. Useful for services that 
+        --config:  Setup the configuration database for local testing and development. Useful for services that
                    interact with the config db. Note that this requires login to a Heroku account.
 USAGE
-    exit 1
+  exit 1
 }
 
 USE_CONFIG_DB=false
 
 for arg in "$@"; do
-    case $arg in
+  case $arg in
     --config)
-        USE_CONFIG_DB=true
-        ;;
+      USE_CONFIG_DB=true
+      ;;
     -h | --help)
-        usage
-        ;;
+      usage
+      ;;
     *)
-        usage
-        exit 1
-        ;;
-    esac
-    shift
+      usage
+      exit 1
+      ;;
+  esac
+  shift
 done
 
 # add_database_hasura will add the database given by the arguments
@@ -101,29 +101,6 @@ DOCKER_CONFIG_PGSTRING="postgres://postgres:whistpass@postgres-config:5432/postg
 LOCAL_WHIST_URL="http://localhost:8080/v1/metadata"
 LOCAL_CONFIG_URL="http://localhost:8082/v1/metadata"
 
-
-if [[ $USE_CONFIG_DB == true ]]; then
-# First pull the config schema because its not tracked in the codebase.
-echo "Pulling config database schema..."
-DEV_CONFIG_DATABASE=$(heroku config:get HEROKU_POSTGRESQL_MAROON_URL -a whist-dev-scaling-service)
-docker run --rm postgres pg_dump --no-owner --no-privileges --schema-only "$DEV_CONFIG_DATABASE" > config_schema.sql
-docker run --rm --network=setup_default -i postgres psql "$LOCAL_CONFIG_PGSTRING" < config_schema.sql
-echo "Populating config database..."
-docker run --rm --network=setup_default -i postgres psql "$LOCAL_CONFIG_PGSTRING" <<EOF
-\x
-INSERT INTO dev VALUES
-    ('DESIRED_FREE_MANDELBOXES_US_EAST_1', '2'),
-    ('ENABLED_REGIONS', '["us-east-1"]'),
-    ('MANDELBOX_LIMIT_PER_USER', '3');
-
-INSERT INTO desktop_app_version(id, major, minor, micro, dev_rc, staging_rc, dev_commit_hash, staging_commit_hash, prod_commit_hash)
-    VALUES
-        (1, 3, 0, 0, 0, 0, 'dummy_commit_hash', 'dummy_commit_hash', 'dummy_commit_hash');
-EOF
-echo "Cleaning up..."
-rm config_schema.sql
-fi
-
 # Start Hasura and Postgres databases.
 docker-compose up -d
 
@@ -134,6 +111,28 @@ wait
 
 echo "Setting up local databases..."
 docker run --rm --network=setup_default -i postgres psql "$LOCAL_WHIST_PGSTRING" < ../../database/schema.sql
+
+if [[ $USE_CONFIG_DB == true ]]; then
+  # First pull the config schema because its not tracked in the codebase.
+  echo "Pulling config database schema..."
+  DEV_CONFIG_DATABASE=$(heroku config:get HEROKU_POSTGRESQL_MAROON_URL -a whist-dev-scaling-service)
+  docker run --rm postgres pg_dump --no-owner --no-privileges --schema-only "$DEV_CONFIG_DATABASE" > config_schema.sql
+  docker run --rm --network=setup_default -i postgres psql "$LOCAL_CONFIG_PGSTRING" < config_schema.sql
+  echo "Populating config database..."
+  docker run --rm --network=setup_default -i postgres psql "$LOCAL_CONFIG_PGSTRING" <<EOF
+\x
+INSERT INTO dev VALUES
+    ('DESIRED_FREE_MANDELBOXES_US_EAST_1', '2'),
+    ('ENABLED_REGIONS', '["us-east-1"]'),
+    ('MANDELBOX_LIMIT_PER_USER', '3');
+
+INSERT INTO desktop_app_version(id, major, minor, micro, dev_rc, staging_rc, dev_commit_hash, staging_commit_hash, prod_commit_hash)
+    VALUES
+        (1, 3, 0, 0, 0, 0, 'dummy_commit_hash', 'dummy_commit_hash', 'dummy_commit_hash');
+EOF
+  echo "Cleaning up..."
+  rm config_schema.sql
+fi
 
 echo "Adding databases to Hasura servers..."
 add_database_hasura "$LOCAL_WHIST_URL" "$DOCKER_WHIST_PGSTRING"

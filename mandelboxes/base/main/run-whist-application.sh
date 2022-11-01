@@ -24,7 +24,7 @@ echo $$ > $WHIST_APPLICATION_PID_FILE
 # Wait for the PID file to have been removed
 block-while-file-exists.sh $WHIST_APPLICATION_PID_FILE >&1
 
-# Set the client OS and system languages. For now, system languages will always be en_US until we can 
+# Set the client OS and system languages. For now, system languages will always be en_US until we can
 # implement restart-less system language changes.
 export LANGUAGE=$SYSTEM_LANGUAGES
 export CLIENT_OS=$CLIENT_OS
