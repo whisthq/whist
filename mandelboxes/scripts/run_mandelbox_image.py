@@ -4,7 +4,6 @@
 
 import argparse
 from collections import namedtuple
-import json
 import os
 import sys
 import uuid
