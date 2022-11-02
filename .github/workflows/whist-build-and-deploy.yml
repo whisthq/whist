@@ -72,72 +72,46 @@ jobs:
         if: ${{ github.event_name == 'push' || github.event_name == 'schedule' || contains(fromJSON('["", "dev", "staging", "prod"]'), inputs.target) }}
         uses: ./.github/actions/set-environment
         with:
-          # Deploy the git ref corresponding to the event that
-          # triggered the workflow unless the event that triggered the
-          # workflow was a manual workflow_dispatch event. In such a
-          # case, the branch specified by the target input should be
-          # deployed.
+          # If workflow_dispatch, use the specified target (dev/staging/prod).
+          # Else, assume the triggering branch is dev/staging/prod and use that
+          # branch name.
           ref: ${{ inputs.target || github.ref }}
 
       - name: Set backend services URL based on Git Branch (prod, staging, dev)
         id: set-backend-services-urls
         run: |
-          # Grab the name of the deployment environment from set-deploy-environment
-          BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
-          else
-            SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
-          fi
+          SCALING_SERVICE_URL=https://${{ steps.set-deploy-environment.outputs.environment }}-scaling-service.whist.com
           echo "scaling_service_url is set to: $SCALING_SERVICE_URL"
           echo "scaling_service_url=$SCALING_SERVICE_URL" >> $GITHUB_OUTPUT
 
       - name: Detect Whether to Publish the Job(s) or Not
         id: detect-publish
+        shell: python3 {0}
         run: |
-          trap 'echo "::error::Command '\''$BASH_COMMAND'\'' exited with code $?"' ERR
-          ref="${{ github.ref }}"
-          target="${{ steps.set-deploy-environment.outputs.environment }}"
-          case "$ref" in
-            *prod|*staging|*dev)
-              # Get the short branch name for dev, staging, and
-              # prod by stripping away any leading characters. For
-              # example, "/refs/heads/dev" becomes "dev".
-              branch="${ref##*/}" ;;
-            *)
-                branch="$ref" ;;
-          esac
+          import os, sys
 
-          # We are only allowed to deploy a branch to its corresponding
-          # target deployment environment. In other words, we can only
-          # deploy dev to dev, staging to staging, and prod to prod.
-          # Feature branches are not deployable.
-          deployable="$([ "$branch" != "$target" ] || echo "1")"
+          # This resolves to True if not a workflow_dispatch event.
+          attempt_to_publish = "${{ inputs.dry-run }}" != "true"
 
-          if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "schedule" ]]; then
-            # If the workflow was triggered by a push or schedule event, the
-            # dry-run input is not available. We can assert that the
-            # push event was triggered on either dev, staging, or
-            # prod, and then set the dry run flag to false.
-            [[ "$branch" =~ dev|staging|prod ]]
-            dry_run="false"
-          else
-            dry_run="${{ inputs.dry-run }}"
+          # If not a dry run, we must confirm that this is a valid
+          # deployment target. In particular, we only want to deploy
+          # dev => dev, staging => staging, and prod => prod.
+          if not is_dry_run:
+            if "${{ steps.set-deploy-environment.outputs.environment }}" != "${{ github.ref }}".split("/")[-1]:
+              sys.exit("Invalid deployment target: attempting to deploy to '${{ steps.set-deploy-environment.outputs.environment }}' from '${{ github.ref }}'.")
 
-            # If we're trying to perform a real deployment, but the
-            # current configuration is not deployable, abort.
-            test "$deployable" -o "$dry_run" != "false"
-          fi
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+            out.write(f"publish={publish}\n")
 
-          # Publish the job outputs iff this is not a dry run and
-          # the git branch that we're deploying matches the target
-          # deployment environment.
-          publish="$([ "$deployable" -a "$dry_run" = "false" ] && echo "true" || echo "false")"
-
-          echo "Publish is set to: $publish"
-          echo "publish=$publish" >> $GITHUB_OUTPUT
+      - name: Create Sentry Release
+        if: ${{ steps.detect-publish.outputs.publish }}
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: whist
+          SENTRY_PROJECT: host-service mandelboxes protocol scaling-service
+        with:
+          environment: ${{ steps.set-deploy-environment.outputs.environment }}
 
       - name: Notify Slack on Job Error
         if: failure()
@@ -147,100 +121,6 @@ jobs:
           BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `whist-publish-build-config` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', steps.set-deploy-environment.outputs.branch)] }}"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
-
-  #######################################################################################
-  #######################################################################################
-
-  # Sentry Release: Create & Deploy a Sentry release for each of our projects to Sentry
-  # Create and deploy a Sentry release for each of the Whist project with an associated
-  # Sentry project to the Sentry console. This helps tag commits for debugging.
-  # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
-  sentry-deploy-sentry-releases:
-    name: "Deploy Sentry Release for: ${{ matrix.project.name }}"
-    runs-on: ubuntu-20.04
-    needs: [whist-publish-build-config]
-    outputs:
-      sentry-deploy-environment: ${{ steps.set-deploy-environment.outputs.environment }}
-    env:
-      SENTRY_ORG: whist
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-
-    strategy:
-      matrix:
-        project:
-          - name: Host Service
-            sentry-project: host-service
-          - name: Mandelboxes
-            sentry-project: mandelboxes
-          - name: Protocol (macOS, Windows, Linux)
-            sentry-project: protocol
-          - name: Scaling Service
-            sentry-project: scaling-service
-
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-
-      - name: Set Deploy Environment
-        id: set-deploy-environment
-        uses: ./.github/actions/set-environment
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Setup Python-based notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh false
-
-      - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
-        run: git remote set-url origin https://github.com/whisthq/whist
-
-      - name: Create New Sentry Release
-        env:
-          SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.set-deploy-environment.outputs.environment }}
-        run: |
-          # Install Sentry CLI
-          curl -sL https://sentry.io/get-cli/ | bash
-
-          # Create new Sentry release
-          export SENTRY_RELEASE=$(sentry-cli releases propose-version)
-          sentry-cli releases new $SENTRY_RELEASE --project ${{ matrix.project.sentry-project }}
-          sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
-          sentry-cli releases finalize $SENTRY_RELEASE
-
-          # Create new deploy for this Sentry release
-          sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
-
-      - name: Notify Slack on Failure
-        if: failure()
-        shell: python3 {0}
-        run: |
-          # Retrieve Slack webhook
-          from notifications.slack_bot import slack_post
-          BODY = f"@releases :rotating_light: Failed to deploy `${{ matrix.project.sentry-project }}` Sentry release on branch: `${{ steps.set-deploy-environment.outputs.environment }}`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', steps.set-deploy-environment.outputs.environment)] }}"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
-
-  sentry-deploy-sentry-releases-notify-slack:
-    name: Notify Slack
-    runs-on: ubuntu-20.04
-    needs: [whist-publish-build-config, sentry-deploy-sentry-releases]
-    if: success()
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-
-      - name: Setup Python-based notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh false
-
-      - name: Notify Slack on Success
-        shell: python3 {0}
-        run: |
-          from notifications.slack_bot import slack_post
-          TITLE = ":sentry: Sentry Releases Deployed :sentry:"
-          BODY = f"Sentry Releases for Whist Sentry Projects `host-service`, `mandelboxes`, `protocol`, and `scaling-service` deployed to Sentry on branch: `${{ needs.sentry-deploy-sentry-releases.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.sentry-deploy-sentry-releases.outputs.sentry-deploy-environment)] }}"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
   #######################################################################################
   #######################################################################################
@@ -572,24 +452,17 @@ jobs:
 
           # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
           if [[ "$BRANCH_NAME" == "prod" ]]; then
-            curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ needs.whist-browser-retrieve-version-number.outputs.new_micro_version }}, staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
-            https://config-database.whist.com/v1/graphql
+            QUERY="{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ needs.whist-browser-retrieve-version-number.outputs.new_micro_version }}, staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
-            curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
-            https://config-database.whist.com/v1/graphql
+            QUERY="{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
           elif [[ "$BRANCH_NAME" == "dev" ]]; then
-            curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
-            https://config-database.whist.com/v1/graphql
+            QUERY="{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
           fi
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+          --data "$QUERY" \
+          https://config-database.whist.com/v1/graphql
 
       - name: Notify Slack on Publishing Whist Desktop Browser Success
         shell: python3 {0}
@@ -716,16 +589,10 @@ jobs:
 
       - name: Notify Slack on Database Migration Performed
         shell: python3 {0}
+        # This should be set by backend/services/scaling-service/deploy.sh
+        if: env.DB_MIGRATION_PERFORMED == 'true'
         run: |
-          import os
-          import sys
-          import urllib.parse
           from notifications.slack_bot import slack_post
-
-          # This should be set by backend/services/scaling-service/deploy.sh
-          if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
-            sys.exit(0)
-
           TITLE = ":construction: Database Migration Performed :construction:"
           BODY = f"Database Schema Migration performed on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           SLACK_WEBHOOK = "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
@@ -765,7 +632,6 @@ jobs:
       [
         whist-publish-build-config,
         auth0-deploy-rules,
-        sentry-deploy-sentry-releases,
         terraform-deploy,
         mandelboxes-publish-ghcr,
         amis-publish-aws,
