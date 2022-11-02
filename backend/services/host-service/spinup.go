@@ -278,8 +278,8 @@ func SpinUpMandelbox(globalCtx context.Context, goroutineTracker *sync.WaitGroup
 
 		// Server protocol waits forever for a client connection and waits for 30
 		// seconds for another connection after the first successful connection
-		// has been disconnected. However, in localdev we default to an infinite 
-		// timeout to enable easier testing. In localdev environments, we can 
+		// has been disconnected. However, in localdev we default to an infinite
+		// timeout to enable easier testing. In localdev environments, we can
 		// override this using an environment variable.
 		//
 		// Since the server protocol only starts after the user configs are loaded,
@@ -343,20 +343,14 @@ func SpinUpMandelbox(globalCtx context.Context, goroutineTracker *sync.WaitGroup
 		return mandelbox, err
 	}
 
-	// Don't wait for whist-application to start up in local environment. We do
-	// this because in local environments, we want to provide the developer a
-	// shell into the container immediately, not conditional on everything
-	// starting up properly.
-	if !metadata.IsLocalEnv() {
-		logger.Info("SpinUpMandelbox(): Waiting for mandelbox whist-application to start up...")
-		err = utils.WaitForFileCreation(path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings"), "done_sleeping_until_X_clients", time.Second*20, nil)
-		if err != nil {
-			incrementErrorRate()
-			return mandelbox, utils.MakeError("error waiting for mandelbox whist-application to start: %s", err)
-		}
-
-		logger.Info("SpinUpMandelbox(): Finished waiting for mandelbox whist application to start up")
+	logger.Info("SpinUpMandelbox(): Waiting for mandelbox whist-application to start up...")
+	err = utils.WaitForFileCreation(path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings"), "done_sleeping_until_X_clients", time.Second*20, nil)
+	if err != nil {
+		incrementErrorRate()
+		return mandelbox, utils.MakeError("error waiting for mandelbox whist-application to start: %s", err)
 	}
+
+	logger.Info("SpinUpMandelbox(): Finished waiting for mandelbox whist application to start up")
 
 	// Mark mandelbox creation as successful, preventing cleanup on function
 	// termination.
