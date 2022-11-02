@@ -1784,7 +1784,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
             udp_packet->udp_whist_segment_data.seq=g_seq_cnt++;
 
-            g_bytes_sent_so_far+= udp_packet_size; //use this size for simplicity
+            g_bytes_sent_so_far+= udp_packet->udp_whist_segment_data.segment_size; //use this size for simplicity
             udp_packet->udp_whist_segment_data.bytes_so_far= g_bytes_sent_so_far;
             udp_packet->udp_whist_segment_data.current_target_bps = context->current_target_video_bitrate;
         }

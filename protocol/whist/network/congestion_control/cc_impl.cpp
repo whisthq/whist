@@ -97,7 +97,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       {
         auto & packet = input.packets[0];
 
-        double window_size_ms=500;
+        double window_size_ms=200;
 
         packet_history.push_back(input.packets[0]);
         while(packet_history.back().depature_time_ms - packet_history.front().depature_time_ms > window_size_ms){
@@ -108,8 +108,10 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         for(int i=1;i<(int)packet_history.size();i++){
              target_sum+= packet_history[i].remote_target_bps/8.0 * (packet_history[i].depature_time_ms - packet_history[i-1].depature_time_ms)*0.001;
         }
-        fprintf(stderr,"<%f %f>\n", shoot_sum, target_sum);
+
         cc_shared_state.shoot_ratio_100 = shoot_sum/target_sum *100;
+
+        fprintf(stderr,"<%f %f %d %d %f>\n", shoot_sum, target_sum, (int)packet_history.size(), (int)(packet_history.back().depature_time_ms - packet_history.front().depature_time_ms), cc_shared_state.shoot_ratio_100);
 
         whist_plotter_insert_sample("shoot_ratio", get_timestamp_sec(), cc_shared_state.shoot_ratio_100);
       }
@@ -301,7 +303,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         int sec= (current_time - cc_shared_state.first_process_time).seconds();
         if(sec%10==0||sec%10==1)
         {
-          //output.bandwitdth_saturation = true;
+          output.bandwitdth_saturation = true;
           output.bandwitdth_saturation = false;
         }
         else output.bandwitdth_saturation = false;
