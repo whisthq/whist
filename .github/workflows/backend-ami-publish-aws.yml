@@ -1,4 +1,4 @@
-name: "Hybrid Browser: Publish to S3"
+name: "AMIs: Publish to AWS"
 
 on:
   workflow_call:
