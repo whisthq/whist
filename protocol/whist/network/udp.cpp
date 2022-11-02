@@ -629,6 +629,10 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             input.packets[0].depature_time_ms= (d_relative/1000.0);
             input.packets[0].packet_size = packet_size;
             input.packets[0].group_id= (long long)group_id;
+
+            input.packets[0].seq= segment->seq;
+            input.packets[0].bytes_so_far= segment->bytes_so_far;
+            input.packets[0].remote_target_bps = segment->current_target_bps;
             FATAL_ASSERT(group_id>=0);
             FATAL_ASSERT(packet_size>0);
 
@@ -1781,7 +1785,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
             udp_packet->udp_whist_segment_data.seq=g_seq_cnt++;
 
             g_bytes_sent_so_far+= udp_packet_size; //use this size for simplicity
-            udp_packet->udp_whist_segment_data.kbytes_so_far= g_bytes_sent_so_far /1000;
+            udp_packet->udp_whist_segment_data.bytes_so_far= g_bytes_sent_so_far;
             udp_packet->udp_whist_segment_data.current_target_bps = context->current_target_video_bitrate;
         }
     }

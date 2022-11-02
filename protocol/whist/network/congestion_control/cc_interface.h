@@ -16,6 +16,10 @@ struct PacketInfo
     int packet_size;
 
     long long group_id;
+
+    int seq;
+    long long bytes_so_far;
+    int remote_target_bps;
 };
 struct CCInput
 {

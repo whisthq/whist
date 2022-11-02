@@ -1,3 +1,4 @@
+#include <deque>
 #include <optional>
 #include "api/transport/network_types.h"
 #include "api/units/data_rate.h"
@@ -17,6 +18,7 @@ extern "C"
 #include <cstddef>
 #include <iostream>
 #include <memory>
+#include <queue>
 using namespace std;
 #include "modules/congestion_controller/goog_cc/trendline_estimator.h"
 #include "modules/congestion_controller/goog_cc/inter_arrival_delta.h"
@@ -50,6 +52,10 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
     //const int rtt_window_size=2;
     //SlidingWindowStat rtt_stat;
 
+    deque<PacketInfo> packet_history;
+
+    int last_seq=0;
+
     public:
     CongestionCongrollerImpl()
     {
@@ -80,6 +86,35 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
   {
       webrtc::Timestamp current_time= webrtc::Timestamp::Millis( input.current_time_ms);
       cc_shared_state.current_time=current_time;
+      /*
+      ========================================
+      maintain packet history and shoot_ratio
+      ========================================
+      */
+
+      RTC_CHECK(input.packets.size()==1);
+      if(input.packets[0].seq > last_seq)
+      {
+        auto & packet = input.packets[0];
+
+        double window_size_ms=500;
+
+        packet_history.push_back(input.packets[0]);
+        while(packet_history.back().depature_time_ms - packet_history.front().depature_time_ms > window_size_ms){
+          packet_history.pop_front();
+        }
+        double shoot_sum= (packet_history.back().bytes_so_far - packet_history[0].bytes_so_far);
+        double target_sum= 1;
+        for(int i=1;i<(int)packet_history.size();i++){
+             target_sum+= packet_history[i].remote_target_bps/8.0 * (packet_history[i].depature_time_ms - packet_history[i-1].depature_time_ms)*0.001;
+        }
+        fprintf(stderr,"<%f %f>\n", shoot_sum, target_sum);
+        cc_shared_state.shoot_ratio_100 = shoot_sum/target_sum *100;
+
+        whist_plotter_insert_sample("shoot_ratio", get_timestamp_sec(), cc_shared_state.shoot_ratio_100);
+      }
+
+
       /*
       ========================================
       do first time handling, mainly related to start bitrate
@@ -265,7 +300,10 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       if(current_time - cc_shared_state.first_process_time > webrtc::TimeDelta::Seconds(10)){
         int sec= (current_time - cc_shared_state.first_process_time).seconds();
         if(sec%10==0||sec%10==1)
-          output.bandwitdth_saturation = true;
+        {
+          //output.bandwitdth_saturation = true;
+          output.bandwitdth_saturation = false;
+        }
         else output.bandwitdth_saturation = false;
       } else{
         output.bandwitdth_saturation = true;
@@ -273,7 +311,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
 
       whist_plotter_insert_sample("saturate", get_timestamp_sec(), output.bandwitdth_saturation *-5);
 
-      output.bandwitdth_saturation = true;
+      //output.bandwitdth_saturation = true;
       return output;
   }
 };

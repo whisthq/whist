@@ -32,6 +32,9 @@ struct CCSharedState {
 
     double loss_ratio=0;
 
+    double shoot_ratio_100=0;
+    double shoot_rate=0;
+
     bool in_slow_increase(){
         return est_cnt_>=2;
     }
