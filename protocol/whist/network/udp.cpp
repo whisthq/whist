@@ -255,6 +255,8 @@ typedef struct {
     void* fec_controller;
     void* congestion_controller;
     bool first_time;
+
+    std::atomic<int> current_target_video_bitrate;
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -544,7 +546,7 @@ static void send_desired_network_settings(UDPContext* context) {
 }
 
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
-                                   timestamp_us arrival_time, int group_id,int packet_size, long long kbytes_so_far) {
+                                   timestamp_us arrival_time, int group_id,int packet_size, long long kbytes_so_far, int remote_target_video_bitrate) {
     whist_lock_mutex(context->congestion_control_mutex);
 
     static timestamp_us d_first=0;
@@ -571,6 +573,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0  -10);
             whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0- 20);
             whist_plotter_insert_sample("kbytes_so_far", current_time, kbytes_so_far);
+            whist_plotter_insert_sample("remote_target", current_time, remote_target_video_bitrate);
             last_plot_time_ms = current_time_ms;
         }
     }
@@ -809,13 +812,13 @@ static bool udp_update(void* raw_context) {
                     if (!wcc_v2&&udp_packet.group_id >= context->curr_group_id) {
                         udp_congestion_control(context,
                                                udp_packet.udp_whist_segment_data.departure_time,
-                                               arrival_time, udp_packet.group_id, network_payload_size, udp_packet.udp_whist_segment_data.kbytes_so_far);
+                                               arrival_time, udp_packet.group_id, network_payload_size, udp_packet.udp_whist_segment_data.kbytes_so_far, udp_packet.udp_whist_segment_data.current_target_bps);
                     }
                 }
                 if (wcc_v2&&udp_packet.group_id >= context->curr_group_id) { //feed everything regardless of nack/dup
                     udp_congestion_control(context,
                                            udp_packet.udp_whist_segment_data.departure_time,
-                                           arrival_time, udp_packet.group_id, network_payload_size, udp_packet.udp_whist_segment_data.kbytes_so_far);
+                                           arrival_time, udp_packet.group_id, network_payload_size, udp_packet.udp_whist_segment_data.kbytes_so_far, udp_packet.udp_whist_segment_data.current_target_bps);
                 }
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
@@ -1778,6 +1781,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
             g_bytes_sent_so_far+= udp_packet_size; //use this size for simplicity
             udp_packet->udp_whist_segment_data.kbytes_so_far= g_bytes_sent_so_far /1000;
+            udp_packet->udp_whist_segment_data.current_target_bps = context->current_target_video_bitrate;
         }
     }
 
@@ -2265,4 +2269,9 @@ size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }
 int udp_get_socket_queue_len(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
     return socket_get_queue_len(context->socket);
+}
+
+void udp_set_current_video_bitrate(void* raw_context, int bitrate) {
+    UDPContext* context = (UDPContext*)raw_context;
+    context->current_target_video_bitrate=bitrate;
 }

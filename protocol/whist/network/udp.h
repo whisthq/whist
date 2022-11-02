@@ -57,7 +57,7 @@ typedef struct {
     bool is_a_duplicate;
 
     int kbytes_so_far;
-    int current_targe_bps;
+    int current_target_bps;
 
     // Must be last, since only the first segment_size bytes will be sent
     char segment_data[MAX_PACKET_SEGMENT_SIZE];
@@ -232,6 +232,8 @@ size_t udp_packet_max_size(void);
  * @returns                        num of bytes queued in the udp socket
  */
 int udp_get_socket_queue_len(void* raw_context);
+
+void udp_set_current_video_bitrate(void* raw_context, int bitrate);
 /*
 ============================
 Private Functions. Exposed for the sake of unit testing only.

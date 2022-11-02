@@ -675,6 +675,7 @@ int32_t multithreaded_send_video(void* opaque) {
         }
 
         network_settings = udp_get_network_settings(&state->client->udp_context);
+        udp_set_current_video_bitrate(state->client->udp_context.context, network_settings.video_bitrate);
 
         int video_bitrate =
             network_settings.video_bitrate * (1.0 - network_settings.video_fec_ratio);
