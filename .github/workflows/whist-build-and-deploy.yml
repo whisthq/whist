@@ -91,17 +91,17 @@ jobs:
           import os, sys
 
           # This resolves to True if not a workflow_dispatch event.
-          attempt_to_publish = "${{ inputs.dry-run }}" != "true"
+          should_publish = "${{ inputs.dry-run }}" != "true"
 
           # If not a dry run, we must confirm that this is a valid
           # deployment target. In particular, we only want to deploy
           # dev => dev, staging => staging, and prod => prod.
-          if not is_dry_run:
+          if should_publish:
             if "${{ steps.set-deploy-environment.outputs.environment }}" != "${{ github.ref }}".split("/")[-1]:
               sys.exit("Invalid deployment target: attempting to deploy to '${{ steps.set-deploy-environment.outputs.environment }}' from '${{ github.ref }}'.")
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-            out.write(f"publish={publish}\n")
+            out.write(f"publish={should_publish}\n")
 
       - name: Create Sentry Release
         if: ${{ steps.detect-publish.outputs.publish }}
