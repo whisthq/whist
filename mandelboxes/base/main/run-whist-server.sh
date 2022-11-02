@@ -103,7 +103,8 @@ function cleanup {
   sudo shutdown now
 }
 
-if [ "$TIMEOUT" != "-1" ]; then
+# TODO: this needs to be adjusted since we'll have -1 in prod too
+if [ "$CONNECT_TIMEOUT" != "-1" || "$DISCONNECT_TIMEOUT" != "-1" ]; then
   # Make sure `cleanup` gets called on script exit except when TIMEOUT is -1, which
   # only occurs during local development. This timeout-setting logic is controlled
   # by spinup.go in the host-service.
