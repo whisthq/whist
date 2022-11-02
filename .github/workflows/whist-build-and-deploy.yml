@@ -118,18 +118,6 @@ jobs:
           environment: ${{ steps.set-deploy-environment.outputs.environment }}
           projects: host-service mandelboxes protocol scaling-service
 
-      - name: Debug Step
-        if: steps.detect-publish.outputs.publish == 'true'
-        run: |
-          echo "publish: ${{ steps.detect-publish.outputs.publish }}"
-          echo "This really should not be running."
-
-      - name: Other Debug Step
-        if: steps.detect-publish.outputs.publish == 'false'
-        run: |
-          echo "publish: ${{ steps.detect-publish.outputs.publish }}"
-          echo "This really should be running."
-
       - name: Notify Slack on Job Error
         if: failure()
         shell: python3 {0}

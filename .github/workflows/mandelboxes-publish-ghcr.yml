@@ -88,7 +88,7 @@ jobs:
 
       # We only deploy the browsers mandelboxes, other mandelboxes are for internal use only
       - name: Push mandelboxes
-        if: ${{ inputs.publish }}
+        if: inputs.publish
         working-directory: mandelboxes
         env:
           GH_USERNAME: ${{ secrets.GHA_USERNAME }}
@@ -100,7 +100,7 @@ jobs:
 
       # Notify Slack after building and deploying the Whist AMI to all supported AWS regions.
       - name: Notify Slack on Job Successs
-        if: ${{ inputs.publish }}
+        if: inputs.publish
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post

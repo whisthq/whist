@@ -81,7 +81,7 @@ jobs:
           echo "changed=$?" >> $GITHUB_OUTPUT
 
       - name: Copy New Core Go Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.services-diff.outputs.changed == true }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.services-diff.outputs.changed == true
         run: rm -rf docs/backend/services && cp -r whist/backend/services/build/docs docs/backend/services
 
       ##############################################################################
@@ -107,14 +107,14 @@ jobs:
           echo "changed=$?" >> $GITHUB_OUTPUT
 
       - name: Copy New Protocol Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.protocol-diff.outputs.changed == true }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.protocol-diff.outputs.changed == true
         run: rm -r docs/protocol && cp -r whist/protocol/build-docker/docs/html docs/protocol # Since the protocol is built inside a Docker container, the folder is build-docker
 
       ##############################################################################
       ################################# PUBLISH STEPS ##############################
 
       - name: Commit the Documentation Changes to whisthq/docs (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true) }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true)
         working-directory: docs
         run: |
           # Set the author of the commit in whisthq/docs to be Phil, since the GHA
@@ -142,7 +142,7 @@ jobs:
       ##############################################################################
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true) && failure() }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true) && failure()
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
@@ -151,7 +151,7 @@ jobs:
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
       - name: Notify Slack on Workflow Success (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true) && success() }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true) && success()
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post

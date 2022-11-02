@@ -265,7 +265,7 @@ jobs:
       # so any Packer instance over 45 minutes old has failed to delete and should be force-deleted
       # We only run Packer Builders on us-east-1
       - name: Kill All Packer Instances Older Than 45 Minutes
-        if: ${{ matrix.aws-region == 'us-east-1' }}
+        if: matrix.aws-region == 'us-east-1'
         run: aws-hashicorp-packer-reaper terminate --older-than 45m
 
       # This deletes all but the currently active deployment AMIs and the past 10 deployment AMIs,

@@ -139,7 +139,7 @@ jobs:
 
       # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
       - name: Tar libcrypto and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
@@ -163,7 +163,7 @@ jobs:
 
       # Only run once, as headers are identical on every OS
       - name: Tar OpenSSL headers and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && runner.os == 'Linux'}}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && runner.os == 'Linux'
         run: |
           # remove all .h.in unnecessary files
           find . -name "*.h.in" -type f -delete
@@ -179,17 +179,17 @@ jobs:
       ###################################################################################
 
       - name: Checkout whisthq/whist Git Repository
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure()
         uses: actions/checkout@v3
 
       - name: Setup Python-based notifications
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure()
         working-directory: .github/workflows/helpers
         shell: bash --noprofile --norc -eo pipefail {0}
         run: ./notifications/setup_notifications.sh
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure()
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
@@ -361,7 +361,7 @@ jobs:
 
       # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
       - name: Tar Sentry and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
@@ -385,7 +385,7 @@ jobs:
 
       # Only run once, as headers are identical on every OS
       - name: Tar Sentry headers and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && runner.os == 'Linux'}}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && runner.os == 'Linux'
         run: |
           # tar and upload the Sentry headers
           tar -zcvf ${{ env.headers-tar-name }} include
@@ -394,17 +394,17 @@ jobs:
       ###################################################################################
 
       - name: Checkout whisthq/whist Git Repository
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure()
         uses: actions/checkout@v3
 
       - name: Setup Python-based notifications
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure()
         working-directory: .github/workflows/helpers
         shell: bash --noprofile --norc -eo pipefail {0}
         run: ./notifications/setup_notifications.sh
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure()
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
@@ -418,7 +418,7 @@ jobs:
   notify-slack:
     name: Notify Slack
     needs: [build-and-publish-openssl, build-and-publish-sentry]
-    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success()
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Git Repository

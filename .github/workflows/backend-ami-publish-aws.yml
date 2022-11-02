@@ -113,7 +113,7 @@ jobs:
       # This spins up an AWS EC2 instance to create the AMI, and then deletes it
       # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
       - name: Generate Packer Configuration, Create New AMI, Update Region, and Update Appropriate Database
-        if: ${{ inputs.publish }}
+        if: inputs.publish
         id: build-new-amis
         working-directory: host-setup
         shell: python3 {0}
@@ -235,7 +235,7 @@ jobs:
 
       # Notify Slack after building and deploying the Whist AMI to all supported AWS regions.
       - name: Notify Slack on Job Successs
-        if: ${{ inputs.publish }}
+        if: inputs.publish
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
