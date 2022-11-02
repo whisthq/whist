@@ -543,10 +543,8 @@ static void send_desired_network_settings(UDPContext* context) {
 }
 
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
-                                   timestamp_us arrival_time, int group_id, WhistSegment *segment) {
+                                   timestamp_us arrival_time, int group_id, int packet_size,WhistSegment *segment) {
     whist_lock_mutex(context->congestion_control_mutex);
-
-    int packet_size= segment->segment_size;
 
     static timestamp_us d_first=0;
     static timestamp_us a_first=0;
@@ -807,6 +805,7 @@ static bool udp_update(void* raw_context) {
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
             if (packet_type == PACKET_VIDEO) {
+                int packet_size=UDPNETWORKPACKET_HEADER_SIZE + get_udp_packet_size(&udp_packet);
                 add_incoming_bits(context, arrival_time, network_payload_size * BITS_IN_BYTE);
                 if (!udp_packet.udp_whist_segment_data.is_a_nack &&
                     !udp_packet.udp_whist_segment_data.is_a_duplicate) {
@@ -816,13 +815,13 @@ static bool udp_update(void* raw_context) {
                     if (!wcc_v2&&udp_packet.group_id >= context->curr_group_id) {
                         udp_congestion_control(context,
                                                udp_packet.udp_whist_segment_data.departure_time,
-                                               arrival_time, udp_packet.group_id, &udp_packet.udp_whist_segment_data);
+                                               arrival_time, udp_packet.group_id, packet_size,&udp_packet.udp_whist_segment_data);
                     }
                 }
                 if (wcc_v2&&udp_packet.group_id >= context->curr_group_id) { //feed everything regardless of nack/dup
                     udp_congestion_control(context,
                                            udp_packet.udp_whist_segment_data.departure_time,
-                                           arrival_time, udp_packet.group_id, &udp_packet.udp_whist_segment_data);
+                                           arrival_time, udp_packet.group_id, packet_size,&udp_packet.udp_whist_segment_data);
                 }
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
@@ -1784,7 +1783,8 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
             udp_packet->udp_whist_segment_data.seq=g_seq_cnt++;
 
-            g_bytes_sent_so_far+= udp_packet->udp_whist_segment_data.segment_size; //use this size for simplicity
+            g_bytes_sent_so_far+= UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size;
+
             udp_packet->udp_whist_segment_data.bytes_so_far= g_bytes_sent_so_far;
             udp_packet->udp_whist_segment_data.current_target_bps = context->current_target_video_bitrate;
         }
@@ -1844,6 +1844,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         }
     }
 
+    FATAL_ASSERT(udp_network_packet.payload_size == udp_packet_size);
     // If encryption has added any extra bytes due to padding, then network throttler should be
     // called again to adjust for these extra bytes, so that the requested bitrate limit is not
     // exceeded.
