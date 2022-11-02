@@ -23,7 +23,8 @@ WHIST_MAPPINGS_DIR=/whist/resourceMappings/
 WHIST_LOGS_FOLDER=/var/log/whist
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
-TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
+CONNECT_TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/connect_timeout
+DISCONNECT_TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/disconnect_timeout
 SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 
@@ -69,11 +70,18 @@ if [ -f "$SENTRY_ENV_FILENAME" ] && [ "$LOCAL_CLIENT" == "false" ]; then
   OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
-# Send in timeout, if set
-if [ -f "$TIMEOUT_FILENAME" ]; then
-  TIMEOUT=$(cat $TIMEOUT_FILENAME)
-  export TIMEOUT
-  OPTIONS="$OPTIONS --timeout=$TIMEOUT"
+# Send in connection timeout, if set
+if [ -f "$CONNECT_TIMEOUT_FILENAME" ]; then
+  CONNECT_TIMEOUT=$(cat $CONNECT_TIMEOUT_FILENAME)
+  export CONNECT_TIMEOUT
+  OPTIONS="$OPTIONS --connect-timeout=$CONNECT_TIMEOUT"
+fi
+
+# Send in disconnection timeout, if set
+if [ -f "$DISCONNECT_TIMEOUT_FILENAME" ]; then
+  DISCONNECT_TIMEOUT=$(cat $DISCONNECT_TIMEOUT_FILENAME)
+  export DISCONNECT_TIMEOUT
+  OPTIONS="$OPTIONS --disconnect-timeout=$DISCONNECT_TIMEOUT"
 fi
 
 # Send in client session id, if set
