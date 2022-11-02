@@ -56,6 +56,7 @@ typedef struct {
     bool is_a_nack;
     bool is_a_duplicate;
 
+    int seq;
     int kbytes_so_far;
     int current_target_bps;
 

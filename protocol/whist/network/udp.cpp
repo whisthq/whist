@@ -80,9 +80,6 @@ typedef struct {
     UDPPacketType type;
     // id of the group of packets that are sent in one burst.
     int group_id;
-#if ENABLE_UDP_SEQ
-    int seq;
-#endif
     // The data itself
     union {
         // UDP_WHIST_SEGMENT
@@ -546,8 +543,10 @@ static void send_desired_network_settings(UDPContext* context) {
 }
 
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
-                                   timestamp_us arrival_time, int group_id,int packet_size, long long kbytes_so_far, int remote_target_video_bitrate) {
+                                   timestamp_us arrival_time, int group_id, WhistSegment *segment) {
     whist_lock_mutex(context->congestion_control_mutex);
+
+    int packet_size= segment->segment_size;
 
     static timestamp_us d_first=0;
     static timestamp_us a_first=0;
@@ -566,14 +565,18 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     timestamp_us d_relative= departure_time - d_first +t_first*1e6;
     timestamp_us a_relative= arrival_time - a_first +t_first*1e6;
 
+    if(PLOT_UDP_SEQ){
+        whist_plotter_insert_sample("udp_seq", get_timestamp_sec(), (double)segment->seq);
+    }
+
     {
         static double last_plot_time_ms=0;
         if(current_time_ms - last_plot_time_ms > 5)
         {
             whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0  -10);
             whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0- 20);
-            whist_plotter_insert_sample("kbytes_so_far", current_time, kbytes_so_far);
-            whist_plotter_insert_sample("remote_target", current_time, remote_target_video_bitrate);
+            //whist_plotter_insert_sample("kbytes_so_far", current_time, kbytes_so_far);
+            //whist_plotter_insert_sample("remote_target", current_time, remote_target_video_bitrate/1000.0/100.0);
             last_plot_time_ms = current_time_ms;
         }
     }
@@ -795,9 +798,6 @@ static bool udp_update(void* raw_context) {
     current_time = last_recv_timer;
 
     if (received_packet) {
-        if(PLOT_UDP_SEQ){
-            whist_plotter_insert_sample("udp_seq", get_timestamp_sec(), (double)udp_packet.seq);
-        }
         // if the packet is a whist_segment, store the data to give later via get_packet
         // Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
@@ -812,13 +812,13 @@ static bool udp_update(void* raw_context) {
                     if (!wcc_v2&&udp_packet.group_id >= context->curr_group_id) {
                         udp_congestion_control(context,
                                                udp_packet.udp_whist_segment_data.departure_time,
-                                               arrival_time, udp_packet.group_id, network_payload_size, udp_packet.udp_whist_segment_data.kbytes_so_far, udp_packet.udp_whist_segment_data.current_target_bps);
+                                               arrival_time, udp_packet.group_id, &udp_packet.udp_whist_segment_data);
                     }
                 }
                 if (wcc_v2&&udp_packet.group_id >= context->curr_group_id) { //feed everything regardless of nack/dup
                     udp_congestion_control(context,
                                            udp_packet.udp_whist_segment_data.departure_time,
-                                           arrival_time, udp_packet.group_id, network_payload_size, udp_packet.udp_whist_segment_data.kbytes_so_far, udp_packet.udp_whist_segment_data.current_target_bps);
+                                           arrival_time, udp_packet.group_id, &udp_packet.udp_whist_segment_data);
                 }
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
@@ -1770,7 +1770,6 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 
     // NOTE: This doesn't interfere with clientside hotpath,
     // since the throttler only throttles the serverside
-    udp_packet->seq=g_seq_cnt++;
     if (throttle) {
         udp_packet->group_id = network_throttler_wait_byte_allocation(
             context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
@@ -1779,6 +1778,8 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     if (udp_packet->type == UDP_WHIST_SEGMENT) {
         udp_packet->udp_whist_segment_data.departure_time = get_timestamp_sec()*US_IN_MS*MS_IN_SECOND;
         if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
+            udp_packet->udp_whist_segment_data.seq=g_seq_cnt++;
+
             g_bytes_sent_so_far+= udp_packet_size; //use this size for simplicity
             udp_packet->udp_whist_segment_data.kbytes_so_far= g_bytes_sent_so_far /1000;
             udp_packet->udp_whist_segment_data.current_target_bps = context->current_target_video_bitrate;
