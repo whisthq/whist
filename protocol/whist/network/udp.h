@@ -55,6 +55,10 @@ typedef struct {
     unsigned short prev_frame_num_duplicates;
     bool is_a_nack;
     bool is_a_duplicate;
+
+    int kbytes_so_far;
+    int current_targe_bps;
+
     // Must be last, since only the first segment_size bytes will be sent
     char segment_data[MAX_PACKET_SEGMENT_SIZE];
 } WhistSegment;

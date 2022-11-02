@@ -544,7 +544,7 @@ static void send_desired_network_settings(UDPContext* context) {
 }
 
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
-                                   timestamp_us arrival_time, int group_id,int packet_size) {
+                                   timestamp_us arrival_time, int group_id,int packet_size, long long kbytes_so_far) {
     whist_lock_mutex(context->congestion_control_mutex);
 
     static timestamp_us d_first=0;
@@ -570,6 +570,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         {
             whist_plotter_insert_sample("relative one-way delay by departure",  d_relative/1e6, a_relative/1000.0 - d_relative/1000.0  -10);
             whist_plotter_insert_sample("relative one-way delay by arrival", a_relative/1e6, a_relative/1000.0 - d_relative/1000.0- 20);
+            whist_plotter_insert_sample("kbytes_so_far", current_time, kbytes_so_far);
             last_plot_time_ms = current_time_ms;
         }
     }
@@ -808,13 +809,13 @@ static bool udp_update(void* raw_context) {
                     if (!wcc_v2&&udp_packet.group_id >= context->curr_group_id) {
                         udp_congestion_control(context,
                                                udp_packet.udp_whist_segment_data.departure_time,
-                                               arrival_time, udp_packet.group_id, network_payload_size);
+                                               arrival_time, udp_packet.group_id, network_payload_size, udp_packet.udp_whist_segment_data.kbytes_so_far);
                     }
                 }
                 if (wcc_v2&&udp_packet.group_id >= context->curr_group_id) { //feed everything regardless of nack/dup
                     udp_congestion_control(context,
                                            udp_packet.udp_whist_segment_data.departure_time,
-                                           arrival_time, udp_packet.group_id, network_payload_size);
+                                           arrival_time, udp_packet.group_id, network_payload_size, udp_packet.udp_whist_segment_data.kbytes_so_far);
                 }
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
@@ -1745,6 +1746,7 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
 
 
 std::atomic<int> g_seq_cnt=0;   //test code
+std::atomic<long long> g_bytes_sent_so_far=0;  //proof of concept
 
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
@@ -1771,10 +1773,6 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
             context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
     }
 
-    if (udp_packet->type == UDP_WHIST_SEGMENT) {
-        udp_packet->udp_whist_segment_data.departure_time = get_timestamp_sec()*US_IN_MS*MS_IN_SECOND;
-    }
-
     UDPNetworkPacket udp_network_packet;
     if (FEATURE_ENABLED(PACKET_ENCRYPTION)) {
         // Encrypt the packet during normal operation
@@ -1787,6 +1785,15 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         memcpy(udp_network_packet.payload, udp_packet, udp_packet_size);
         udp_network_packet.payload_size = udp_packet_size;
     }
+
+    if (udp_packet->type == UDP_WHIST_SEGMENT) {
+        udp_packet->udp_whist_segment_data.departure_time = get_timestamp_sec()*US_IN_MS*MS_IN_SECOND;
+        if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
+            g_bytes_sent_so_far+= udp_packet_size; //use this size for simplicity
+            udp_packet->udp_whist_segment_data.kbytes_so_far= g_bytes_sent_so_far /1000;
+        }
+    }
+
 
     // The size of the udp packet that actually needs to be sent over the network
     int udp_network_packet_size = UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size;
