@@ -280,30 +280,42 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			return utils.MakeError("error writing mandelbox params: %s", err)
 		}
 
-		// Server protocol waits 30 seconds for a client connection. However, in
-		// localdev we default to an infinite timeout to enable easier testing.
-		// In localdev environments, we can override this using an environment
-		// variable.
+		// Server protocol waits forever for a client connection and waits for 30
+		// seconds for another connection after the first successful connection
+		// has been disconnected. However, in localdev we default to an infinite 
+		// timeout to enable easier testing. In localdev environments, we can 
+		// override this using an environment variable.
 		//
 		// Since the server protocol only starts after the user configs are loaded,
 		// zygote mandelboxes will wait forever until JSON transport. Once that occurs,
 		// the server timeout will exit correctly if a client disconnects or fails to
 		// connect.
-		protocolTimeout := 30
+		protocolConnectTimeout := -1
+		protocolDisconnectTimeout := 30
 		if metadata.IsLocalEnv() {
-			localDevTimeout := os.Getenv("LOCALDEV_PROTOCOL_TIMEOUT")
-			if localDevTimeout != "" {
-				protocolTimeout, err = strconv.Atoi(localDevTimeout)
+			localDevConnectTimeout := os.Getenv("LOCALDEV_PROTOCOL_CONNECT_TIMEOUT")
+			if localDevConnectTimeout != "" {
+				protocolConnectTimeout, err = strconv.Atoi(localDevConnectTimeout)
 				if err != nil {
-					logger.Warningf("SpinUpMandelbox(): Error parsing LOCALDEV_PROTOCOL_TIMEOUT envvar: %s", err)
+					logger.Warningf("SpinUpMandelbox(): Error parsing LOCALDEV_PROTOCOL_CONNECT_TIMEOUT envvar: %s", err)
 				}
 			} else {
-				protocolTimeout = -1
+				protocolConnectTimeout = -1
+			}
+
+			localDevDisconnectTimeout := os.Getenv("LOCALDEV_PROTOCOL_DISCONNECT_TIMEOUT")
+			if localDevDisconnectTimeout != "" {
+				protocolDisconnectTimeout, err = strconv.Atoi(localDevDisconnectTimeout)
+				if err != nil {
+					logger.Warningf("SpinUpMandelbox(): Error parsing LOCALDEV_PROTOCOL_DISCONNECT_TIMEOUT envvar: %s", err)
+				}
+			} else {
+				protocolDisconnectTimeout = -1
 			}
 		}
 
-		if err := mandelbox.WriteProtocolTimeout(protocolTimeout); err != nil {
-			return utils.MakeError("error writing protocol timeout: %s", err)
+		if err := mandelbox.WriteProtocolTimeouts(protocolConnectTimeout, protocolDisconnectTimeout); err != nil {
+			return utils.MakeError("error writing protocol timeouts: %s", err)
 		}
 
 		logger.Infow("SpinUpMandelbox(): Successfully wrote parameters for mandelbox", contextFields)
