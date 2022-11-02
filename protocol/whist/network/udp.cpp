@@ -1773,6 +1773,14 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
             context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
     }
 
+    if (udp_packet->type == UDP_WHIST_SEGMENT) {
+        udp_packet->udp_whist_segment_data.departure_time = get_timestamp_sec()*US_IN_MS*MS_IN_SECOND;
+        if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
+            g_bytes_sent_so_far+= udp_packet_size; //use this size for simplicity
+            udp_packet->udp_whist_segment_data.kbytes_so_far= g_bytes_sent_so_far /1000;
+        }
+    }
+
     UDPNetworkPacket udp_network_packet;
     if (FEATURE_ENABLED(PACKET_ENCRYPTION)) {
         // Encrypt the packet during normal operation
@@ -1786,13 +1794,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         udp_network_packet.payload_size = udp_packet_size;
     }
 
-    if (udp_packet->type == UDP_WHIST_SEGMENT) {
-        udp_packet->udp_whist_segment_data.departure_time = get_timestamp_sec()*US_IN_MS*MS_IN_SECOND;
-        if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
-            g_bytes_sent_so_far+= udp_packet_size; //use this size for simplicity
-            udp_packet->udp_whist_segment_data.kbytes_so_far= g_bytes_sent_so_far /1000;
-        }
-    }
+
 
 
     // The size of the udp packet that actually needs to be sent over the network
