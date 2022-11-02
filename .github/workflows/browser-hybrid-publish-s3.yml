@@ -50,10 +50,6 @@ on:
         required: true
       SLACK_HOOKS_ENDPOINT_DEV:
         required: true
-      SLACK_HOOKS_ENDPOINT_STAGING:
-        required: true
-      SLACK_HOOKS_ENDPOINT_PROD:
-        required: true
 
 jobs:
   main:
