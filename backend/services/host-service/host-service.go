@@ -125,7 +125,7 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 	for i := int32(0); i < instanceCapacity; i++ {
 		mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
 		var appName mandelboxtypes.AppName = mandelboxtypes.AppName(utils.MandelboxApp)
-		mandelbox, err := SpinUpMandelbox(globalCtx, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan, false, false, false)
+		mandelbox, err := SpinUpMandelbox(globalCtx, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan, true, true, false)
 
 		// If we fail to create a mandelbox, it indicates a problem with the instance, or the Docker images
 		// Its not safe to assign users to it, so we cancel the global context and shut down the instance
