@@ -18,6 +18,7 @@ package main
 import (
 	"crypto/tls"
 	"encoding/json"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -83,20 +84,28 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 	assignResult := res.Result.(httputils.MandelboxAssignRequestResult)
 
 	var (
-		buf    []byte
-		status int
+		buf           []byte
+		status        int
+		mandelboxInfo httputils.MandelboxInfoRequestResult
 	)
 
+	// Send a request to the host service running on the assigned instance to get the
+	// information of the mandelbox. If the response is successful, return the mandelbox
+	// ports and private key to the frontend as part of the assign request result.
 	if assignResult.Error != "" {
 		// Send a 503
 		status = http.StatusServiceUnavailable
 	} else {
-		// Send a 200 code
-		status = http.StatusOK
-		getMandelboxInfo(assignResult.IP, assignResult.MandelboxID.String(), accessToken)
+		mandelboxInfo, err = getMandelboxInfo(assignResult.IP, assignResult.MandelboxID.String(), accessToken)
+		if err != nil {
+			logger.Errorf("failed to get mandelbox info from host service: %s", err)
+			status = http.StatusServiceUnavailable
+		} else {
+			status = http.StatusOK
+		}
 	}
 
-	buf, err = json.Marshal(assignResult)
+	buf, err = json.Marshal(mandelboxInfo)
 	w.WriteHeader(status)
 	if err != nil {
 		logger.Errorf("error marshalling a %d HTTP Response body: %s", status, err)
@@ -176,20 +185,21 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 
 // getMandelboxInfo processes an HTTP request to receive data
 // directly from the frontend.
-func getMandelboxInfo(ip string, mandelboxID string, accessToken string) error {
+func getMandelboxInfo(ip string, mandelboxID string, accessToken string) (httputils.MandelboxInfoRequestResult, error) {
+	var mandelboxInfo httputils.MandelboxInfoRequestResult
+
 	// Send the request to the instance and then return the response
 	url := utils.Sprintf("https://%s:%v/mandelbox/%s", ip, HostServicePort, mandelboxID)
 
 	// Create a new request
 	hostReq, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return err
+		return mandelboxInfo, err
 	}
 
 	// Add necessary headers to host request
-	hostReq.Header.Add("content-type", "application/json")
+	hostReq.Header.Add("Content-Type", "application/json")
 	hostReq.Header.Add("Authorization", utils.Sprintf("Bearer %s", accessToken))
-	hostReq.Close = true
 
 	// Instanciate a new http client with a custom transport
 	tr := &http.Transport{
@@ -201,15 +211,28 @@ func getMandelboxInfo(ip string, mandelboxID string, accessToken string) error {
 
 	// Now that request is fully assembled and the client is initialized, send the request
 	res, err := client.Do(hostReq)
-	defer hostReq.Body.Close()
-
 	if err != nil {
-		return err
+		logger.Error(err)
+		return mandelboxInfo, err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return mandelboxInfo, err
 	}
 
-	logger.Infof("response is %v", res)
+	// Unmarshal and parse the response to return a result object
+	var info struct {
+		Result httputils.MandelboxInfoRequestResult `json:"result"`
+	}
+	err = json.Unmarshal(body, &info)
+	if err != nil {
+		return mandelboxInfo, err
+	}
 
-	return nil
+	mandelboxInfo = info.Result
+	return mandelboxInfo, nil
 }
 
 // throttleMiddleware will limit requests on the endpoint using the provided rate limiter.
