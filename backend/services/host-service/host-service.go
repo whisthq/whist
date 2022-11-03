@@ -694,6 +694,17 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					return
 				}
 
+				// Since the frontend has requested the information for this specific mandelbox (via the scaling service)
+				// we set its status to running and write it to the database.
+				mandelbox.SetStatus(dbdriver.MandelboxStatusRunning)
+				err = dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusRunning)
+				if err != nil {
+					logger.Error(err)
+					serverEvent.ReturnResult(nil, err)
+					return
+
+				}
+
 				serverEvent.ReturnResult(httputils.MandelboxInfoRequestResult{
 					HostPortForTCP32261: hostPortForTCP32261,
 					HostPortForTCP32262: hostPortForTCP32262,
