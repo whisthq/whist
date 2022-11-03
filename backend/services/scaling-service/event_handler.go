@@ -51,8 +51,10 @@ import (
 )
 
 func main() {
-	var cleanupPeriod time.Duration
-	var noCleanup bool
+	var (
+		cleanupPeriod time.Duration
+		noCleanup bool
+	)
 
 	flag.DurationVar(&cleanupPeriod, "cleanup", time.Duration(time.Minute),
 		"the amount of time between when each cleanup thread runs")

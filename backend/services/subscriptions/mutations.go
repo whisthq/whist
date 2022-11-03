@@ -17,7 +17,7 @@ type (
 			Hosts []struct {
 				ID graphql.String `graphql:"id"`
 			} `graphql:"returning"`
-		} `graphql:"update_whist_instances(where: {region: {_eq: $region}, updated_at: {_lt: $maxAge}, status: {_neq: \"TERMINATING\"}}, _set: {status: \"TERMINATING\"})"`
+		} `graphql:"update_whist_instances(where: {region: {_eq: $region}, updated_at: {_lt: $maxAge}, status: {_in: [\"ACTIVE\", \"TERMINATING\"]}}, _set: {status: \"TERMINATING\"})"`
 	}
 
 	// TerminateLockedInstances takes two arguments: region and ids. The region

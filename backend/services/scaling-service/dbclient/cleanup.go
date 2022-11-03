@@ -14,7 +14,7 @@ import (
 func (c *DBClient) LockBrokenInstances(ctx context.Context, client subscriptions.WhistGraphQLClient, region string, maxAge time.Time) ([]string, error) {
 	var m subscriptions.LockBrokenInstances
 	vars := map[string]interface{}{
-		"maxAge": timestamptz2(maxAge),
+		"maxAge": timestamptz(maxAge),
 		"region": graphql.String(region),
 	}
 
@@ -39,7 +39,7 @@ func (c *DBClient) LockBrokenInstances(ctx context.Context, client subscriptions
 func (c *DBClient) TerminateLockedInstances(ctx context.Context, client subscriptions.WhistGraphQLClient, region string, ids []string) ([]string, error) {
 	var m subscriptions.TerminateLockedInstances
 
-	// We need to pass the instance IDs as a slice of grpahql String type
+	// We need to pass the instance IDs as a slice of graphql String type
 	//instances, not just a normal string slice.
 	_ids := make([]graphql.String, 0, len(ids))
 
