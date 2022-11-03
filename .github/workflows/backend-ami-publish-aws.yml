@@ -161,9 +161,10 @@ jobs:
           # costs since we don't have/need test users in other regions.
           supported_aws_regions_dev = ["us-east-1", "us-west-1"]
           supported_aws_regions_staging = supported_aws_regions_dev
+          supported_aws_regions = supported_aws_regions_${{ inputs.branch }}
 
           data["mandelbox_logz_shipping_token"] = "${{ secrets[format('LOGZ_SHIPPING_TOKEN_{0}', inputs.branch)] }}"
-          data["destination_regions"] = supported_aws_regions_${{ inputs.branch }}
+          data["destination_regions"] = supported_aws_regions
 
           # Packer isn't able to loop over AWS Regions by itself. To work around this, we need to loop over all AWS regions
           # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
