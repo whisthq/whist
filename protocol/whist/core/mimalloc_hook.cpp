@@ -237,7 +237,8 @@ static void mlock_statics() {
             if ((prev_addr == 0 || addr >= prev_addr + prev_size) && addr <= max_addr) {
                 // update region list data and mlock
                 int ret = mlock((void*)addr, size);
-                if (ret == -1) {
+                // the error check is LOG_INFO because we expect mlock to fail on unmapped/unallocated regions here
+                if (ret != 0) {
                     LOG_INFO("mlock at addr %p size %llu failed with error %s", (void*)addr, size,
                              strerror(errno));
                 }
