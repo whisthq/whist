@@ -61,7 +61,7 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Get the whole git history
+          fetch-depth: 0 # Get the whole git history (maybe nix)
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
@@ -384,7 +384,7 @@ jobs:
             # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
             UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
 
-            # set new Whist Desktop Browser version [-x64/-arm64] gets appended depending on the OS architecture it is built on
+            # set new Whist Desktop Browser version
             NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-dev-rc.${NEW_DEV_RC}"
 
             # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
@@ -458,11 +458,11 @@ jobs:
 
           # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
           if [[ "$BRANCH_NAME" == "prod" ]]; then
-            QUERY="{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ needs.whist-browser-retrieve-version-number.outputs.new_micro_version }}, staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            QUERY="{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ needs.whist-browser-retrieve-version-number.outputs.new_micro_version }}, staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }"
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
-            QUERY="{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            QUERY="{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }"
           elif [[ "$BRANCH_NAME" == "dev" ]]; then
-            QUERY="{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            QUERY="{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }"
           fi
           curl -X POST \
           -H "Content-Type: application/json" \
