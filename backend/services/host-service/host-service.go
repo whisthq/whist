@@ -141,7 +141,7 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 		// We have to parse the appname before writing to the database.
 		appString := strings.Split(string(mandelbox.GetAppName()), "/")
 		appNameForDb := strings.ToUpper(appString[1])
-		err = dbdriver.CreateMandelbox(mandelbox.GetID(), appNameForDb, instanceID)
+		err = dbdriver.CreateMandelbox(mandelbox.GetID(), appNameForDb, instanceID, string(mandelbox.GetSessionID()))
 		if err != nil {
 			logger.Errorf("failed to register mandelbox %s on database: %s", mandelbox.GetID(), err)
 		}
