@@ -1,0 +1,17 @@
+[cloud]
+provider = "AWS"
+
+[regions]
+"us-east-1" = 2
+"us-west-1" = 2
+
+[images]
+"us-east-1" = "ami-01"
+"us-west-1" = "ami-02"
+
+[backend]
+version = "0.0.0"
+
+[cleaner]
+enabled = true
+schedule = "3m"
