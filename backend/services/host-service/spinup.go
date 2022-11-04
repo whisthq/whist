@@ -62,6 +62,7 @@ func SpinUpMandelbox(globalCtx context.Context, goroutineTracker *sync.WaitGroup
 	hash := sha1.New()
 	hash.Write(randBytes)
 	serverSessionID := utils.Sprintf("%x", hash.Sum(nil))
+	mandelbox.SetSessionID(mandelboxtypes.SessionID(serverSessionID))
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered

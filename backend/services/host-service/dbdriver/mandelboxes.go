@@ -63,7 +63,7 @@ func CreateMandelbox(id types.MandelboxID, app string, instanceID string, sessio
 		},
 		SessionID: pgtype.Varchar{
 			String: sessionID,
-			Status: pgtype.Null,
+			Status: pgtype.Present,
 		},
 		Status: pgtype.Varchar{
 			String: string(MandelboxStatusWaiting),
