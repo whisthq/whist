@@ -4,11 +4,15 @@ import { state } from "../shared/state"
 let whistParameters: string | null = null
 
 const GPUCommandStreaming = async () => {
-  return await new Promise((resolve) =>
-    (chrome as any).whist.isGPUCommandStreaming((enabled: boolean) => {
-      resolve(enabled)
-    })
-  )
+  return await new Promise((resolve) => {
+    if ((chrome as any).whist.isGPUCommandStreaming) {
+      ;(chrome as any).whist.isGPUCommandStreaming((enabled: boolean) => {
+        resolve(enabled)
+      })
+    } else {
+      resolve(false)
+    }
+  })
 }
 
 const initializeWhistTagHandler = () => {
