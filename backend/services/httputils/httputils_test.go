@@ -58,7 +58,6 @@ func TestParseRequest(t *testing.T) {
 			CommitHash: "test_sha",
 			UserEmail:  "user@whist.com",
 			Version:    "1.0.0",
-			SessionID:  1234567890,
 		}},
 		{"Empty assign request", &MandelboxAssignRequest{}, `{}`, &MandelboxAssignRequest{}},
 	}

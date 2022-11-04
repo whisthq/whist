@@ -49,7 +49,6 @@ type MandelboxAssignRequest struct {
 	CommitHash string   `json:"client_commit_hash"`
 	UserEmail  string   `json:"user_email"`
 	Version    string   `json:"version"`
-	SessionID  int64    `json:"session_id"`
 	// The userID is obtained from the access token, but when testing it can be sent in the request
 	UserID mandelboxtypes.UserID `json:"user_id"`
 	// Channel to pass the request result between goroutines
