@@ -33,7 +33,7 @@ jobs:
   # AWS EC2 instance to test that all components of the Whist stack work as expected.
   backend-integration-test:
     name: "Backend Integration Test"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       GITHUB_PERSONAL_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 

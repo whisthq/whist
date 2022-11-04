@@ -24,7 +24,7 @@ jobs:
   # Check that the AMIs build
   host-setup-check-pr-building:
     name: Building
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3

@@ -44,7 +44,7 @@ jobs:
             # Set to true to CUDA-optimize Windows server. This is slow to install (5-7 minutes).
             cuda: false
           - name: "Ubuntu Linux"
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             arch: x86_64
           - name: "macOS (x64)"
             os: macos-11.0

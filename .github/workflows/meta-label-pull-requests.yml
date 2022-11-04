@@ -16,7 +16,7 @@ concurrency:
 jobs:
   meta-label-pull-requests-main:
     name: Label Pull Request
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     env:
       PR_LABEL_PREFIX: "📁 Repo: "

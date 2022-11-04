@@ -12,7 +12,7 @@ This folder also contains our configuration files for Filebeat, which we use for
 
 To set up your personal Whist development instance:
 
-- Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on the AWS region of your choosing (the geographically closest to you), with at least 64 GB of storage (else you will run out of storage for the Whist protocol and base container image).
+- Create an Ubuntu Server 22.04 `g4dn.xlarge` EC2 instance on the AWS region of your choosing (the geographically closest to you), with at least 64 GB of storage (else you will run out of storage for the Whist protocol and base container image).
 
   - Note that the 32 GB of persistent, EBS storage should be in addition to the built-in 125 GB of ephemeral storage! The ephemeral storage will not persist across reboots, so at this moment we do not use it for anything on personal development instances.
 
@@ -78,7 +78,7 @@ Support for Google Cloud is still a work in progress, but at this point its poss
 - Sign in to the [Google Cloud console](https://console.cloud.google.com/compute/instances?project=multi-cloud-test-357621). This link should get you to the Compute Engine console, if not navigate to Compute Engine and if prompted, select the Multi-Cloud Test project.
 - Click on "Create Instance", name your instance to whatever you want, and select the `us-central-1a` zone. Support for more zones is still in progress.
 - Under General-Purpose instances, select the N1 series. Select a n1-standard-4 machine type. Then, expand the "CPU Platform and GPU" section, add a single NVIDIA Tesla T4 GPU, and check "Enable the NVIDIA workstation".
-- Click on "Change" in the Boot Disk section, change the OS to Ubuntu, use the Ubuntu Server 20.04 LTS image for x86/64. Make sure to use at least 32 GB for the boot disk. This is to make sure there is enough space for building the mandelboxes.
+- Click on "Change" in the Boot Disk section, change the OS to Ubuntu, use the Ubuntu Server 22.04 LTS image for x86/64. Make sure to use at least 32 GB for the boot disk. This is to make sure there is enough space for building the mandelboxes.
 - Go to Advanced options -> Networking and add the mandelboxes tag to the Network tags. Once this is done, you can create the instance.
 - Your instance should appear on the console, once its ready click the SSH button. This will open a managed ssh shell window you can use to connect. Support for non-managed SSH keys is still in progress.
 - Run the following commands, note the different flags for the setup script and build script.

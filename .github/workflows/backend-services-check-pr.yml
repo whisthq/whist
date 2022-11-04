@@ -34,7 +34,7 @@ jobs:
   # Check that the Host Service builds.
   backend-services-check-pr-building:
     name: Building
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git Repository
@@ -74,7 +74,7 @@ jobs:
   # notify the PR if schema changes are detected
   check-migra-diff:
     name: Check Migra Diff
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
       GITHUB_ISSUE: ${{ github.event.number }}

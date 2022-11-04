@@ -27,7 +27,7 @@ usage () {
 USAGE:
   setup_host.sh --localdevelopment
   setup_host.sh --deployment [ARGS...]
-This script takes a blank Ubuntu 20.04 EC2 instance and sets it up for running
+This script takes a blank Ubuntu 22.04 EC2 instance and sets it up for running
 Whist by configuring Docker and NVIDIA to run Whist's GPU-enabled
 mandelboxes.
 To set up the host for local development, pass in the --localdevelopment flag.
@@ -109,10 +109,10 @@ install_nvidia_docker () {
   echo "================================================"
 
   # Source nvidia-docker apt-get package
-  # Note that we hardcode `distribution` to 20.04, so that we can upgrade to a higher Ubuntu eventually by
-  # pinning 20.04 as the nvidia-docker distribution, since it works with unofficially-supported versions
-  # of Ubuntu, like 20.04, which don't have an official nvidia-docker package
-  distribution="ubuntu20.04"
+  # Note that we hardcode `distribution` to 22.04, so that we can upgrade to a higher Ubuntu eventually by
+  # pinning 22.04 as the nvidia-docker distribution, since it works with unofficially-supported versions
+  # of Ubuntu, like 22.04, which don't have an official nvidia-docker package
+  distribution="ubuntu22.04"
   curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key add -
   curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 

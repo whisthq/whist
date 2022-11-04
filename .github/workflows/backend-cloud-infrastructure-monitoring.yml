@@ -22,7 +22,7 @@ jobs:
   # running in each region, and notify Slack
   backend-enumerate-all-instances:
     name: Enumerate All Instances
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       AWS_REGIONS: "us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-central-1 eu-west-1 eu-west-2 eu-west-3 eu-south-1 eu-north-1 sa-east-1 me-south-1 af-south-1 ap-east-1 ap-south-1 ap-northeast-1 ap-northeast-2 ap-northeast-3 ap-southeast-1 ap-southeast-2 ap-southeast-3"
     steps:
@@ -73,7 +73,7 @@ jobs:
   #     without an associated mandelbox (`last_update` can be <2 mins)
   backend-old-hanging-lingering-resource-notifications:
     name: Backend Old, Hanging, or Lingering Resource Notifications
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [backend-enumerate-all-instances]
     strategy:
       matrix:
@@ -217,7 +217,7 @@ jobs:
   # The utilies we use to clean resources run per-region, so this job is run as a matrix over our AWS regions
   backend-cleanup-lingering-packer-builders-and-ami-resources:
     name: Delete Lingering Packer Builder Instances, AMI Snapshots & EBS Volumes
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         aws-region:
@@ -303,7 +303,7 @@ jobs:
         backend-cleanup-lingering-packer-builders-and-ami-resources,
       ]
     if: failure()
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3

@@ -26,7 +26,7 @@ on: push
 jobs:
   my-job:
     name: My Job
-    runs-on: ubuntu:20.04
+    runs-on: ubuntu:22.04
     steps:
       # The repository must be checked out before the custom Action may be used
       # in the Workflow.

@@ -42,7 +42,7 @@ on:
 jobs:
   main:
     name: "Build & Deploy AMIs to AWS"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
     steps:

@@ -21,7 +21,7 @@ concurrency:
 jobs:
   shell-scripts-linting-main:
     name: Lint Shell Scripts
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git Repository
@@ -51,7 +51,7 @@ jobs:
 
   shell-scripts-shellcheck:
     name: Run ShellCheck on Shell Scripts
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git Repository

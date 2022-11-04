@@ -2,7 +2,7 @@
 
 At Whist, we use the term "mandelbox" to refer to what is essentially an application that we deliver, combined with the Whist-specific customizations that make everything work (securely). At the moment, our mandelboxes run on Docker.
 
-This repository contains the code for "mandelbox-izing" the various applications that Whist streams. The base Dockerfile running the Whist protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Whist protocol.
+This repository contains the code for "mandelbox-izing" the various applications that Whist streams. The base Dockerfile running the Whist protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 22.04** and installs everything needed to interface with the drivers and the Whist protocol.
 
 ## Development
 

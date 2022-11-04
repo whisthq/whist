@@ -24,7 +24,7 @@ In many cases, `jobname` can simply be `main` -- for example, here is the start 
 jobs:
   protocol-linting-main:
     name: Lint Protocol
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 ```
 
 Notice that we also include a `Title Case`, plaintext name for the job, in addition to the tag `protocol-linting-main`.
@@ -35,7 +35,7 @@ In complex workflows with many jobs, please be specific in both the job identifi
 jobs:
   banana-build-publish-beige-server:
     name: "Banana: Build & Publish to Beige Server"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 ```
 
 (Take this paragraph with a grain of salt. It is old and GitHub has probably fixed many of the early bugs.) Something to keep in mind when writing jobs, is that neither `cmd` nor `powershell` will fail if a command it runs fails. So, you should explicitly check if any commands you want to succeed, does indeed succeed. If you attach a job with `shell: bash` without specifying any arguments, then the job will _also_ not fail if any command it runs fails, unless it's the very last command (`cmd`/`powershell` will still not fail, even if the last command fails).

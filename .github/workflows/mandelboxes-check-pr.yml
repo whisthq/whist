@@ -31,7 +31,7 @@ jobs:
   # Checks for formatting and Dockerfile standards using Hadolint.
   mandelboxes-lint-dockerfiles:
     name: Linting
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: hadolint/hadolint:v2.10.0-debian
 
     steps:
@@ -54,7 +54,7 @@ jobs:
   # Formatting and testing Rust code in mandelboxes
   mandelboxes-rust-checks:
     name: Format and Test Rust Code
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git Repository
@@ -76,7 +76,7 @@ jobs:
   # Linting/formatting Python code in mandelboxes
   mandelboxes-python-scripts-linting:
     name: Lint mandelboxes Python Scripts
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git Repository
@@ -101,7 +101,7 @@ jobs:
   # Checks that the Docker images build successfully.
   mandelboxes-build-images:
     name: Building
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git Repository

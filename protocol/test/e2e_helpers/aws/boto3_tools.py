@@ -21,13 +21,13 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 # Constants
 # We will need to change the owner ID/AMI once AWS' target version of Linux Ubuntu changes
 AMAZON_OWNER_ID = "099720109477"
-AWS_UBUNTU_2004_AMI = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
+AWS_UBUNTU_2204_AMI = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
 INSTANCE_TYPE = "g4dn.xlarge"
 
 
 def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
     """
-    Get the AMI of the most recent AWS EC2 Amazon Machine Image running Ubuntu Server 20.04 Focal Fossa
+    Get the AMI of the most recent AWS EC2 Amazon Machine Image running Ubuntu Server 22.04 Jammy Jellyfish
 
     Args:
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
@@ -41,7 +41,7 @@ def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
         Filters=[
             {
                 "Name": "name",
-                "Values": [AWS_UBUNTU_2004_AMI],
+                "Values": [AWS_UBUNTU_2204_AMI],
             },
             {
                 "Name": "architecture",
@@ -374,7 +374,7 @@ def create_or_start_aws_instance(boto3client, region_name, existing_instance_id,
 
     # Define the AWS machine variables
 
-    # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+    # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 22.04 LTS
     instance_AMI = get_current_AMI(boto3client, region_name)
     instance_type = INSTANCE_TYPE  # The type of instance we want to create
 

@@ -23,7 +23,7 @@ concurrency:
 jobs:
   terraform-validate-and-plan:
     name: Terraform validate and plan
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       # Set AWS credentials for Terraform
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}

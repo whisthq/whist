@@ -26,7 +26,7 @@ jobs:
   # Check that our Whist Authentication API authentication is valid for all our environments dev/staging/prod
   auth0-verify-whist-api-auth:
     name: "Auth0: Verify Whist API Authentication for ${{ matrix.environment.name }}"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -60,7 +60,7 @@ jobs:
   # Check that our Auth0 deployment setup works by attempting to retrieve the current upstream schema
   auth0-verify-tenant-schema-retrieval:
     name: "Auth0: Verify Tenant Schema Retrieval for ${{ matrix.environment.name }}"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:

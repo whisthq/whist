@@ -23,7 +23,7 @@ concurrency:
 jobs:
   python-linting:
     name: Check Python Formatting
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git repository

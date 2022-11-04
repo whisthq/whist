@@ -1,6 +1,6 @@
 # Whist Base Mandelbox Image
 
-This subfolder contains the base mandelbox Dockerfile that builds the core Whist mandelbox running Whist and general utilities and services that application-specific Dockerfiles can build upon. The base image runs **Ubuntu 20.04**.
+This subfolder contains the base mandelbox Dockerfile that builds the core Whist mandelbox running Whist and general utilities and services that application-specific Dockerfiles can build upon. The base image runs **Ubuntu 22.04**.
 
 This subfolders conforms to the **Styling** and **Continous Integration** practices defined in the outer README.
 

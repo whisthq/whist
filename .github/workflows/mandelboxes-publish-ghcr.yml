@@ -35,7 +35,7 @@ on:
 jobs:
   mandelboxes-publish-ghcr-main:
     name: "Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git Repository

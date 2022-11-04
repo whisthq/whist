@@ -101,7 +101,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   source_ami_filter {
     filters = {
        virtualization-type = "hvm"
-       name = "ubuntu/images/*ubuntu-focal-20.04-amd64-server-*" # Ubuntu Server 20.04
+       name = "ubuntu/images/*ubuntu-jammy-22.04-amd64-server-*" # Ubuntu Server 22.04
        root-device-type = "ebs"
     }
     owners = ["099720109477"] # Canonical

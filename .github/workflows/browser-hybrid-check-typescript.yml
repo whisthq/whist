@@ -25,7 +25,7 @@ jobs:
             dir: browser/hybrid/components/cloud_tabs_ui
 
     name: Lint and Format ${{ matrix.component.name }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     defaults:
       run:

@@ -18,7 +18,7 @@ concurrency:
 jobs:
   whist-linting-line-endings:
     name: Lint Line Endings
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git Repository
@@ -35,7 +35,7 @@ jobs:
 
   whist-linting-trailing-newlines:
     name: Lint Trailing Newlines
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Git Repository

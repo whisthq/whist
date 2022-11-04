@@ -12,7 +12,7 @@ on: push
 jobs:
   call-my-action:
     name: Call my custom GitHub Action
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2

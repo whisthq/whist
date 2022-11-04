@@ -49,7 +49,7 @@ jobs:
   # Access branch with `whist-publish-build-config.outputs.branch`.
   whist-publish-build-config:
     name: "Configure Jobs"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       branch: ${{ steps.set-deploy-environment.outputs.environment }}
       publish: ${{ steps.detect-publish.outputs.publish }}
@@ -136,7 +136,7 @@ jobs:
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
   auth0-deploy-rules:
     name: "Deploy Auth0 Rules"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     concurrency: auth0-deploy-rules-${{ github.ref }}
     needs: [whist-publish-build-config]
 
@@ -193,7 +193,7 @@ jobs:
   # 2 - Run Terraform apply to deploy infrastructure.
   terraform-deploy:
     name: Deploy Terraform
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [whist-publish-build-config]
     env:
       # Set AWS credentials for Terraform
@@ -280,7 +280,7 @@ jobs:
   # This is the first step in the Whist Browser deployment jobs
   whist-browser-retrieve-version-number:
     name: "Whist Browser: Retrieve Current Version Number from Config Database"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     concurrency: whist-browser-retrieve-version-number-${{ github.ref }}
     needs:
       [
@@ -427,7 +427,7 @@ jobs:
   # Set the New Whist version number in our configuration database, through Hasura
   whist-browser-update-version-number:
     name: "Whist Browser: Set New Version Number in Config Database"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     concurrency: whist-browser-update-version-number-${{ github.ref }}
     needs:
       [
@@ -495,7 +495,7 @@ jobs:
   # automatically start the image swapover event on the scaling service.
   scaling-service-deploy:
     name: "Scaling Service: Deploy & Upgrade Image"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     concurrency: scaling-service-deploy-${{ github.ref }}
     needs:
       [
@@ -633,7 +633,7 @@ jobs:
   # Runs if the entire deployment succeeds and the promotion is running on `prod`
   whist-create-github-release-tag:
     name: "Create GitHub Release Tag"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs:
       [
         whist-publish-build-config,

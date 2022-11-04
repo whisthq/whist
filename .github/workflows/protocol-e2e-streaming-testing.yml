@@ -31,7 +31,7 @@ jobs:
   # AWS EC2 instance to test end-to-end networking performance in a controlled environment.
   protocol-streaming-e2e-check-pr:
     name: "Protocol Streaming End-to-End Test"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # Cancel the workflow if we have waited for 3h or more. This duration will give enough time for the worker to wait for up to 4-5 additional competiting workflows to complete, then run the whole E2E job.
     timeout-minutes: 180
     env:

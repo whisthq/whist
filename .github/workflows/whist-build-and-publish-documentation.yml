@@ -33,7 +33,7 @@ concurrency:
 jobs:
   whist-build-and-publish-documentation:
     name: Build & Publish Whist Internal Documentation to whisthq/docs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # This is a hack. We don't want concurrency for PRs, since they do not deploy and
     # can cause spurious PR CI failure. Here, concurrency depends on the branch name
     # that triggered the action. Deploys end with "-dev" and therefore will be in the
