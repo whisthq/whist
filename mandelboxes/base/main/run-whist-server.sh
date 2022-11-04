@@ -25,15 +25,9 @@ IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
 CONNECT_TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/connect_timeout
 DISCONNECT_TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/disconnect_timeout
-SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
+
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 
-# Read and export the session id, if the file exists
-if [ -f "$SESSION_ID_FILENAME" ]; then
-  SESSION_ID=$(cat $SESSION_ID_FILENAME)
-  export SESSION_ID
-  WHIST_LOGS_FOLDER=$WHIST_LOGS_FOLDER/$SESSION_ID
-fi
 # To avoid interfering with Filebeat, the logs files should not contain hyphens in the name before the {-out, -err}.log suffix
 PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-out.log
 PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-err.log
@@ -82,11 +76,6 @@ if [ -f "$DISCONNECT_TIMEOUT_FILENAME" ]; then
   DISCONNECT_TIMEOUT=$(cat $DISCONNECT_TIMEOUT_FILENAME)
   export DISCONNECT_TIMEOUT
   OPTIONS="$OPTIONS --disconnect-timeout=$DISCONNECT_TIMEOUT"
-fi
-
-# Send in client session id, if set
-if [[ -n "${SESSION_ID+1}" ]]; then
-  OPTIONS="$OPTIONS --session-id=$SESSION_ID"
 fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup

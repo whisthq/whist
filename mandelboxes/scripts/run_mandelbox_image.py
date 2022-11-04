@@ -4,7 +4,6 @@
 
 import argparse
 from collections import namedtuple
-import json
 import os
 import sys
 import uuid
@@ -84,6 +83,7 @@ PortBindings = namedtuple(
     "PortBindings", ["host_port_32262tcp", "host_port_32263udp", "host_port_32273tcp"]
 )
 
+
 def ensure_root_privileges():
     if os.geteuid() != 0:
         sys.exit(
@@ -138,20 +138,23 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     Args: mandelbox_id: the id of the mandelbox to create
     """
     print("Sending GetMandelbox request to host service!")
-    url = HOST_SERVICE_URL + "json_transport" # TODO: this endpoint will no longer exist, so we need to move the equivalent functionality for local without db to the assign_mandelbox endpoint
+    url = HOST_SERVICE_URL + "mandelbox" + "/" + str(mandelbox_id)
     development_args = {
         "kiosk_mode": not args.no_kiosk,
         "load_extension": not args.no_extension,
         "local_client": args.local_client,
     }
-    payload = {
-        "app_name": args.image,
-        "jwt_access_token": "bogus_jwt",
-        "mandelbox_id": str(mandelbox_id),
-        "json_data": json.dumps(development_args), # TODO: change this to be "development_args" or something like that
-    }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
-    respobj = requests.put(url=url, json=payload, verify=tls_verification, timeout=10)
+
+    try:
+        respobj = requests.get(
+            url=url, params=development_args, verify=tls_verification, timeout=10
+        )
+        respobj.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"host service returned error: {e}")
+        return
+
     response = respobj.json()
     print(f"Response from host service: {response}")
     respobj.raise_for_status()
