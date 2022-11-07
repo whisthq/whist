@@ -78,7 +78,7 @@ if build_all:
 # Get dependency path from given image path
 def get_dependency_from_image(img_path):  # returns dep_path
     # Open Dockerfile for the image path
-    with open(img_path + "/Dockerfile.20", encoding="utf-8") as file:
+    with open(img_path + "/Dockerfile.22", encoding="utf-8") as file:
         # Regex match the Dockerfile dependency, with a capture group on the dependency name
         regex = re.compile("^[ ]*FROM[ ]+whisthq/([^:]*):current-build")
         for line in file:
@@ -132,7 +132,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
         "--memory-swap=-1",  # enable unlimited swap
         "--shm-size=4g",  # give Docker more memory to build the image
         "-f",
-        f"{img_path}/Dockerfile.20",
+        f"{img_path}/Dockerfile.22",
         img_path,
         "-t",
         f"whisthq/{img_path}:current-build",

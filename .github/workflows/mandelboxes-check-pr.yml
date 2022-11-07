@@ -48,8 +48,8 @@ jobs:
       # Start from top-level folder to use .hadolint.yaml config
       - name: Check if Mandelbox Dockerfiles Follow Hadolint Standards
         run: |
-          hadolint ./mandelboxes/*/Dockerfile.20
-          hadolint ./mandelboxes/*/*/Dockerfile.20
+          hadolint ./mandelboxes/*/Dockerfile.22
+          hadolint ./mandelboxes/*/*/Dockerfile.22
 
   # Formatting and testing Rust code in mandelboxes
   mandelboxes-rust-checks:

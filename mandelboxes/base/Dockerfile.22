@@ -1,4 +1,4 @@
-################### build-assets ###################
+g################### build-assets ###################
 # EXPOSES the appropriate build-assets package to
 # handle copying files from outside the repo
 ####################################################
@@ -738,7 +738,8 @@ RUN \
                       acpid \
                       NetworkManager-wait-online \
     # Remove ProtectHostname=yes from logind and timedate services
-    && sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-{login,time{sync,date}}d.service \
+    && sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-{login,timedate}d.service \
+    && sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-time-wait-sync.service \
     # Enable proper usage of resolvconf in containers (see https://github.com/moby/moby/issues/1297)
     && echo "resolvconf resolvconf/linkify-resolvconf boolean false" | debconf-set-selections \
     ### Sentry CLI Installation

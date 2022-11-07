@@ -3,7 +3,7 @@ Version: 0.4.0
 Section: x11
 Priority: optional
 Architecture: all
-Depends: xorg-video-abi-24, xserver-xorg-core, libc6
+Depends: xorg-video-abi-25, xserver-xorg-core, libc6
 Provides: xserver-xorg-video-dummy (= 9.99.9)
 Maintainer: Whist (developers@whist.com)
 Description: Whist builds an up-to-date release of

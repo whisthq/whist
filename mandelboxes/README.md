@@ -38,7 +38,7 @@ To build a specific application's mandelbox image, run:
 ./build.sh APP
 ```
 
-This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Whist mandelbox is built with `./build_mandelbox_image.sh browsers/whistium`, since the relevant Dockerfile is `browsers/whistium/Dockerfile.20`. This script names the built image as `whist/$APP`, with a tag of `current-build`.
+This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Whist mandelbox is built with `./build_mandelbox_image.sh browsers/whistium`, since the relevant Dockerfile is `browsers/whistium/Dockerfile.22`. This script names the built image as `whist/$APP`, with a tag of `current-build`.
 
 You first need to build the protocol and then build the base image before you can finally build a specific application image.
 
