@@ -35,4 +35,4 @@ jobs:
         working-directory: browser/hybrid
         run: |
           files_to_lint=$(find . -type f \( -name "*.c" -o -name "*.cc" -o -name "*.cpp" -o -name "*.cu" -o -name "*.m" -o -name "*.mm" -o -name "*.h" -o -name "*.hpp" -o -name "*.cuh" \) -not -path "./src/third_party/skia/*")
-          ../..github/workflows/helpers/chromium/cpplint.py --verbose=5 --counting=detailed --extensions=c,cc,cpp,cu,m,mm,h,hpp,cuh --root=../../.. $files_to_lint
+          ../../.github/workflows/helpers/chromium/cpplint.py --verbose=5 --counting=detailed --extensions=c,cc,cpp,cu,m,mm,h,hpp,cuh --root=../../.. $files_to_lint

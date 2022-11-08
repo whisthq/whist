@@ -69,6 +69,8 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'schedule' || contains(fromJSON('["", "dev", "staging", "prod"]'), inputs.target)
         shell: python3 {0}
         run: |
+          import os
+
           # If workflow_dispatch, use the specified target (dev/staging/prod).
           # Else, assume the triggering branch is dev/staging/prod and use that
           # branch name.
