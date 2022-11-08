@@ -13,6 +13,7 @@ replace (
 )
 
 require (
+	github.com/google/uuid v1.1.2
 	github.com/knadh/koanf v1.4.4
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1

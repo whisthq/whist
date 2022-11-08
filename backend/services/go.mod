@@ -78,6 +78,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
+	github.com/rabbitmq/amqp091-go v1.5.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
