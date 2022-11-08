@@ -257,7 +257,7 @@ jobs:
     name: "Mandelboxes: Publish to GHCR"
     needs: [whist-publish-build-config]
     concurrency: mandelboxes-publish-ghcr-${{ github.ref }}
-    uses: .github/workflows/mandelboxes-publish-ghcr.yml
+    uses: ./.github/workflows/mandelboxes-publish-ghcr.yml
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
@@ -270,7 +270,7 @@ jobs:
     name: "AMIs: Publish to AWS"
     concurrency: amis-publish-aws-${{ github.ref }}
     needs: [whist-publish-build-config, terraform-deploy]
-    uses: .github/workflows/backend-ami-publish-aws.yml
+    uses: ./.github/workflows/backend-ami-publish-aws.yml
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
@@ -414,7 +414,7 @@ jobs:
       ]
     # Only run whist-browser deployment if none of the previous steps failed
     if: always() && (needs.whist-browser-retrieve-version-number.result == 'success')
-    uses: .github/workflows/browser-hybrid-publish-s3.yml
+    uses: ./.github/workflows/browser-hybrid-publish-s3.yml
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       release_version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}
@@ -566,7 +566,7 @@ jobs:
         env:
           HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
-        uses: .github/actions/db-migration
+        uses: ./.github/actions/db-migration
 
       - name: Write heroku.yml with yq
         uses: mikefarah/yq@master
@@ -670,7 +670,7 @@ jobs:
 
       - name: Notify Slack on Job Error
         if: failure()
-        # uses: .github/actions/slack-notify
+        # uses: ./.github/actions/slack-notify
         # with:
         #   webhook: "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
         #   body: "@releases :rotating_light: GitHub release failed to create, investigate immediately "rotating_light"
