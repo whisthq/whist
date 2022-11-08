@@ -75,6 +75,8 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         send_side_bwd= std::make_unique<webrtc::SendSideBandwidthEstimation> (ft,nullptr);
         delay_based_bwe->SetMinBitrate(webrtc::congestion_controller::GetMinBitrate());
         acknowledged_bitrate_estimator_=webrtc::AcknowledgedBitrateEstimatorInterface::Create(ft);
+
+        cc_shared_state.bwd_saturate_controller = make_shared<BandwithSaturateController>();
     }
 
    ~CongestionCongrollerImpl() override
@@ -97,7 +99,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       {
         auto & packet = input.packets[0];
 
-        double window_size_ms=200;
+        double window_size_ms=300;
 
         packet_history.push_back(input.packets[0]);
         while(packet_history.back().depature_time_ms - packet_history.front().depature_time_ms > window_size_ms){
@@ -111,7 +113,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
 
         cc_shared_state.shoot_ratio_100 = shoot_sum/target_sum *100;
 
-        fprintf(stderr,"<%f %f %d %d %f>\n", shoot_sum, target_sum, (int)packet_history.size(), (int)(packet_history.back().depature_time_ms - packet_history.front().depature_time_ms), cc_shared_state.shoot_ratio_100);
+        //fprintf(stderr,"<%f %f %d %d %f>\n", shoot_sum, target_sum, (int)packet_history.size(), (int)(packet_history.back().depature_time_ms - packet_history.front().depature_time_ms), cc_shared_state.shoot_ratio_100);
 
         whist_plotter_insert_sample("shoot_ratio", get_timestamp_sec(), cc_shared_state.shoot_ratio_100);
       }
@@ -126,6 +128,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       {
          RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value() && input.start_bitrate.has_value());
          cc_shared_state.first_process_time= current_time;
+         cc_shared_state.bwd_saturate_controller->init(current_time);
          std::optional<webrtc::DataRate> start_rate;
          //printf("<<%f>>\n", input.start_bitrate.value());
          start_rate=webrtc::DataRate::BitsPerSec(input.start_bitrate.value());
@@ -299,6 +302,13 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       cc_shared_state.current_bitrate = loss_based_target_rate;
       //whist_plotter_insert_sample("current_bitrate_ratio", get_timestamp_sec(), cc_shared_state.current_bitrate_ratio*100);
 
+
+      cc_shared_state.bwd_saturate_controller->insert_bandwidth_sample(  current_time, loss_based_target_rate.bps());
+
+      output.bandwitdth_saturation=  cc_shared_state.bwd_saturate_controller->get_saturate_state();
+
+
+      /*
       if(current_time - cc_shared_state.first_process_time > webrtc::TimeDelta::Seconds(10)){
         int sec= (current_time - cc_shared_state.first_process_time).seconds();
         if(sec%10==0||sec%10==1)
@@ -309,7 +319,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         else output.bandwitdth_saturation = false;
       } else{
         output.bandwitdth_saturation = true;
-      }
+      }*/
 
       whist_plotter_insert_sample("saturate", get_timestamp_sec(), output.bandwitdth_saturation *-5);
 
