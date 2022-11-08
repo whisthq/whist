@@ -12,8 +12,6 @@ on:
       - "!auth0/README.md"
       - "!auth0/**/README.md"
       - ".github/workflows/auth0-check-pr.yml"
-      - ".github/actions/generate-auth0-token"
-      - ".github/actions/set-environment/action.yml"
   workflow_dispatch:
 
 # This guarantees that if you push many commits to the same PR, only the latest
@@ -23,40 +21,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Check that our Whist Authentication API authentication is valid for all our environments dev/staging/prod
-  auth0-verify-whist-api-auth:
-    name: "Auth0: Verify Whist API Authentication for ${{ matrix.environment.name }}"
-    runs-on: ubuntu-20.04
-
-    strategy:
-      matrix:
-        environment:
-          - name: Dev
-            ref: /refs/heads/dev
-          - name: Staging
-            ref: /refs/heads/staging
-          - name: Prod
-            ref: /refs/heads/prod
-
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-
-        # We are testing this configuration against deployable branches dev/staging/prod only
-      - name: Set Workflow Environment
-        id: set-workflow-environment
-        uses: ./.github/actions/set-environment
-        with:
-          ref: ${{ matrix.environment.ref }}
-
-      - name: Obtain an Auth0 Access Token with Whist API Audience
-        id: get-token
-        uses: ./.github/actions/generate-auth0-token
-        with:
-          domain: ${{ steps.set-workflow-environment.outputs.auth0-domain }}
-          client-id: ${{ steps.set-workflow-environment.outputs.auth0-client-id }}
-          client-secret: ${{ secrets[steps.set-workflow-environment.outputs.auth0-client-secret-key] }}
-
   # Check that our Auth0 deployment setup works by attempting to retrieve the current upstream schema
   auth0-verify-tenant-schema-retrieval:
     name: "Auth0: Verify Tenant Schema Retrieval for ${{ matrix.environment.name }}"
@@ -78,13 +42,6 @@ jobs:
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
-
-        # We are testing this configuration against deployable branches dev/staging/prod only
-      - name: Set Workflow Environment
-        id: set-workflow-environment
-        uses: ./.github/actions/set-environment
-        with:
-          ref: ${{ matrix.environment.ref }}
 
       - name: Set up NodeJS Environment
         uses: actions/setup-node@v3.4.1

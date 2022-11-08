@@ -20,7 +20,7 @@ jobs:
           ref: ${{ github.ref }} # Use this input to specify the exact ref to checkout
 
       - name: Call my Action
-        uses: ./.github/actions/my-action
+        uses: .github/actions/my-action
 ```
 
 When writing custom Actions, please adhere to the style guidelines described in `.github/workflows/README.md`.

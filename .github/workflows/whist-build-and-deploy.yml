@@ -54,9 +54,6 @@ jobs:
       branch: ${{ steps.set-deploy-environment.outputs.environment }}
       publish: ${{ steps.detect-publish.outputs.publish }}
       scaling_service_url: ${{ steps.set-backend-services-urls.outputs.scaling_service_url }}
-      auth0-domain: ${{ steps.set-deploy-environment.outputs.auth0-domain }}
-      auth0-client-id: ${{ steps.set-deploy-environment.outputs.auth0-client-id }}
-      auth0-client-secret-key: ${{ steps.set-deploy-environment.outputs.auth0-client-secret-key }}
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
@@ -70,12 +67,16 @@ jobs:
       - name: Set deploy environment
         id: set-deploy-environment
         if: github.event_name == 'push' || github.event_name == 'schedule' || contains(fromJSON('["", "dev", "staging", "prod"]'), inputs.target)
-        uses: ./.github/actions/set-environment
-        with:
+        shell: python3 {0}
+        run: |
           # If workflow_dispatch, use the specified target (dev/staging/prod).
           # Else, assume the triggering branch is dev/staging/prod and use that
           # branch name.
-          ref: ${{ inputs.target || github.ref }}
+          branch = "${{ inputs.target || github.ref }}".split("/")[-1]
+          if not branch in ["prod", "staging"]:
+              branch = "dev"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+            out.write(f"environment={branch}\n")
 
       - name: Set backend services URL based on Git Branch (prod, staging, dev)
         id: set-backend-services-urls
@@ -256,7 +257,7 @@ jobs:
     name: "Mandelboxes: Publish to GHCR"
     needs: [whist-publish-build-config]
     concurrency: mandelboxes-publish-ghcr-${{ github.ref }}
-    uses: ./.github/workflows/mandelboxes-publish-ghcr.yml
+    uses: .github/workflows/mandelboxes-publish-ghcr.yml
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
@@ -269,7 +270,7 @@ jobs:
     name: "AMIs: Publish to AWS"
     concurrency: amis-publish-aws-${{ github.ref }}
     needs: [whist-publish-build-config, terraform-deploy]
-    uses: ./.github/workflows/backend-ami-publish-aws.yml
+    uses: .github/workflows/backend-ami-publish-aws.yml
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
@@ -413,7 +414,7 @@ jobs:
       ]
     # Only run whist-browser deployment if none of the previous steps failed
     if: always() && (needs.whist-browser-retrieve-version-number.result == 'success')
-    uses: ./.github/workflows/browser-hybrid-publish-s3.yml
+    uses: .github/workflows/browser-hybrid-publish-s3.yml
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       release_version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}
@@ -542,17 +543,7 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
-          if [[ ${{ needs.whist-publish-build-config.outputs.branch }} == dev ]]; then
-            HEROKU_APP_NAME=whist-dev-scaling-service
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == staging ]]; then
-            HEROKU_APP_NAME=whist-staging-scaling-service
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == prod ]]; then
-            HEROKU_APP_NAME=whist-prod-scaling-service
-          else
-            echo 'Error: Invalid branch' && false
-          fi
-          echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
-
+          echo "HEROKU_APP_NAME=whist-${{ needs.whist-publish-build-config.outputs.branch }}-scaling-service" >> $GITHUB_ENV
           heroku git:remote --app $HEROKU_APP_NAME --remote heroku-whist-scaling-service
 
       - name: Configure git for Scaling Service deploy script
@@ -575,7 +566,7 @@ jobs:
         env:
           HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
-        uses: ./.github/actions/db-migration
+        uses: .github/actions/db-migration
 
       - name: Write heroku.yml with yq
         uses: mikefarah/yq@master
@@ -679,7 +670,11 @@ jobs:
 
       - name: Notify Slack on Job Error
         if: failure()
-        shell: python3 {0}
+        # uses: .github/actions/slack-notify
+        # with:
+        #   webhook: "${{ secrets[format('SLACK_HOOKS_ENDPOINT_{0}', needs.whist-publish-build-config.outputs.branch)] }}"
+        #   body: "@releases :rotating_light: GitHub release failed to create, investigate immediately "rotating_light"
+        #   run_id: ${{ github.run_id }}
         run: |
           from notifications.slack_bot import slack_post
           BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `whist-create-github-release-tag` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
