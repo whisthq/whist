@@ -1,0 +1,34 @@
+From db71eec722bc0baa3d29a73a43d0a39097fafec2 Mon Sep 17 00:00:00 2001
+From: Suriya Kandaswamy <suriya@whist.com>
+Date: Tue, 8 Nov 2022 06:12:55 +0000
+Subject: [PATCH 3/5] Hide zoom popup
+
+---
+ chrome/browser/ui/views/page_action/zoom_view.cc | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/chrome/browser/ui/views/page_action/zoom_view.cc b/chrome/browser/ui/views/page_action/zoom_view.cc
+index fba0a8ce686d1..a256348e4ce9f 100644
+--- a/chrome/browser/ui/views/page_action/zoom_view.cc
++++ b/chrome/browser/ui/views/page_action/zoom_view.cc
+@@ -34,6 +34,9 @@ void ZoomView::UpdateImpl() {
+ }
+ 
+ bool ZoomView::ShouldBeVisible(bool can_show_bubble) const {
++  // We don't want the server to ever show the zoom bubble view
++  return false;
++  /*
+   if (delegate()->ShouldHidePageActionIcons())
+     return false;
+ 
+@@ -47,6 +50,7 @@ bool ZoomView::ShouldBeVisible(bool can_show_bubble) const {
+   zoom::ZoomController* zoom_controller =
+       zoom::ZoomController::FromWebContents(GetWebContents());
+   return zoom_controller && !zoom_controller->IsAtDefaultZoom();
++  */
+ }
+ 
+ bool ZoomView::HasAssociatedBubble() const {
+-- 
+2.25.1
+

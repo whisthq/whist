@@ -98,7 +98,6 @@ int multithreaded_gpu_command_receiver(void *opaque) {
     FD_ZERO(&fds);
     FD_SET(listener, &fds);
     int fdmax = listener;
-    bool connected = false;
     struct timeval timeout;
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
@@ -122,7 +121,6 @@ int multithreaded_gpu_command_receiver(void *opaque) {
         for (int fd = 0; fd < (fdmax + 1); fd++) {
             if (FD_ISSET(fd, &readfds)) {  // fd is ready for reading
                 if (fd == listener) {      // request for new connection
-                    if (connected) continue;
                     int fd_new;
                     if ((fd_new = accept(listener, NULL, NULL)) == -1) {
                         LOG_ERROR("Could not accept to IPC unix socket");
@@ -130,7 +128,6 @@ int multithreaded_gpu_command_receiver(void *opaque) {
                     LOG_INFO("Got a new GPU connection fd_new=%d", fd_new);
                     FD_SET(fd_new, &fds);
                     if (fd_new > fdmax) fdmax = fd_new;
-                    connected = true;
                 } else  // data from an existing connection, receive it
                 {
                     ssize_t numbytes = read(fd, recv_command, LARGEST_GPUFRAME_SIZE);

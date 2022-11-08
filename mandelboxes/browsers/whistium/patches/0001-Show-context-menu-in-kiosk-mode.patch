@@ -1,0 +1,72 @@
+From b4a39d276dac2137cd311f0f61ab42927051227b Mon Sep 17 00:00:00 2001
+From: Roshan Padaki <roshan@whist.com>
+Date: Tue, 8 Nov 2022 06:07:30 +0000
+Subject: [PATCH 1/5] Show context menu in kiosk mode
+
+---
+ .../render_view_context_menu.cc                      | 12 ++++--------
+ .../ui/views/bookmarks/bookmark_context_menu.cc      |  3 ---
+ .../render_view_context_menu_views.cc                |  3 ---
+ 3 files changed, 4 insertions(+), 14 deletions(-)
+
+diff --git a/chrome/browser/renderer_context_menu/render_view_context_menu.cc b/chrome/browser/renderer_context_menu/render_view_context_menu.cc
+index e6efbf1e457ae..aba8b15bec745 100644
+--- a/chrome/browser/renderer_context_menu/render_view_context_menu.cc
++++ b/chrome/browser/renderer_context_menu/render_view_context_menu.cc
+@@ -1366,14 +1366,6 @@ void RenderViewContextMenu::AppendLinkItems() {
+       AppendProtocolHandlerSubMenu();
+     }
+ 
+-    // Links to system web app can't be opened in incognito / off-the-record.
+-    if (!link_system_app_type) {
+-      menu_model_.AddItemWithStringId(
+-          IDC_CONTENT_CONTEXT_OPENLINKOFFTHERECORD,
+-          in_app ? IDS_CONTENT_CONTEXT_OPENLINKOFFTHERECORD_INAPP
+-                 : IDS_CONTENT_CONTEXT_OPENLINKOFFTHERECORD);
+-    }
+-
+     AppendOpenInWebAppLinkItems();
+     AppendOpenWithLinkItems();
+ 
+@@ -1755,6 +1747,10 @@ void RenderViewContextMenu::AppendExitFullscreenItem() {
+   if (!browser)
+     return;
+ 
++  // If kiosk mode, Whist has enabled the context menu so we must remove this option.
++  if (base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kKioskMode))
++    return;
++
+   // Only show item if in fullscreen mode.
+   if (!browser->exclusive_access_manager()
+            ->fullscreen_controller()
+diff --git a/chrome/browser/ui/views/bookmarks/bookmark_context_menu.cc b/chrome/browser/ui/views/bookmarks/bookmark_context_menu.cc
+index 116e2b842fcb7..238fa1cb005c6 100644
+--- a/chrome/browser/ui/views/bookmarks/bookmark_context_menu.cc
++++ b/chrome/browser/ui/views/bookmarks/bookmark_context_menu.cc
+@@ -81,9 +81,6 @@ void BookmarkContextMenu::InstallPreRunCallback(base::OnceClosure callback) {
+ 
+ void BookmarkContextMenu::RunMenuAt(const gfx::Point& point,
+                                     ui::MenuSourceType source_type) {
+-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kKioskMode))
+-    return;
+-
+   if (!PreRunCallback().is_null())
+     std::move(PreRunCallback()).Run();
+ 
+diff --git a/chrome/browser/ui/views/renderer_context_menu/render_view_context_menu_views.cc b/chrome/browser/ui/views/renderer_context_menu/render_view_context_menu_views.cc
+index dd729e8186d03..aeed067f3f4f6 100644
+--- a/chrome/browser/ui/views/renderer_context_menu/render_view_context_menu_views.cc
++++ b/chrome/browser/ui/views/renderer_context_menu/render_view_context_menu_views.cc
+@@ -362,9 +362,6 @@ void RenderViewContextMenuViews::ExecOpenInReadAnything() {
+ }
+ 
+ void RenderViewContextMenuViews::Show() {
+-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kKioskMode))
+-    return;
+-
+   // Menus need a Widget to work. If we're not the active tab we won't
+   // necessarily be in a widget.
+   views::Widget* top_level_widget = GetTopLevelWidget();
+-- 
+2.25.1
+
