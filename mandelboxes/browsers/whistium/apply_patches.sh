@@ -1,6 +1,8 @@
 #!/bin/bash
 
-CHROMIUM_PATH=$1
+WHISTIUM_INSTANCE_IP=$1
+WHISTIUM_INSTANCE_SSH_KEY=$2
+WHISTIUM_INSTANCE_CHROMIUM_PATH=$3
 MONOREPO_PATH=$(git rev-parse --show-toplevel)
 
 # Apply patches
@@ -8,7 +10,8 @@ echo "Applying patches..."
 PATCH_FOLDER=$MONOREPO_PATH/mandelboxes/browsers/whistium/patches
 for filename in $(ls $PATCH_FOLDER) ; do
 	echo $filename
-	cd $CHROMIUM_PATH && git apply $PATCH_FOLDER/$filename
+	scp -i $WHISTIUM_INSTANCE_SSH_KEY $PATCH_FOLDER/$filename ubuntu@$WHISTIUM_INSTANCE_IP:/tmp/patch
+	ssh -i $WHISTIUM_INSTANCE_SSH_KEY ubuntu@$WHISTIUM_INSTANCE_IP "cd $WHISTIUM_INSTANCE_CHROMIUM_PATH && git apply /tmp/patch"
 done
 
 echo "-------"
@@ -19,5 +22,7 @@ ADDED_FOLDER=$MONOREPO_PATH/mandelboxes/browsers/whistium/custom_files
 for filename in $(ls $ADDED_FOLDER) ; do
 	echo $filename
 	CHROMIUM_REPO_FILEPATH=$(echo $filename | tr "-" "/")
-	cp $ADDED_FOLDER/$filename $CHROMIUM_PATH/$CHROMIUM_REPO_FILEPATH
+	CHROMIUM_REPO_DIRPATH="$(dirname $CHROMIUM_REPO_FILEPATH)"
+	ssh -i $WHISTIUM_INSTANCE_SSH_KEY ubuntu@$WHISTIUM_INSTANCE_IP "mkdir -p $WHISTIUM_INSTANCE_CHROMIUM_PATH/$CHROMIUM_REPO_DIRPATH"
+	scp -i $WHISTIUM_INSTANCE_SSH_KEY $ADDED_FOLDER/$filename ubuntu@$WHISTIUM_INSTANCE_IP:$WHISTIUM_INSTANCE_CHROMIUM_PATH/$CHROMIUM_REPO_FILEPATH
 done
