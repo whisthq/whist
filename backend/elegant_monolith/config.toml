@@ -1,3 +1,6 @@
+[backend]
+version = "0.0.0"
+
 [cloud]
 provider = "AWS"
 
@@ -9,8 +12,8 @@ provider = "AWS"
 "us-east-1" = "ami-01"
 "us-west-1" = "ami-02"
 
-[backend]
-version = "0.0.0"
+[mandelboxes]
+limit = 3
 
 [cleaner]
 enabled = true

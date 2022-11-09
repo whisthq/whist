@@ -1,7 +1,6 @@
 package assign
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net"
@@ -26,24 +25,24 @@ type assignServer struct {
 	UnimplementedAssignServiceServer
 }
 
-func (assignSrv *assignServer) MandelboxAssign(ctx context.Context, req *MandelboxAssignRequest) (res *MandelboxAssignResponse, err error) {
-	mandelboxID, ip, err := assignSrv.service.MandelboxAssign(ctx, req.Regions)
-	if err != nil {
-		return &MandelboxAssignResponse{
-			MandelboxId: mandelboxID,
-			Ip: ip,
-			Err: err.Error(),
-		}, err
-	}
-	
-	return &MandelboxAssignResponse{
-		MandelboxId: mandelboxID,
-		Ip: ip,
-		Err: err.Error(),
-	}, nil
-}
+// func (assignSrv *assignServer) MandelboxAssign(ctx context.Context, req *MandelboxAssignRequest) (res *MandelboxAssignResponse, err error) {
+// 	mandelboxID, ip, err := assignSrv.service.MandelboxAssign(ctx, req.Regions)
+// 	if err != nil {
+// 		return &MandelboxAssignResponse{
+// 			MandelboxId: mandelboxID,
+// 			Ip: ip,
+// 			Err: err.Error(),
+// 		}, err
+// 	}
 
-func  (assignSrv assignServer) Serve() {
+// 	return &MandelboxAssignResponse{
+// 		MandelboxId: mandelboxID,
+// 		Ip: ip,
+// 		Err: err.Error(),
+// 	}, nil
+// }
+
+func (assignSrv assignServer) Serve() {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", PORT))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

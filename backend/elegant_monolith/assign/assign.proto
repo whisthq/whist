@@ -10,6 +10,8 @@ service AssignService {
 
 message MandelboxAssignRequest {
   repeated string regions = 1;
+  string user_id = 2;
+  string user_email = 3;
 }
 
 message MandelboxAssignResponse {
