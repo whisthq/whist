@@ -12,7 +12,6 @@
 
 #include "base/command_line.h"
 #include "base/environment.h"
-#include "brave/common/extensions/api/whist.h"
 #include "brave/common/pref_names.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/profiles/profile.h"
@@ -21,6 +20,7 @@
 #include "components/prefs/pref_service.h"
 #include "extensions/browser/event_router.h"
 #include "gpu/command_buffer/service/gpu_switches.h"
+#include "whist/browser/hybrid/common/extensions/api/whist.h"
 
 #include "whist_api_native.h"
 
