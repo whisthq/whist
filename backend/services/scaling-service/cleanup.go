@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"reflect"
 	"sync"
 	"time"
 
@@ -106,11 +105,29 @@ func do(ctx context.Context, client subscriptions.WhistGraphQLClient, h hosts.Ho
 		return
 	}
 
-	if !reflect.DeepEqual(deleted, ids) {
+	if !equal(deleted, ids) {
 		logger.Errorf("some %s instance rows were not deleted: requested "+
 			"%v, got %v", region, ids, deleted)
 	} else {
 		logger.Info("Successfully removed the following unresponsive instance "+
 			"rows from the database for %s:", region, deleted)
+	}
+}
+
+func equal(u, v []string) bool {
+	if len(u) != len(v) {
+		return false
+	}
+
+	same := true
+	set := make(map[string]struct{}, len(u))
+
+	for _, s := range u {
+		set[s] = struct{}{}
+	}
+
+	for _, s := range v {
+		_, ok := set[s]
+		same = same && ok
 	}
 }
