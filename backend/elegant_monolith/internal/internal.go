@@ -13,9 +13,9 @@ type Instance struct {
 	Region            string
 	ImageID           string
 	ClientSHA         string
-	IPAddress         string
-	Type              string
-	RemainingCapacity string
+	IPAddress         string `gorm:"column:ip_addr"`
+	Type              string `gorm:"column:instance_type"`
+	RemainingCapacity int
 	Status            string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
@@ -41,7 +41,7 @@ func (Mandelbox) TableName() string {
 }
 
 type Image struct {
-	ID        string
+	ID        string `gorm:"column:image_id"`
 	Provider  string
 	Region    string
 	ClientSHA string

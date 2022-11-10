@@ -1,6 +1,7 @@
 package assign
 
 import (
+	context "context"
 	"fmt"
 	"log"
 	"net"
@@ -25,22 +26,15 @@ type assignServer struct {
 	UnimplementedAssignServiceServer
 }
 
-// func (assignSrv *assignServer) MandelboxAssign(ctx context.Context, req *MandelboxAssignRequest) (res *MandelboxAssignResponse, err error) {
-// 	mandelboxID, ip, err := assignSrv.service.MandelboxAssign(ctx, req.Regions)
-// 	if err != nil {
-// 		return &MandelboxAssignResponse{
-// 			MandelboxId: mandelboxID,
-// 			Ip: ip,
-// 			Err: err.Error(),
-// 		}, err
-// 	}
-
-// 	return &MandelboxAssignResponse{
-// 		MandelboxId: mandelboxID,
-// 		Ip: ip,
-// 		Err: err.Error(),
-// 	}, nil
-// }
+func (assignSrv *assignServer) MandelboxAssign(ctx context.Context, req *MandelboxAssignRequest) (res *MandelboxAssignResponse, err error) {
+	log.Printf("Req: %v", req)
+	mandelboxID, ip, err := assignSrv.service.MandelboxAssign(ctx, req.Regions, req.UserEmail, req.UserId, req.CommitHash)
+	return &MandelboxAssignResponse{
+		MandelboxId: mandelboxID,
+		Ip:          ip,
+		Error:       err.(AssignError).Code(),
+	}, nil
+}
 
 func (assignSrv assignServer) Serve() {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", PORT))

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"time"
 
 	"github.com/whisthq/whist/backend/elegant_monolith/internal"
 	"github.com/whisthq/whist/backend/elegant_monolith/internal/config"
@@ -13,7 +14,7 @@ import (
 )
 
 func (svc *assignService) MandelboxAssign(ctx context.Context, regions []string, userEmail string, userID string, commitHash string) (string, string, AssignError) {
-	logger.Infof("Starting mandelbox assign action.")
+	logger.Infof("Starting mandelbox assign action. %v %v %v %v", regions, userEmail, userID, commitHash)
 	defer logger.Infof("Finished mandelbox assign action.")
 
 	// Note: we receive the email from the client, so its value should
@@ -98,8 +99,8 @@ func (svc *assignService) MandelboxAssign(ctx context.Context, regions []string,
 	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
 	for i, region := range availableRegions {
 		// TODO: set different cloud provider when doing multi-cloud
-		regionImage, err := svc.db.QueryLatestImage(ctx, "AWS", region)
-		if err != nil {
+		regionImage, rows, err := svc.db.QueryLatestImage(ctx, "AWS", region)
+		if err != nil || rows == 0 {
 			return "", "", AssignError{
 				ErrorCode: SERVICE_UNAVAILABLE,
 				Err:       fmt.Errorf("failed to query latest image in %s: %s", region, err),
@@ -109,15 +110,15 @@ func (svc *assignService) MandelboxAssign(ctx context.Context, regions []string,
 		logger.Infof("Trying to find instance in region %s, with commit hash %s and image %s",
 			region, commitHash, regionImage.ID)
 
-		instanceResult, err := svc.db.QueryInstancesWithCapacity(ctx, region)
+		instanceResult, rows, err := svc.db.QueryInstancesWithCapacity(ctx, region)
 		if err != nil {
 			return "", "", AssignError{
 				ErrorCode: SERVICE_UNAVAILABLE,
-				Err:       fmt.Errorf("failed to query latest image in %s: %s", region, err),
+				Err:       fmt.Errorf("failed to query instances in %s: %s", region, err),
 			}
 		}
 
-		if len(instanceResult) == 0 {
+		if rows == 0 {
 			logger.Warningf("Failed to find any instances with capacity in %s. Trying on next region", region)
 			continue
 		}
@@ -175,9 +176,47 @@ func (svc *assignService) MandelboxAssign(ctx context.Context, regions []string,
 		}
 	}
 
-	// TODO update waiting mandelbox to allocated with user and return fields?
+	waitingMandelbox, rows, err := svc.db.QueryMandelbox(ctx, assignedInstance.ID, internal.MandelboxStatusWaiting)
+	if err != nil {
+		logger.Errorf("failed to query database for mandelbox on instance %s: %s", assignedInstance.ID, err)
+		return "", "", AssignError{
+			ErrorCode: SERVICE_UNAVAILABLE,
+			Err:       err,
+		}
+	}
 
-	// TODO update assigned instance remaining capacity
+	if rows == 0 {
+		logger.Errorf("failed to find a waiting mandelbox even though the instance %s had sufficient capacity", assignedInstance.ID)
+		return "", "", AssignError{
+			ErrorCode: SERVICE_UNAVAILABLE,
+			Err:       err,
+		}
+	}
+
+	waitingMandelbox.UserID = userID
+	waitingMandelbox.Status = internal.MandelboxStatusAllocated
+	waitingMandelbox.UpdatedAt = time.Now()
+
+	updated, err := svc.db.UpdateMandelbox(ctx, waitingMandelbox)
+	if err != nil {
+		logger.Errorf("error updating mandelbox %s: %s", waitingMandelbox.ID, err)
+		return "", "", AssignError{
+			ErrorCode: SERVICE_UNAVAILABLE,
+			Err:       err,
+		}
+	}
+	logger.Infof("Updated %d mandelbox rows in database", updated)
+
+	assignedInstance.RemainingCapacity--
+	updated, err = svc.db.UpdateInstance(ctx, assignedInstance)
+	if err != nil {
+		logger.Errorf("error updating instance %s: %s", assignedInstance.ID, err)
+		return "", "", AssignError{
+			ErrorCode: SERVICE_UNAVAILABLE,
+			Err:       err,
+		}
+	}
+	logger.Infof("Updated %d instance rows in database", updated)
 
 	// Parse IP address. The database uses the CIDR notation (192.0.2.0/24)
 	// so we need to extract the address and send it to the frontend.
@@ -189,8 +228,7 @@ func (svc *assignService) MandelboxAssign(ctx context.Context, regions []string,
 		}
 	}
 
-	//return waitingMandelbox.ID, ip.String(), AssignError{}
-	return "", ip.String(), AssignError{}
+	return waitingMandelbox.ID, ip.String(), AssignError{}
 }
 
 // checkForExistingMandelbox queries the database to compute the current number of active mandelboxes associated to a single user.
@@ -201,14 +239,14 @@ func (svc *assignService) checkForExistingMandelbox(ctx context.Context, userID 
 		return false, fmt.Errorf("user ID is empty, not assigning mandelboxes")
 	}
 
-	mandelboxResult, err := svc.db.QueryUserMandelboxes(ctx, userID)
+	mandelboxResult, rows, err := svc.db.QueryUserMandelboxes(ctx, userID)
 	if err != nil {
 		return false, err
 	}
 
 	logger.Infof("User %s has %d mandelboxes active", userID, len(mandelboxResult))
 
-	if len(mandelboxResult) == 0 {
+	if rows == 0 {
 		return true, nil
 	}
 

@@ -2,30 +2,32 @@ package dbclient
 
 import (
 	"context"
-	"log"
 
 	"github.com/whisthq/whist/backend/elegant_monolith/internal"
+	"github.com/whisthq/whist/backend/elegant_monolith/pkg/logger"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 type DBClient interface {
-	QueryInstance(ctx context.Context, instanceID string) (internal.Instance, error)
-	QueryInstancesWithCapacity(ctx context.Context, region string) ([]internal.Instance, error)
+	QueryInstance(ctx context.Context, instanceID string) (internal.Instance, int, error)
+	QueryInstancesWithCapacity(ctx context.Context, region string) ([]internal.Instance, int, error)
 	// QueryInstancesByStatusOnRegion(context.Context, string, string) ([]internal.Instance, error)
 	// QueryInstancesByImage(context.Context, string) ([]internal.Instance, error)
 	// InsertInstances(context.Context, []internal.Instance) (int, error)
-	// UpdateInstance(context.Context, internal.Instance) (int, error)
+	UpdateInstance(ctx context.Context, update internal.Instance) (int, error)
 	// DeleteInstance(context.Context, string) (int, error)
 
 	// QueryImage(context.Context, string, string) ([]Image, error)
-	QueryLatestImage(ctx context.Context, provider string, region string) (internal.Image, error)
+	QueryLatestImage(ctx context.Context, provider string, region string) (internal.Image, int, error)
 	// InsertImages(context.Context, []Image) (int, error)
 	// UpdateImage(context.Context, Image) (int, error)
 
-	QueryUserMandelboxes(ctx context.Context, userID string) ([]internal.Mandelbox, error)
+	QueryMandelbox(ctx context.Context, instanceID string, status string) (internal.Mandelbox, int, error)
+	QueryUserMandelboxes(ctx context.Context, userID string) ([]internal.Mandelbox, int, error)
 	// InsertMandelboxes(context.Context, []Mandelbox) (int, error)
-	// UpdateMandelbox(context.Context, Mandelbox) (int, error)
+	UpdateMandelbox(ctx context.Context, update internal.Mandelbox) (int, error)
 }
 
 type Client struct {
@@ -36,10 +38,10 @@ func NewConnection() DBClient {
 	cl := &Client{}
 	db, err := connect()
 	if err != nil {
-		log.Printf("error starting db: %s", err)
+		logger.Infof("error starting db: %s", err)
 		return nil
 	}
-
+	logger.Infof("Successfully connected to db")
 	cl.db = db
 	return cl
 }

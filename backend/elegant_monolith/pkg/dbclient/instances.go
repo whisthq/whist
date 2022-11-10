@@ -6,16 +6,16 @@ import (
 	"github.com/whisthq/whist/backend/elegant_monolith/internal"
 )
 
-func (client Client) QueryInstance(ctx context.Context, id string) (internal.Instance, error) {
+func (client Client) QueryInstance(ctx context.Context, id string) (internal.Instance, int, error) {
 	var instance internal.Instance
-	err := client.db.First(&instance).Error
-	return instance, err
+	tx := client.db.Limit(1).Find(&instance)
+	return instance, int(tx.RowsAffected), tx.Error
 }
 
-func (client Client) QueryInstancesWithCapacity(ctx context.Context, region string) ([]internal.Instance, error) {
+func (client Client) QueryInstancesWithCapacity(ctx context.Context, region string) ([]internal.Instance, int, error) {
 	var instances []internal.Instance
-	err := client.db.Where("region = ?", region).Find(&instances).Error
-	return instances, err
+	tx := client.db.Where("region = ?", region).Find(&instances)
+	return instances, int(tx.RowsAffected), tx.Error
 }
 
 // func QueryInstancesByStatusOnRegion(context.Context, string, string) ([]internal.Instance, error) {
@@ -27,8 +27,10 @@ func (client Client) QueryInstancesWithCapacity(ctx context.Context, region stri
 // func InsertInstances(context.Context, []internal.Instance) (int, error) {
 // }
 
-// func UpdateInstance(context.Context, internal.Instance) (int, error) {
-// }
+func (client Client) UpdateInstance(ctx context.Context, instance internal.Instance) (int, error) {
+	tx := client.db.Save(&instance)
+	return int(tx.RowsAffected), tx.Error
+}
 
 // func DeleteInstance(context.Context, string) (int, error) {
 // }

@@ -10,12 +10,13 @@ service AssignService {
 
 message MandelboxAssignRequest {
   repeated string regions = 1;
-  string user_id = 2;
-  string user_email = 3;
+  string commit_hash = 2;
+  string user_id = 3;
+  string user_email = 4;
 }
 
 message MandelboxAssignResponse {
-  string mandelbox_id = 1;
-  string ip = 2;
-  string err = 3;
+  string ip = 1;
+  string mandelbox_id = 2;
+  string error = 3;
 }

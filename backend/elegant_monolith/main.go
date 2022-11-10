@@ -25,7 +25,7 @@ func main() {
 
 	// Start services
 	assignSvc := assign.New()
-	assignSrv := assign.NewServer(assignSvc)
+	server := assign.NewServer(assignSvc)
 
 	scalingSvc := scaling.New()
 
@@ -40,7 +40,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		assignSrv.Serve()
+		server.Serve()
 	}()
 
 	wg.Add(1)
@@ -48,11 +48,6 @@ func main() {
 		defer wg.Done()
 		scalingSvc.Start()
 	}()
-
-	_, _, err = assignSvc.MandelboxAssign(context.Background(), []string{}, "", "", "")
-	if err != nil {
-		log.Printf("err in assign: %s", err)
-	}
 
 	wg.Wait()
 	log.Printf("Finished waiting for all services to stop")
