@@ -3,32 +3,24 @@
 WHISTIUM_INSTANCE_IP=$1
 WHISTIUM_INSTANCE_SSH_KEY=$2
 WHISTIUM_INSTANCE_CHROMIUM_PATH=$3
+CHROMIUM_BASE_VERSION=$4
 MONOREPO_PATH=$(git rev-parse --show-toplevel)
 
-# Create patches for modified files
-echo "Creating patch files..."
+# Check for confirmation
+read -e -p "This script will delete all patches and re-generate them. Interrupting this script may yield undesired results. Continue? [y/N] " choice
+[[ "$choice" == [Yy]* ]] && echo "Beginning patch generation process!" || exit
+
+# Delete and recreate patch folder
 PATCH_FOLDER=$MONOREPO_PATH/mandelboxes/browsers/whistium/patches
-if [ ! -d $PATCH_FOLDER ]; then
-	mkdir -p $PATCH_FOLDER
-fi
-for filepath in $(ssh -i $WHISTIUM_INSTANCE_SSH_KEY ubuntu@$WHISTIUM_INSTANCE_IP "cd $WHISTIUM_INSTANCE_CHROMIUM_PATH && git diff --name-only") ; do
-	PATCH_FILENAME=$(echo $filepath | tr "/" "-")
-	PATCH_FILENAME=${PATCH_FILENAME%.*}.patch
-	echo $PATCH_FILENAME
-	ssh -i $WHISTIUM_INSTANCE_SSH_KEY ubuntu@$WHISTIUM_INSTANCE_IP "cd $WHISTIUM_INSTANCE_CHROMIUM_PATH && git diff $filepath" > $PATCH_FOLDER/$PATCH_FILENAME
-done
+echo "Deleting and recreating local patch directory..."
+rm -rf $PATCH_FOLDER
+mkdir -p $PATCH_FOLDER
 
-echo "-------"
-
-# Copy added files
-echo "Copying added files..."
-ADDED_FOLDER=$MONOREPO_PATH/mandelboxes/browsers/whistium/custom_files
-if [ ! -d $ADDED_FOLDER ]; then
-	mkdir -p $ADDED_FOLDER
-fi
-for filepath in $(ssh -i $WHISTIUM_INSTANCE_SSH_KEY ubuntu@$WHISTIUM_INSTANCE_IP "cd $WHISTIUM_INSTANCE_CHROMIUM_PATH && git status --porcelain -uall | awk 'match(\$1, \"\\\\?\\\\?\"){print \$2}'") ; do
-	ADDED_FILENAME=$(echo $filepath | tr "/" "-")
-	# cp $CHROMIUM_PATH/$filepath $ADDED_FOLDER/$ADDED_FILENAME
-	scp -i $WHISTIUM_INSTANCE_SSH_KEY ubuntu@$WHISTIUM_INSTANCE_IP:$WHISTIUM_INSTANCE_CHROMIUM_PATH/$filepath $ADDED_FOLDER/$ADDED_FILENAME
-	echo "---copied as $ADDED_FILENAME"
-done
+# Create patches
+echo "Creating patch files..."
+# This command does the following:
+# - Remove and recreate temporary patches directory
+# - Declare "intent to add" untracked files to make them tracked
+# - Generate diffs for all modified and added files into the temporary patches directory
+ssh -i $WHISTIUM_INSTANCE_SSH_KEY ubuntu@$WHISTIUM_INSTANCE_IP "cd $WHISTIUM_INSTANCE_CHROMIUM_PATH && rm -rf /tmp/patches && mkdir /tmp/patches && git add -N . && for filepath in \$(git diff $CHROMIUM_BASE_VERSION --name-only) ; do git diff -p $CHROMIUM_BASE_VERSION \$filepath > /tmp/patches/\$(echo \$filepath | tr \"/\" \"-\").patch ; done"
+scp -i $WHISTIUM_INSTANCE_SSH_KEY ubuntu@$WHISTIUM_INSTANCE_IP:/tmp/patches/* $PATCH_FOLDER
