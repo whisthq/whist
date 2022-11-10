@@ -17,7 +17,6 @@
 #include "base/logging.h"
 #include "base/native_library.h"
 #include "base/path_service.h"
-#include "chrome/common/chrome_paths.h"
 #if BUILDFLAG(IS_MAC)
 #include "base/mac/bundle_locations.h"
 #include "base/mac/foundation_util.h"
