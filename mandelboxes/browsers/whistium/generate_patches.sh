@@ -25,4 +25,4 @@ echo "Creating patch files..."
 # - Declare "intent to add" untracked files to make them tracked
 # - Generate diffs for all modified and added files into the temporary patches directory
 ssh -i "$WHISTIUM_INSTANCE_SSH_KEY" ubuntu@"$WHISTIUM_INSTANCE_IP" "cd $WHISTIUM_INSTANCE_CHROMIUM_PATH && rm -rf /tmp/patches && mkdir /tmp/patches && git add -N . && for filepath in \$(git diff $CHROMIUM_BASE_VERSION --name-only) ; do git diff -p $CHROMIUM_BASE_VERSION \$filepath > /tmp/patches/\$(echo \$filepath | tr \"/\" \"-\").patch ; done"
-scp -i "$WHISTIUM_INSTANCE_SSH_KEY" ubuntu@"$WHISTIUM_INSTANCE_IP":/tmp/patches/* $PATCH_FOLDER
+scp -i "$WHISTIUM_INSTANCE_SSH_KEY" ubuntu@"$WHISTIUM_INSTANCE_IP":/tmp/patches/* "$PATCH_FOLDER"
