@@ -99,7 +99,7 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
       {
         auto & packet = input.packets[0];
 
-        double window_size_ms=300;
+        double window_size_ms=200;
 
         packet_history.push_back(input.packets[0]);
         while(packet_history.back().depature_time_ms - packet_history.front().depature_time_ms > window_size_ms){
@@ -112,6 +112,8 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         }
 
         cc_shared_state.shoot_ratio_100 = shoot_sum/target_sum *100;
+
+        if(cc_shared_state.shoot_ratio_100>150) cc_shared_state.shoot_ratio_100=150;
 
         //fprintf(stderr,"<%f %f %d %d %f>\n", shoot_sum, target_sum, (int)packet_history.size(), (int)(packet_history.back().depature_time_ms - packet_history.front().depature_time_ms), cc_shared_state.shoot_ratio_100);
 
@@ -166,6 +168,9 @@ class CongestionCongrollerImpl:CongestionCongrollerInterface
         RTC_CHECK(input.min_bitrate.has_value() && input.max_bitrate.has_value() && input.start_bitrate.has_value());
         send_side_bwd->SetBitrates(std::nullopt, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
                                       webrtc::DataRate::BitsPerSec(input.max_bitrate.value()),  current_time);
+        /*send_side_bwd->SetBitrates(std::nullopt, webrtc::DataRate::BitsPerSec(input.min_bitrate.value()),
+                                      webrtc::DataRate::BitsPerSec(input.min_bitrate.value()+100),  current_time);*/
+
         delay_based_bwe->SetMinBitrate(webrtc::DataRate::BitsPerSec(input.min_bitrate.value()));
         cc_shared_state.min_bitrate = webrtc::DataRate::BitsPerSec(input.min_bitrate.value());
         cc_shared_state.max_bitrate = webrtc::DataRate::BitsPerSec(input.max_bitrate.value());
