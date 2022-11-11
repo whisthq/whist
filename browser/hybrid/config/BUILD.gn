@@ -1,0 +1,8 @@
+# On macOS Ventura, sprintf is finally deprecated, so by default
+# the compiler warns us to use snprintf instead. Once we rebase
+# on top of updated Brave/Chrome sources, we can remove this fix.
+config("macos_ventura_sprintf_fix") {
+  if (is_mac) {
+    cflags = [ "-Wno-deprecated-declarations" ]
+  }
+}
