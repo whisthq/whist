@@ -2,10 +2,10 @@ package assign
 
 import (
 	"context"
-	"log"
 
 	"github.com/whisthq/whist/backend/elegant_monolith/internal"
 	"github.com/whisthq/whist/backend/elegant_monolith/pkg/dbclient"
+	"github.com/whisthq/whist/backend/elegant_monolith/pkg/logger"
 )
 
 type AssignService interface {
@@ -28,7 +28,7 @@ type assignService struct {
 func (assignSvc assignService) Start() {
 	for {
 		<-assignSvc.stopChan
-		log.Printf("Shutting down assign service...")
+		logger.Infof("Shutting down assign service...")
 		return
 	}
 }

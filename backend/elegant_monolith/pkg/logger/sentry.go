@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/whisthq/whist/backend/elegant_monolith/internal/config"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -110,7 +111,7 @@ func (sc *sentryCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 // Write is where the core sends the event payload to Sentry. This method
 // will manually assemble Sentry events so that they are sent correctly.
 func (sc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
-	if false {
+	if !config.UseProdLogging() {
 		return nil
 	}
 
@@ -146,7 +147,7 @@ func (sc *sentryCore) Sync() error {
 	//Flush sentry
 	ok := sc.sender.Flush(5 * time.Second)
 	if !ok {
-		return fmt.Errorf("failed to flush Sentry, some events may not have been sent.")
+		return fmt.Errorf("failed to flush Sentry, some events may not have been sent")
 	}
 
 	return nil
@@ -155,36 +156,9 @@ func (sc *sentryCore) Sync() error {
 // getStackTrace will extract and filter the stack trace from the error.
 func getStackStrace(err error) *sentry.Stacktrace {
 	stack := sentry.ExtractStacktrace(err)
-	frames := filterFrames(stack.Frames)
 	stacktrace := sentry.Stacktrace{
-		Frames: frames,
+		Frames: stack.Frames,
 	}
 
 	return &stacktrace
-}
-
-// filterFrames filters out stack frames that are not meant to be reported to
-// Sentry. Those are frames internal to the logger implementation.
-func filterFrames(frames []sentry.Frame) []sentry.Frame {
-	if len(frames) == 0 {
-		return nil
-	}
-
-	filteredFrames := make([]sentry.Frame, 0, len(frames))
-
-	for _, frame := range frames {
-		// // Skip zap frames
-		// if strings.HasPrefix(frame.Module, "go.uber.org/zap") ||
-		// 	strings.Contains(frame.AbsPath, "go.uber.org/zap") {
-		// 	continue
-		// }
-		// // Skip whistlogger frames
-		// if strings.HasPrefix(frame.Module, "github.com/whisthq/whist/backend/services/whistlogger") ||
-		// 	strings.Contains(frame.AbsPath, "github.com/whisthq/whist/backend/services/whistlogger") {
-		// 	continue
-		// }
-		filteredFrames = append(filteredFrames, frame)
-	}
-
-	return filteredFrames
 }

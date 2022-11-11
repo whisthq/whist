@@ -11,25 +11,15 @@ package config
 
 import (
 	"context"
-	"flag"
-	"fmt"
-	"log"
-	"os"
 	"sync"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/knadh/koanf"
-	"github.com/knadh/koanf/parsers/toml"
-	"github.com/knadh/koanf/providers/basicflag"
-	"github.com/knadh/koanf/providers/file"
 )
 
 // serviceConfig stores service-global configuration values.
 type serviceConfig struct {
-	scalingEnabled bool
-
-	scalingInterval time.Duration
-
 	// enabledRegions is the list of regions in which users are allowed to request
 	// Mandelboxes.
 	enabledRegions []string
@@ -37,6 +27,21 @@ type serviceConfig struct {
 	// mandelboxLimitPerUser is the maximum number of active mandelboxes a
 	// user can have.
 	mandelboxLimitPerUser int
+
+	// targetFreeMandelboxes maps region names to integers, where the integer
+	// associated with each region is the number of Mandelboxes we want to have
+	// available at all times. This might differ from the actual number number
+	// of Mandelboxes we have available at any given time, but that's what scaling
+	// algorithms are for.
+	targetFreeMandelboxes map[string]uint32
+
+	scalingEnabled     bool
+	commitHashOverride bool
+	useProdLogging     bool
+
+	scalingInterval time.Duration
+
+	databaseConnectionString string
 }
 
 // config is a singleton that stores service-global configuration values.
@@ -53,54 +58,26 @@ func Initialize(ctx context.Context) error {
 
 	var k = koanf.New(".")
 
-	// Load TOML config
-	err := k.Load(file.Provider("config.toml"), toml.Parser())
-	if err != nil {
-		return fmt.Errorf("error loading config: %s", err)
-	}
+	var configErr *multierror.Error
 
-	// Load command line config
-	f, err := setFlags()
-	if err != nil {
-		return fmt.Errorf("error parsing flags: %s", err)
-	}
+	multierror.Append(configErr, getConfigFromFile(k))
+	multierror.Append(configErr, getConfigFromFlags(k))
+	multierror.Append(configErr, getConfigFromEnv(k))
 
-	err = k.Load(basicflag.Provider(f, "."), nil)
-	if err != nil {
-		return fmt.Errorf("error loading flags to config: %s", err)
-	}
-	log.Printf("%v", k.Duration("scalingtime"))
-
-	config.enabledRegions = k.MapKeys("regions")
-	config.mandelboxLimitPerUser = k.Int("mandelboxes.limit")
-	config.scalingEnabled = k.Bool("scaling")
-	config.scalingInterval = k.Duration("scalingtime")
-
-	return nil
+	return configErr.ErrorOrNil()
 }
 
-func setFlags() (*flag.FlagSet, error) {
-	var (
-		scalingInterval time.Duration
-		cleanupPeriod   time.Duration
+// GetTargetFreeMandelboxes returns the number of Mandelboxes we want to have
+// available all times in a particular region.
+func GetTargetFreeMandelboxes(r string) uint32 {
+	rw.RLock()
+	defer rw.RUnlock()
 
-		scalingEnabled bool
-		cleanupEnabled bool
-	)
-
-	f := flag.NewFlagSet("config", flag.ContinueOnError)
-	f.DurationVar(&scalingInterval, "scalingtime", time.Duration(time.Minute*10), "Interval between when each scaling service runs.")
-	f.DurationVar(&cleanupPeriod, "cleantime", time.Duration(time.Minute), "Interval between when each cleaner service runs.")
-
-	f.BoolVar(&scalingEnabled, "scaling", false, "If the application starts the scaling service or not.")
-	f.BoolVar(&cleanupEnabled, "cleanup", false, "If the application starts the cleaner service or not.")
-
-	err := f.Parse(os.Args[1:])
-	if err != nil {
-		return nil, err
+	if n, ok := config.targetFreeMandelboxes[r]; ok {
+		return n
 	}
 
-	return f, nil
+	return 0
 }
 
 // GetEnabledRegions returns a list of regions in which a user may request a
@@ -121,4 +98,39 @@ func GetMandelboxLimitPerUser() int {
 	defer rw.RUnlock()
 
 	return config.mandelboxLimitPerUser
+}
+
+func GetCommitHashOverride() bool {
+	rw.RLock()
+	defer rw.RUnlock()
+
+	return config.commitHashOverride
+}
+
+func UseProdLogging() bool {
+	rw.RLock()
+	defer rw.RUnlock()
+
+	return config.useProdLogging
+}
+
+func GetScalingEnabled() bool {
+	rw.RLock()
+	defer rw.RUnlock()
+
+	return config.scalingEnabled
+}
+
+func GetScalingInterval() time.Duration {
+	rw.RLock()
+	defer rw.RUnlock()
+
+	return config.scalingInterval
+}
+
+func GetDatabaseURL() string {
+	rw.RLock()
+	defer rw.RUnlock()
+
+	return config.databaseConnectionString
 }

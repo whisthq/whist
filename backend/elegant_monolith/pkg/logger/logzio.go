@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/logzio/logzio-go"
+	"github.com/whisthq/whist/backend/elegant_monolith/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -112,8 +113,7 @@ func (lc *logzioCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 
 // Write is where the core sends the event payload to logz.io
 func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
-	// TODO
-	if true {
+	if !config.UseProdLogging() {
 		return nil
 	}
 

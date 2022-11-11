@@ -13,9 +13,9 @@ import (
 type DBClient interface {
 	QueryInstance(ctx context.Context, instanceID string) (internal.Instance, int, error)
 	QueryInstancesWithCapacity(ctx context.Context, region string) ([]internal.Instance, int, error)
-	// QueryInstancesByStatusOnRegion(context.Context, string, string) ([]internal.Instance, error)
+	QueryInstancesByStatusOnRegion(ctx context.Context, status string, region string) ([]internal.Instance, int, error)
 	// QueryInstancesByImage(context.Context, string) ([]internal.Instance, error)
-	// InsertInstances(context.Context, []internal.Instance) (int, error)
+	InsertInstances(ctx context.Context, instances []internal.Instance) (int, error)
 	UpdateInstance(ctx context.Context, update internal.Instance) (int, error)
 	// DeleteInstance(context.Context, string) (int, error)
 
@@ -26,7 +26,7 @@ type DBClient interface {
 
 	QueryMandelbox(ctx context.Context, instanceID string, status string) (internal.Mandelbox, int, error)
 	QueryUserMandelboxes(ctx context.Context, userID string) ([]internal.Mandelbox, int, error)
-	// InsertMandelboxes(context.Context, []Mandelbox) (int, error)
+	InsertMandelboxes(ctx context.Context, mandelboxes []internal.Mandelbox) (int, error)
 	UpdateMandelbox(ctx context.Context, update internal.Mandelbox) (int, error)
 }
 

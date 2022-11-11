@@ -86,8 +86,6 @@ func (svc *assignService) MandelboxAssign(ctx context.Context, regions []string,
 		}
 	}
 
-	// TODO use latest image in localdev
-
 	var (
 		instanceFound          bool
 		instanceProximityIndex int
@@ -105,6 +103,10 @@ func (svc *assignService) MandelboxAssign(ctx context.Context, regions []string,
 				ErrorCode: SERVICE_UNAVAILABLE,
 				Err:       fmt.Errorf("failed to query latest image in %s: %s", region, err),
 			}
+		}
+
+		if config.GetCommitHashOverride() && commitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
+			commitHash = regionImage.ClientSHA
 		}
 
 		logger.Infof("Trying to find instance in region %s, with commit hash %s and image %s",

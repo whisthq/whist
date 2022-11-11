@@ -3,9 +3,9 @@ package assign
 import (
 	context "context"
 	"fmt"
-	"log"
 	"net"
 
+	"github.com/whisthq/whist/backend/elegant_monolith/pkg/logger"
 	"google.golang.org/grpc"
 )
 
@@ -27,7 +27,6 @@ type assignServer struct {
 }
 
 func (assignSrv *assignServer) MandelboxAssign(ctx context.Context, req *MandelboxAssignRequest) (res *MandelboxAssignResponse, err error) {
-	log.Printf("Req: %v", req)
 	mandelboxID, ip, err := assignSrv.service.MandelboxAssign(ctx, req.Regions, req.UserEmail, req.UserId, req.CommitHash)
 	return &MandelboxAssignResponse{
 		MandelboxId: mandelboxID,
@@ -39,13 +38,13 @@ func (assignSrv *assignServer) MandelboxAssign(ctx context.Context, req *Mandelb
 func (assignSrv assignServer) Serve() {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", PORT))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logger.Errorf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
 	RegisterAssignServiceServer(s, &assignSrv)
 
-	log.Printf("server listening at %v", lis.Addr())
+	logger.Infof("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		logger.Errorf("failed to serve: %v", err)
 	}
 }

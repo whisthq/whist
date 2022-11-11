@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
 	"sync"
 
 	"github.com/whisthq/whist/backend/elegant_monolith/assign"
 	"github.com/whisthq/whist/backend/elegant_monolith/internal/config"
+	"github.com/whisthq/whist/backend/elegant_monolith/pkg/logger"
 	"github.com/whisthq/whist/backend/elegant_monolith/scaling"
 )
 
@@ -17,11 +17,8 @@ func main() {
 	// Load config from files and command line
 	err := config.Initialize(globalCtx)
 	if err != nil {
-		// Exit cleanly
-		return
+		globalCancel()
 	}
-
-	// Load config from db ??
 
 	// Start services
 	assignSvc := assign.New()
@@ -49,6 +46,9 @@ func main() {
 		scalingSvc.Start()
 	}()
 
+	<-globalCtx.Done()
+	assignSvc.Stop()
+	scalingSvc.Stop()
 	wg.Wait()
-	log.Printf("Finished waiting for all services to stop")
+	logger.Infof("Finished waiting for all services to stop")
 }
