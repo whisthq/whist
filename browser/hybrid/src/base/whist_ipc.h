@@ -3,8 +3,8 @@
  * All rights reserved
  */
 
-#ifndef BASE_WHIST_IPC_H_
-#define BASE_WHIST_IPC_H_
+#ifndef WHIST_BROWSER_HYBRID_SRC_BASE_WHIST_IPC_H_
+#define WHIST_BROWSER_HYBRID_SRC_BASE_WHIST_IPC_H_
 
 #include <inttypes.h>
 
@@ -55,6 +55,6 @@ typedef struct LockTransferCacheParams {
   uint32_t id;
 } LockTransferCacheParams;
 
-}
+}  // namespace base
 
-#endif  // BASE_WHIST_IPC_H_
+#endif  // WHIST_BROWSER_HYBRID_SRC_BASE_WHIST_IPC_H_
