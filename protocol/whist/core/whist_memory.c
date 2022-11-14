@@ -410,7 +410,7 @@ void* allocate_region(size_t region_size) {
 #if USING_MLOCK
     int ret = mlock(p, region_size);
     if (ret != 0) {
-        LOG_WARNING_RATE_LIMITED("mlock failed with error %s", strerror(errno));
+        LOG_WARNING_RATE_LIMITED(5, 1, "mlock failed with error %s", strerror(errno));
     }
 #endif
     return TO_REGION_DATA(p);

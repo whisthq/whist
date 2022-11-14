@@ -11,6 +11,7 @@ extern "C" {
 #include <string.h>
 }
 
+/*
 // malloc_zone override
 // save the members just in case
 static size_t page_size;
@@ -186,6 +187,7 @@ static inline malloc_zone_t* new_get_default_zone(void) {
         return malloc_default_zone();
     }
 }
+*/
 
 // Helper function for locking statics
 
@@ -258,7 +260,7 @@ static void mlock_statics() {
     }
 }
 
-extern malloc_zone_t* malloc_default_purgeable_zone(void) __attribute__((weak_import));
+// extern malloc_zone_t* malloc_default_purgeable_zone(void) __attribute__((weak_import));
 
 void init_whist_malloc_hook() {
     // this makes it so that resets and unresets happen once a second instead of once every 100ms,
@@ -266,6 +268,7 @@ void init_whist_malloc_hook() {
     mi_option_set(mi_option_reset_delay, 1000);
     LOG_INFO("mlocking statics");
     mlock_statics();
+    /*
     LOG_INFO("Initializing custom malloc");
     // This zone replacement is copied from mimalloc; I've preserved the comments in case we want to
     // try to resolve them in the future
@@ -298,4 +301,5 @@ void init_whist_malloc_hook() {
         malloc_zone_unregister(purgeable_zone);
         malloc_zone_register(purgeable_zone);
     }
+    */
 }

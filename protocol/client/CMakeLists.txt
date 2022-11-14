@@ -34,6 +34,7 @@ list(APPEND WHIST_CLIENT_DEPENDS ${EMBED_FILE_LIST})
 
 if(CLIENT_SHARED_LIB)
   add_library(WhistClient SHARED
+      /Users/serinahu/Documents/Whist/mimalloc/out/release/CMakeFiles/mimalloc-obj.dir/src/static.c.o
     ${WHIST_CLIENT_DEPENDS}
   )
   add_custom_command(
@@ -45,6 +46,7 @@ if(CLIENT_SHARED_LIB)
 else()
   add_executable(WhistClient
     main.c
+      /Users/serinahu/Documents/Whist/mimalloc/out/release/CMakeFiles/mimalloc-obj.dir/src/static.c.o
     ${WHIST_CLIENT_DEPENDS}
   )
 endif()
