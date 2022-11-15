@@ -22,6 +22,19 @@ resource "aws_s3_bucket" "whist-browser-macos-x64" {
   }
 }
 
+# ------------------------------ Buckets for Chromium Browser Policies ------------------------------ #
+
+# Bucket for storing Chromium builds for macOS (arm64)
+resource "aws_s3_bucket" "whist-browser-policies" {
+  bucket = "whist-browser-policies-${var.env}"
+
+  tags = {
+    Name      = "whist-browser-policies-${var.env}"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
 # ------------------------- Bucket for Linux Server-side Whist Chromium Browser ------------------------ #
 
 # Bucket for storing Server-side Chromium builds for Linux Ubuntu (x64)

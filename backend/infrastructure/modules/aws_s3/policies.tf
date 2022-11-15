@@ -11,7 +11,7 @@ data "aws_iam_policy_document" "whist-browser-macos-arm64-public-access-policy" 
       # This block will be rendered as
       # "Principal": "*"
       identifiers = ["*"]
-      type = "*"
+      type        = "*"
     }
 
     actions = [
@@ -31,7 +31,7 @@ data "aws_iam_policy_document" "whist-browser-macos-x64-public-access-policy" {
       # This block will be rendered as
       # "Principal": "*"
       identifiers = ["*"]
-      type = "*"
+      type        = "*"
     }
 
     actions = [
@@ -41,6 +41,26 @@ data "aws_iam_policy_document" "whist-browser-macos-x64-public-access-policy" {
     effect = "Allow"
     resources = [
       "${aws_s3_bucket.whist-browser-macos-x64.arn}/*",
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "whist-browser-policies-public-access-policy" {
+  statement {
+    principals {
+      # This block will be rendered as
+      # "Principal": "*"
+      identifiers = ["*"]
+      type        = "*"
+    }
+
+    actions = [
+      "s3:GetObject",
+    ]
+
+    effect = "Allow"
+    resources = [
+      "${aws_s3_bucket.whist-browser-policies.arn}/*",
     ]
   }
 }
@@ -76,6 +96,16 @@ resource "aws_s3_bucket_policy" "whist-browser-macos-arm64-public-access-policy-
 resource "aws_s3_bucket_policy" "whist-browser-macos-x64-public-access-policy-attachment" {
   bucket = aws_s3_bucket.whist-browser-macos-x64.id
   policy = data.aws_iam_policy_document.whist-browser-macos-x64-public-access-policy.json
+}
+
+# ------------------------------ Access Block for Whist Browser Policies ------------------------------ #
+
+resource "aws_s3_bucket_public_access_block" "whist-browser-policies" {
+  bucket                  = aws_s3_bucket.whist-browser-policies.id
+  block_public_acls       = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+  ignore_public_acls      = false
 }
 
 # ------------------------- Policy for Linux Server-side Whist Chromium Browser ------------------------- #
@@ -182,6 +212,19 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-mac
     }
   }
 }
+
+# Whist Browser Policies bucket encryption
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-policies-encryption" {
+  bucket = aws_s3_bucket.whist-browser-policies.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
 
 # Linux Server-side Chromium Browser bucket encryption
 
