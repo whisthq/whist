@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "whist-browser-macos-x64-public-access-policy" {
   }
 }
 
-data "aws_iam_policy_document" "whist-browser-policies-public-access-policy" {
+data "aws_iam_policy_document" "whist-browser-customer-policies-public-access-policy" {
   statement {
     principals {
       # This block will be rendered as
@@ -60,7 +60,7 @@ data "aws_iam_policy_document" "whist-browser-policies-public-access-policy" {
 
     effect = "Allow"
     resources = [
-      "${aws_s3_bucket.whist-browser-policies.arn}/*",
+      "${aws_s3_bucket.whist-browser-customer-policies.arn}/*",
     ]
   }
 }
@@ -98,10 +98,10 @@ resource "aws_s3_bucket_policy" "whist-browser-macos-x64-public-access-policy-at
   policy = data.aws_iam_policy_document.whist-browser-macos-x64-public-access-policy.json
 }
 
-# ------------------------------ Access Block for Whist Browser Policies ------------------------------ #
+# ------------------------------ Access Block for Whist Browser Customer Policies ------------------------------ #
 
-resource "aws_s3_bucket_public_access_block" "whist-browser-policies" {
-  bucket                  = aws_s3_bucket.whist-browser-policies.id
+resource "aws_s3_bucket_public_access_block" "whist-browser-customer-policies" {
+  bucket                  = aws_s3_bucket.whist-browser-customer-policies.id
   block_public_acls       = false
   block_public_policy     = false
   restrict_public_buckets = false
@@ -215,8 +215,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-mac
 
 # Whist Browser Policies bucket encryption
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-policies-encryption" {
-  bucket = aws_s3_bucket.whist-browser-policies.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-customer-policies-encryption" {
+  bucket = aws_s3_bucket.whist-browser-customer-policies.id
 
   rule {
     apply_server_side_encryption_by_default {
