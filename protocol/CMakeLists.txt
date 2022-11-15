@@ -287,30 +287,6 @@ else()
     find_package(OpenSSL REQUIRED)
 endif()
 
-# if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#     if(USE_MIMALLOC)
-#         # We manually compile a malloc hook so we can mlock all memory allocations in the protocol, improving latency when memory pressure is high
-#         # see github.com/whisthq/mimalloc
-#         message(STATUS "Looking for mimalloc lib: libmimalloc.a")
-#         set(MIMALLOC_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/mimalloc/${CMAKE_SYSTEM_NAME}")
-#         message(STATUS "MIMALLOC_DIR_PATH: ${MIMALLOC_DIR_PATH}")
-#         find_library(LIB_MIMALLOC
-#             NAMES mimalloc
-#             PATHS ${MIMALLOC_DIR_PATH}
-#             NO_DEFAULT_PATH
-#             NO_CMAKE_ENVIRONMENT_PATH
-#             NO_CMAKE_PATH
-#             NO_SYSTEM_ENVIRONMENT_PATH
-#             NO_CMAKE_SYSTEM_PATH
-#             NO_CMAKE_FIND_ROOT_PATH)
-#         message(STATUS "Found mimalloc lib: ${LIB_MIMALLOC}")
-#         list(APPEND SHARED_LIBS_PATHS ${MIMALLOC_DIR_PATH})
-#         add_compile_definitions(USING_MLOCK=true)
-#     else()
-#         add_compile_definitions(USING_MLOCK=false)
-#     endif()
-# endif()
-
 set(SENTRY_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
 find_library(LIB_SENTRY NAMES sentry PATHS "${SENTRY_DIR_PATH}"
     NO_DEFAULT_PATH

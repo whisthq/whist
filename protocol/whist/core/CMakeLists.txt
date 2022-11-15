@@ -23,7 +23,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND USE_MIMALLOC)
     target_sources(whistCore PRIVATE
         mimalloc_hook.cpp
     )
-# target_link_libraries(whistCore ${LIB_MIMALLOC})
 endif()
 
 # Ensure that whist.v is updated prior to compiling whistCore
