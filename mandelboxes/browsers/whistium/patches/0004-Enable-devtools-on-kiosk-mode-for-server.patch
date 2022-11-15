@@ -1,0 +1,29 @@
+From f878f068af2cdc6cd9911ee9b0336132ff72824f Mon Sep 17 00:00:00 2001
+From: Suriya Kandaswamy <suriya@whist.com>
+Date: Tue, 8 Nov 2022 06:14:07 +0000
+Subject: [PATCH 4/5] Enable devtools on kiosk mode for server
+
+---
+ chrome/browser/devtools/devtools_window.cc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/chrome/browser/devtools/devtools_window.cc b/chrome/browser/devtools/devtools_window.cc
+index a945456d4d15f..14b43c5bb4fd8 100644
+--- a/chrome/browser/devtools/devtools_window.cc
++++ b/chrome/browser/devtools/devtools_window.cc
+@@ -1090,10 +1090,12 @@ DevToolsWindow::DevToolsWindow(FrontendType frontend_type,
+ // static
+ bool DevToolsWindow::AllowDevToolsFor(Profile* profile,
+                                       content::WebContents* web_contents) {
++  /* We want DevTools UI in kiosk mode on Whist
+   // Don't allow DevTools UI in kiosk mode, because the DevTools UI would be
+   // broken there. See https://crbug.com/514551 for context.
+   if (base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kKioskMode))
+     return false;
++  */
+ 
+   return ChromeDevToolsManagerDelegate::AllowInspection(profile, web_contents);
+ }
+-- 
+2.25.1
+

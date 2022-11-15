@@ -1,0 +1,1080 @@
+From 395b92f7ed0c07dadbf32feb6151d05e58ab305b Mon Sep 17 00:00:00 2001
+From: Karthick Jeyapal <karthick@whist.com>
+Date: Tue, 8 Nov 2022 06:20:16 +0000
+Subject: [PATCH 5/5] Support GPU command streaming
+
+---
+ base/BUILD.gn                                 |  2 +
+ base/whist_ipc.cc                             | 89 +++++++++++++++++
+ base/whist_ipc.h                              | 79 +++++++++++++++
+ .../async_layer_tree_frame_sink.cc            | 28 ++++++
+ .../renderer_host/render_process_host_impl.cc |  1 +
+ content/renderer/renderer_main.cc             |  6 +-
+ .../client/client_transfer_cache.cc           |  7 ++
+ .../client/cmd_buffer_helper.cc               | 41 ++++++++
+ gpu/command_buffer/client/cmd_buffer_helper.h | 27 +++++-
+ .../client/gles2_implementation.cc            |  3 +-
+ .../client/implementation_base.cc             |  6 +-
+ .../client/raster_cmd_helper.cc               | 14 ++-
+ gpu/command_buffer/client/raster_cmd_helper.h |  9 +-
+ .../client/raster_implementation.cc           | 16 +++
+ .../client/raster_implementation.h            |  2 +-
+ gpu/config/gpu_switches.cc                    |  3 +
+ gpu/config/gpu_switches.h                     |  1 +
+ .../client/client_shared_image_interface.cc   | 97 ++++++++++++++++++-
+ .../client/client_shared_image_interface.h    | 13 ++-
+ gpu/ipc/client/command_buffer_proxy_impl.cc   | 42 ++++++++
+ gpu/ipc/client/gpu_channel_host.cc            |  4 +-
+ gpu/ipc/client/gpu_channel_host.h             |  2 +-
+ .../client/shared_image_interface_proxy.cc    |  1 +
+ .../gpu/context_provider_command_buffer.cc    |  6 +-
+ skia/BUILD.gn                                 |  9 +-
+ 25 files changed, 481 insertions(+), 27 deletions(-)
+ create mode 100644 base/whist_ipc.cc
+ create mode 100644 base/whist_ipc.h
+
+diff --git a/base/BUILD.gn b/base/BUILD.gn
+index 32d8f8db42fa9..86dcb4d1c5bd3 100644
+--- a/base/BUILD.gn
++++ b/base/BUILD.gn
+@@ -928,6 +928,8 @@ mixed_component("base") {
+     "version.h",
+     "vlog.cc",
+     "vlog.h",
++    "whist_ipc.cc",
++    "whist_ipc.h",
+   ]
+ 
+   # Various files that are unused in the Chromium build, but presumably here to
+diff --git a/base/whist_ipc.cc b/base/whist_ipc.cc
+new file mode 100644
+index 0000000000000..eea860a34bb4f
+--- /dev/null
++++ b/base/whist_ipc.cc
+@@ -0,0 +1,89 @@
++/**
++ * Copyright (c) 2022 Whist Technologies, Inc.
++ * All rights reserved
++ */
++
++#include "base/whist_ipc.h"
++
++#include <stdint.h>
++#include <string.h>
++#include <sys/types.h>
++#include <sys/socket.h>
++#include <sys/un.h>
++#include <unistd.h>
++
++#include "base/logging.h"
++#include "base/trace_event/trace_event.h"
++
++#define IPC_FILE "/home/whist/gpu_commands"
++#define INITIAL_SOCKET_BUFFER_SIZE (10 * 1024* 1024) // Set it to 10MB initially
++
++namespace base {
++
++WhistIPC::~WhistIPC() {
++    if (socket_buffer_) {
++        free(socket_buffer_);
++    }
++}
++
++void WhistIPC::ConnectToWhist() {
++    if ((sock_fd_ = socket (AF_UNIX, SOCK_SEQPACKET, 0)) == -1) {
++        int err_socket = errno;
++        LOG(ERROR) << "Could not open the socket for GPU command streaming, error=" << strerror(err_socket);
++        return;
++    }
++    LOG(INFO) << "Successfully opened the socket for GPU command streaming pid:" << base::trace_event::TraceLog::GetInstance()->process_id();
++
++    struct sockaddr_un socket_address;
++    memset (&socket_address, 0, sizeof (struct sockaddr_un));
++    socket_address.sun_family = AF_UNIX;
++    strncpy (socket_address.sun_path, IPC_FILE, sizeof (socket_address.sun_path) - 1);
++
++    if (connect (sock_fd_, (const struct sockaddr *) &socket_address, sizeof (struct sockaddr_un)) == -1) {
++        sock_fd_ = -1;
++        int err_socket = errno;
++        LOG(ERROR) << "Could not connect to the socket for GPU command streaming, error=" << strerror(err_socket);
++        return;
++    }
++    LOG(INFO) << "Successfully connected the socket for GPU command streaming";
++    socket_buffer_ = (uint8_t *)malloc(INITIAL_SOCKET_BUFFER_SIZE);
++    socket_buffer_size_ = INITIAL_SOCKET_BUFFER_SIZE;
++}
++
++void WhistIPC::SendToWhist(
++    base::CommandType type,
++    uint64_t command_buffer_id,
++    const void *data,
++    size_t size) {
++  if (sock_fd_ == -1) {
++    return;
++  }
++  if (socket_buffer_ == NULL) {
++    return;
++  }
++  lock_.Acquire();
++  size_t total_size = 1 + size + sizeof(uint64_t);
++  if (socket_buffer_size_ < total_size) {
++    socket_buffer_ = (uint8_t *)realloc(socket_buffer_, total_size);
++    socket_buffer_size_ = total_size;
++  }
++  total_size = 0;
++  uint8_t *buffer = socket_buffer_;
++  buffer[0] = static_cast<uint8_t>(type);
++  buffer += 1;
++  if (command_buffer_id != 0) {
++    memcpy(buffer, &command_buffer_id, sizeof(command_buffer_id));
++    buffer += sizeof(command_buffer_id);
++  }
++  if (size != 0) {
++    memcpy(buffer, data, size);
++    buffer += size;
++  }
++  LOG(ERROR) << "Sent " << buffer - socket_buffer_ << " bytes of packet type=" << static_cast<uint32_t>(type) << ", socket_buffer_[0]=" << static_cast<uint32_t>(socket_buffer_[0]);
++  if (write(sock_fd_, socket_buffer_, buffer - socket_buffer_) == -1) {
++      LOG(ERROR) << "Could not send the command data to Whist";
++  }
++  lock_.Release();
++}
++
++}
+diff --git a/base/whist_ipc.h b/base/whist_ipc.h
+new file mode 100644
+index 0000000000000..0b3b86762aa43
+--- /dev/null
++++ b/base/whist_ipc.h
+@@ -0,0 +1,79 @@
++/**
++ * Copyright (c) 2022 Whist Technologies, Inc.
++ * All rights reserved
++ */
++
++#ifndef BASE_WHIST_IPC_H_
++#define BASE_WHIST_IPC_H_
++
++#include "base/base_export.h"
++#include "base/memory/singleton.h"
++#include "base/synchronization/lock.h"
++
++namespace base {
++
++enum class CommandType {
++  RASTER,
++  CREATE_SHARED_MEM,
++  CREATE_TRANSFER_CACHE_MEM,
++  CREATE_FONT_MEM,
++  FLUSH,
++  CREATE_SHARED_IMAGE,
++  DESTROY_SHARED_IMAGE,
++  COMPOSITOR_FRAME,
++  GPU_CONTROL,
++  ORDERING_BARRIER,
++  LOCK_TRANSFER_CACHE,
++  INVALID,
++};
++
++typedef enum GpuControlType {
++  ENSURE_WORK_VISIBLE,
++  FLUSH_PENDING_WORK,
++  GEN_FENCE_SYNC_RELEASE,
++  WAIT_SYNC_TOKEN,
++} GpuControlType;
++
++typedef struct GenFenceSyncRelease {
++  uint64_t release_count;
++} GenFenceSyncRelease;
++
++typedef struct WaitSyncToken {
++  uint64_t release_count;
++  uint64_t command_buffer_id;
++  bool verified_flush;
++} WaitSyncToken;
++
++typedef struct GpuControlParams {
++  GpuControlType type;
++  union {
++    GenFenceSyncRelease gen_fence_sync_release;
++    WaitSyncToken wait_sync_token;
++  };
++} GpuControlParams;
++
++typedef struct LockTransferCacheParams {
++  uint32_t type;
++  uint32_t id;
++} LockTransferCacheParams;
++
++class BASE_EXPORT WhistIPC {
++  public:
++    static WhistIPC* GetInstance() { return base::Singleton<WhistIPC>::get(); }
++    ~WhistIPC();
++    void ConnectToWhist();
++    void SendToWhist(base::CommandType type, uint64_t command_buffer_id,
++                     const void *data, size_t size);
++    int get_sock_fd() { return sock_fd_; }
++  private:
++    friend struct base::DefaultSingletonTraits<WhistIPC>;
++    WhistIPC() {}
++    int sock_fd_ = -1;
++    uint8_t *socket_buffer_ = NULL;
++    size_t socket_buffer_size_ = 0;
++    Lock lock_;
++};
++
++}
++
++#endif  // BASE_WHIST_IPC_H_
+diff --git a/cc/mojo_embedder/async_layer_tree_frame_sink.cc b/cc/mojo_embedder/async_layer_tree_frame_sink.cc
+index 522c1a6f1b83c..f78ef169673aa 100644
+--- a/cc/mojo_embedder/async_layer_tree_frame_sink.cc
++++ b/cc/mojo_embedder/async_layer_tree_frame_sink.cc
+@@ -12,6 +12,7 @@
+ #include "base/metrics/histogram_macros.h"
+ #include "base/threading/platform_thread.h"
+ #include "base/trace_event/trace_event.h"
++#include "base/whist_ipc.h"
+ #include "build/build_config.h"
+ #include "cc/base/histograms.h"
+ #include "cc/trees/layer_tree_frame_sink_client.h"
+@@ -23,6 +24,19 @@
+ #include "components/viz/common/hit_test/hit_test_region_list.h"
+ #include "components/viz/common/quads/compositor_frame.h"
+ 
++#include "services/viz/public/mojom/compositing/compositor_frame_sink.mojom.h"
++#include "services/viz/public/mojom/compositing/compositor_frame_sink.mojom-params-data.h"
++#include "services/viz/public/mojom/compositing/compositor_frame_sink.mojom-shared-message-ids.h"
++
++#include "services/viz/public/mojom/compositing/compositor_frame_sink.mojom-import-headers.h"
++#include "services/viz/public/mojom/compositing/compositor_frame_sink.mojom-test-utils.h"
++
++#ifndef SERVICES_VIZ_PUBLIC_MOJOM_COMPOSITING_COMPOSITOR_FRAME_SINK_MOJOM_JUMBO_H_
++#define SERVICES_VIZ_PUBLIC_MOJOM_COMPOSITING_COMPOSITOR_FRAME_SINK_MOJOM_JUMBO_H_
++#include "services/viz/public/cpp/compositing/begin_frame_args_mojom_traits.h"
++#include "services/viz/public/cpp/compositing/compositor_frame_mojom_traits.h"
++#endif
++
+ namespace cc {
+ namespace mojo_embedder {
+ 
+@@ -212,6 +226,20 @@ void AsyncLayerTreeFrameSink::SubmitCompositorFrame(
+   power_mode_voter_.OnFrameProduced(frame.render_pass_list.back()->damage_rect,
+                                     frame.device_scale_factor());
+ 
++  if (base::trace_event::TraceLog::GetInstance()->process_name() == "Renderer") {
++    // Serialize the compositor frame and send it to Whist protocol
++    mojo::Message message(
++        ::viz::mojom::internal::kCompositorFrameSink_SubmitCompositorFrame_Name, 0, 0, 0,
++        MOJO_CREATE_MESSAGE_FLAG_UNLIMITED_SIZE, nullptr);
++    mojo::internal::MessageFragment<::viz::mojom::internal::CompositorFrame_Data> frame_fragment(message);
++    mojo::internal::Serialize<::viz::mojom::CompositorFrameDataView>(
++        frame, frame_fragment);
++
++    base::WhistIPC::GetInstance()->SendToWhist(base::CommandType::COMPOSITOR_FRAME,
++      0,
++      message.data(),
++      message.data_num_bytes());
++  }
+   compositor_frame_sink_ptr_->SubmitCompositorFrame(
+       local_surface_id_, std::move(frame), std::move(hit_test_region_list), 0);
+ }
+diff --git a/content/browser/renderer_host/render_process_host_impl.cc b/content/browser/renderer_host/render_process_host_impl.cc
+index b74b4c2028ccb..1e61c0718d691 100644
+--- a/content/browser/renderer_host/render_process_host_impl.cc
++++ b/content/browser/renderer_host/render_process_host_impl.cc
+@@ -3281,6 +3281,7 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
+     switches::kEnableTouchDragDrop,
+     switches::kEnableUnsafeFastJSCalls,
+     switches::kEnableUnsafeWebGPU,
++    switches::kEnableGpuCommandStreaming,
+     switches::kEnableViewport,
+     switches::kEnableVtune,
+     switches::kEnableWebGLDeveloperExtensions,
+diff --git a/content/renderer/renderer_main.cc b/content/renderer/renderer_main.cc
+index af6c0c7d3a5fe..793131a19ce16 100644
+--- a/content/renderer/renderer_main.cc
++++ b/content/renderer/renderer_main.cc
+@@ -22,6 +22,7 @@
+ #include "base/threading/platform_thread.h"
+ #include "base/timer/hi_res_timer_manager.h"
+ #include "base/trace_event/trace_event.h"
++#include "base/whist_ipc.h"
+ #include "build/build_config.h"
+ #include "build/chromeos_buildflags.h"
+ #include "content/common/content_constants_internal.h"
+@@ -35,6 +36,7 @@
+ #include "content/renderer/render_process_impl.h"
+ #include "content/renderer/render_thread_impl.h"
+ #include "content/renderer/renderer_main_platform_delegate.h"
++#include "gpu/config/gpu_switches.h"
+ #include "media/media_buildflags.h"
+ #include "mojo/public/cpp/bindings/mojo_buildflags.h"
+ #include "ppapi/buildflags/buildflags.h"
+@@ -181,7 +183,9 @@ int RendererMain(MainFunctionParams parameters) {
+     icu::TimeZone::adoptDefault(
+         icu::TimeZone::createTimeZone(icu::UnicodeString(time_zone.c_str())));
+   }
+-
++  if (command_line.HasSwitch(switches::kEnableGpuCommandStreaming)) {
++    base::WhistIPC::GetInstance()->ConnectToWhist();
++  }
+   InitializeSkia();
+ 
+   // This function allows pausing execution using the --renderer-startup-dialog
+diff --git a/gpu/command_buffer/client/client_transfer_cache.cc b/gpu/command_buffer/client/client_transfer_cache.cc
+index 00d7a7058340d..d9613ec768c8c 100644
+--- a/gpu/command_buffer/client/client_transfer_cache.cc
++++ b/gpu/command_buffer/client/client_transfer_cache.cc
+@@ -3,6 +3,7 @@
+ // found in the LICENSE file.
+ 
+ #include "gpu/command_buffer/client/client_transfer_cache.h"
++#include "gpu/command_buffer/client/cmd_buffer_helper.h"
+ 
+ namespace gpu {
+ 
+@@ -51,12 +52,18 @@ void ClientTransferCache::UnmapAndCreateEntry(uint32_t type, uint32_t id) {
+ 
+   if (mapped_ptr_) {
+     DCHECK(!transfer_buffer_ptr_);
++    client_->cmd_buffer_helper()->SendBufferToWhist(
++        base::CommandType::CREATE_TRANSFER_CACHE_MEM,
++        mapped_ptr_->address(), mapped_ptr_->size());
+     client_->IssueCreateTransferCacheEntry(
+         type, id, handle.shm_id(), handle.byte_offset(), mapped_ptr_->shm_id(),
+         mapped_ptr_->offset(), mapped_ptr_->size());
+     mapped_ptr_ = absl::nullopt;
+   } else {
+     DCHECK(!mapped_ptr_);
++    client_->cmd_buffer_helper()->SendBufferToWhist(
++        base::CommandType::CREATE_TRANSFER_CACHE_MEM,
++        transfer_buffer_ptr_->address(), transfer_buffer_ptr_->size());
+     client_->IssueCreateTransferCacheEntry(
+         type, id, handle.shm_id(), handle.byte_offset(),
+         transfer_buffer_ptr_->shm_id(), transfer_buffer_ptr_->offset(),
+diff --git a/gpu/command_buffer/client/cmd_buffer_helper.cc b/gpu/command_buffer/client/cmd_buffer_helper.cc
+index 8813dac7f22d0..608020ba01b72 100644
+--- a/gpu/command_buffer/client/cmd_buffer_helper.cc
++++ b/gpu/command_buffer/client/cmd_buffer_helper.cc
+@@ -117,6 +117,7 @@ void CommandBufferHelper::SetGetBuffer(int32_t id,
+   // No need to query it through IPC.
+   put_ = 0;
+   last_flush_put_ = 0;
++  last_whist_put_ = 0;
+   last_ordering_barrier_put_ = 0;
+   cached_get_offset_ = 0;
+   service_on_old_buffer_ = true;
+@@ -169,6 +170,37 @@ bool CommandBufferHelper::WaitForGetOffsetInRange(int32_t start, int32_t end) {
+   return !context_lost_;
+ }
+ 
++uint64_t CommandBufferHelper::GetCommandBufferId() const {
++  return 0;
++}
++
++void CommandBufferHelper::SendBufferToWhist(base::CommandType type,
++                                            void* buffer,
++                                            int32_t size) {
++  if (GetCommandType() != base::CommandType::RASTER)
++    return;
++  base::WhistIPC::GetInstance()->SendToWhist(type, GetCommandBufferId(),
++                                             buffer, size);
++}
++
++void CommandBufferHelper::SendCommandsToWhist() {
++  if (GetCommandType() != base::CommandType::RASTER)
++    return;
++  DCHECK(put_ >= last_whist_put_);
++  if (put_ == last_whist_put_)
++    return;
++  int size = (put_ - last_whist_put_) * sizeof (CommandBufferEntry);
++  base::WhistIPC::GetInstance()->SendToWhist(GetCommandType(),
++                                             GetCommandBufferId(),
++                                             &entries_[last_whist_put_],
++                                             size);
++  last_whist_put_ = put_;
++}
++
++base::CommandType CommandBufferHelper::GetCommandType() const {
++  return base::CommandType::INVALID;
++}
++
+ void CommandBufferHelper::Flush() {
+   TRACE_EVENT0("gpu", "CommandBufferHelper::Flush");
+   // Wrap put_ before flush.
+@@ -177,6 +209,9 @@ void CommandBufferHelper::Flush() {
+ 
+   if (HaveRingBuffer()) {
+     last_flush_time_ = base::TimeTicks::Now();
++    SendCommandsToWhist();
++    SendBufferToWhist(base::CommandType::FLUSH, nullptr, 0);
++
+     last_flush_put_ = put_;
+     last_ordering_barrier_put_ = put_;
+     command_buffer_->Flush(put_);
+@@ -197,6 +232,8 @@ void CommandBufferHelper::OrderingBarrier() {
+     put_ = 0;
+ 
+   if (HaveRingBuffer()) {
++    SendCommandsToWhist();
++    SendBufferToWhist(base::CommandType::ORDERING_BARRIER, nullptr, 0);
+     last_ordering_barrier_put_ = put_;
+     command_buffer_->OrderingBarrier(put_);
+     ++flush_generation_;
+@@ -244,6 +281,10 @@ int32_t CommandBufferHelper::InsertToken() {
+   if (cmd) {
+     token_ = (token_ + 1) & 0x7FFFFFFF;
+     cmd->Init(token_);
++    // SetToken command is immediately sent, so that the corresponding
++    // shared memory buffers can be freed on the client side before
++    // the next shared memory buffer packet is sent from the server.
++    SendCommandsToWhist();
+     if (token_ == 0) {
+       TRACE_EVENT0("gpu", "CommandBufferHelper::InsertToken(wrapped)");
+       bool finished = Finish();  // we wrapped
+diff --git a/gpu/command_buffer/client/cmd_buffer_helper.h b/gpu/command_buffer/client/cmd_buffer_helper.h
+index 5d0d6a9a8ed2b..a62138d83fba2 100644
+--- a/gpu/command_buffer/client/cmd_buffer_helper.h
++++ b/gpu/command_buffer/client/cmd_buffer_helper.h
+@@ -16,7 +16,9 @@
+ #include "base/memory/ref_counted.h"
+ #include "base/time/time.h"
+ #include "base/trace_event/memory_dump_provider.h"
++#include "base/whist_ipc.h"
+ #include "build/build_config.h"
++#include "gpu/command_buffer/client/transfer_buffer.h"
+ #include "gpu/command_buffer/common/cmd_buffer_common.h"
+ #include "gpu/command_buffer/common/command_buffer.h"
+ #include "gpu/command_buffer/common/context_result.h"
+@@ -204,6 +206,10 @@ class GPU_EXPORT CommandBufferHelper {
+     if (cmd) {
+       cmd->Init(token);
+     }
++    // SetToken command is immediately sent, so that the corresponding
++    // shared memory buffers can be freed on the client side before
++    // the next shared memory buffer packet is sent from the server.
++    SendCommandsToWhist();
+   }
+ 
+   void SetBucketSize(uint32_t bucket_id, uint32_t size) {
+@@ -215,14 +221,18 @@ class GPU_EXPORT CommandBufferHelper {
+ 
+   void SetBucketData(uint32_t bucket_id,
+                      uint32_t offset,
+-                     uint32_t size,
+-                     uint32_t shared_memory_id,
+-                     uint32_t shared_memory_offset) {
++                     ScopedTransferBufferPtr &buffer) {
++    SendBufferToWhist(base::CommandType::CREATE_SHARED_MEM,
++                      buffer.address(), buffer.size());
+     cmd::SetBucketData* cmd = GetCmdSpace<cmd::SetBucketData>();
+     if (cmd) {
+-      cmd->Init(bucket_id, offset, size, shared_memory_id,
+-                shared_memory_offset);
++      cmd->Init(bucket_id, offset, buffer.size(), buffer.shm_id(),
++                buffer.offset());
+     }
++    // SetBucketData command is sent immediately, to preserve ordering of packets
++    // that depend on the shared memory data. Otherwise the shared memory buffer
++    // sent earlier will get overwritten by some other command's buffer.
++    SendCommandsToWhist();
+   }
+ 
+   void SetBucketDataImmediate(uint32_t bucket_id,
+@@ -290,6 +300,11 @@ class GPU_EXPORT CommandBufferHelper {
+ 
+   int32_t GetPutOffsetForTest() const { return put_; }
+ 
++  void SendBufferToWhist(base::CommandType type, void* buffer, int32_t size);
++  void SendCommandsToWhist();
++  virtual uint64_t GetCommandBufferId() const;
++  virtual base::CommandType GetCommandType() const;
++
+  private:
+   void CalcImmediateEntries(int waiting_count);
+   bool AllocateRingBuffer();
+@@ -348,6 +363,8 @@ class GPU_EXPORT CommandBufferHelper {
+   // Can be used to track when prior commands have been flushed.
+   uint32_t flush_generation_ = 0;
+ 
++  int32_t last_whist_put_ = 0;
++
+   friend class CommandBufferHelperTest;
+ };
+ 
+diff --git a/gpu/command_buffer/client/gles2_implementation.cc b/gpu/command_buffer/client/gles2_implementation.cc
+index 7c33d18041938..8f6ce21210b08 100644
+--- a/gpu/command_buffer/client/gles2_implementation.cc
++++ b/gpu/command_buffer/client/gles2_implementation.cc
+@@ -7374,8 +7374,7 @@ bool GLES2Implementation::PackStringsToBucket(GLsizei count,
+         DCHECK(copy_size + 1 == buffer.size());
+         reinterpret_cast<char*>(buffer.address())[copy_size] = 0;
+       }
+-      helper_->SetBucketData(kResultBucketId, offset, buffer.size(),
+-                             buffer.shm_id(), buffer.offset());
++      helper_->SetBucketData(kResultBucketId, offset, buffer);
+       offset += buffer.size();
+       src += buffer.size();
+       size -= buffer.size();
+diff --git a/gpu/command_buffer/client/implementation_base.cc b/gpu/command_buffer/client/implementation_base.cc
+index 0492f62a9f77e..7663c86adb5d6 100644
+--- a/gpu/command_buffer/client/implementation_base.cc
++++ b/gpu/command_buffer/client/implementation_base.cc
+@@ -53,6 +53,7 @@ void ImplementationBase::SetLostContextCallback(base::OnceClosure callback) {
+ }
+ 
+ void ImplementationBase::FlushPendingWork() {
++  helper_->SendCommandsToWhist();
+   gpu_control_->FlushPendingWork();
+ }
+ 
+@@ -139,6 +140,7 @@ void ImplementationBase::VerifySyncTokens(GLbyte** sync_tokens, GLsizei count) {
+       memcpy(sync_tokens[i], &sync_token, sizeof(sync_token));
+     }
+   }
++  helper_->SendCommandsToWhist();
+ 
+   // Ensure all the fence syncs are visible on GPU service.
+   if (requires_synchronization)
+@@ -148,6 +150,7 @@ void ImplementationBase::VerifySyncTokens(GLbyte** sync_tokens, GLsizei count) {
+ void ImplementationBase::WaitSyncToken(const GLbyte* sync_token_data) {
+   if (!sync_token_data)
+     return;
++  helper_->SendCommandsToWhist();
+ 
+   // Copy the data over before data access to ensure alignment.
+   SyncToken sync_token, verified_sync_token;
+@@ -331,8 +334,7 @@ void ImplementationBase::SetBucketContents(uint32_t bucket_id,
+       }
+       memcpy(buffer.address(), static_cast<const int8_t*>(data) + offset,
+              buffer.size());
+-      helper_->SetBucketData(bucket_id, offset, buffer.size(), buffer.shm_id(),
+-                             buffer.offset());
++      helper_->SetBucketData(bucket_id, offset, buffer);
+       offset += buffer.size();
+       size -= buffer.size();
+     }
+diff --git a/gpu/command_buffer/client/raster_cmd_helper.cc b/gpu/command_buffer/client/raster_cmd_helper.cc
+index 191dfa3b36a68..ea4cc4827cf2a 100644
+--- a/gpu/command_buffer/client/raster_cmd_helper.cc
++++ b/gpu/command_buffer/client/raster_cmd_helper.cc
+@@ -7,10 +7,20 @@
+ namespace gpu {
+ namespace raster {
+ 
+-RasterCmdHelper::RasterCmdHelper(CommandBuffer* command_buffer)
+-    : CommandBufferHelper(command_buffer) {}
++RasterCmdHelper::RasterCmdHelper(CommandBuffer* command_buffer,
++                                 uint64_t command_buffer_id)
++    : CommandBufferHelper(command_buffer),
++      command_buffer_id_(command_buffer_id) {}
+ 
+ RasterCmdHelper::~RasterCmdHelper() = default;
+ 
++base::CommandType RasterCmdHelper::GetCommandType() const {
++  return base::CommandType::RASTER;
++}
++
++uint64_t RasterCmdHelper::GetCommandBufferId() const {
++  return command_buffer_id_;
++}
++
+ }  // namespace raster
+ }  // namespace gpu
+diff --git a/gpu/command_buffer/client/raster_cmd_helper.h b/gpu/command_buffer/client/raster_cmd_helper.h
+index 0dc93d8606b51..b3575a11ec2b7 100644
+--- a/gpu/command_buffer/client/raster_cmd_helper.h
++++ b/gpu/command_buffer/client/raster_cmd_helper.h
+@@ -17,17 +17,24 @@ namespace raster {
+ // A class that helps write GL command buffers.
+ class RASTER_EXPORT RasterCmdHelper : public CommandBufferHelper {
+  public:
+-  explicit RasterCmdHelper(CommandBuffer* command_buffer);
++  explicit RasterCmdHelper(CommandBuffer* command_buffer,
++                           uint64_t command_buffer_id);
+ 
+   RasterCmdHelper(const RasterCmdHelper&) = delete;
+   RasterCmdHelper& operator=(const RasterCmdHelper&) = delete;
+ 
+   ~RasterCmdHelper() override;
+ 
++  base::CommandType GetCommandType() const override;
++
++  uint64_t GetCommandBufferId() const override;
++
+ // Include the auto-generated part of this class. We split this because it
+ // means we can easily edit the non-auto generated parts right here in this
+ // file instead of having to edit some template or the code generator.
+ #include "gpu/command_buffer/client/raster_cmd_helper_autogen.h"
++ private:
++  uint64_t command_buffer_id_;
+ };
+ 
+ }  // namespace raster
+diff --git a/gpu/command_buffer/client/raster_implementation.cc b/gpu/command_buffer/client/raster_implementation.cc
+index 2a43b28a56c2d..01030b082e2b1 100644
+--- a/gpu/command_buffer/client/raster_implementation.cc
++++ b/gpu/command_buffer/client/raster_implementation.cc
+@@ -217,6 +217,9 @@ class RasterImplementation::TransferCacheSerializeHelperImpl final
+     bool succeeded = entry.Serialize(
+         base::make_span(reinterpret_cast<uint8_t*>(memory), bytes_remaining));
+     DCHECK(succeeded);
++    ri_->helper_->SendBufferToWhist(
++        base::CommandType::CREATE_TRANSFER_CACHE_MEM, memory, bytes_to_write);
++
+     ri_->transfer_cache_.AddTransferCacheEntry(
+         entry.UnsafeType(), entry.Id(), buffer->shm_id(),
+         buffer->offset() + memory_offset, bytes_to_write);
+@@ -705,6 +708,9 @@ void RasterImplementation::UnmapAndCreateTransferCacheEntry(uint32_t type,
+ 
+ bool RasterImplementation::ThreadsafeLockTransferCacheEntry(uint32_t type,
+                                                             uint32_t id) {
++  base::LockTransferCacheParams params({type, id});
++  helper_->SendBufferToWhist(base::CommandType::LOCK_TRANSFER_CACHE, &params,
++                             sizeof(params));
+   return transfer_cache_.LockEntry(type, id);
+ }
+ 
+@@ -808,6 +814,7 @@ void RasterImplementation::IssueCreateTransferCacheEntry(
+   helper_->CreateTransferCacheEntryINTERNAL(entry_type, entry_id, handle_shm_id,
+                                             handle_shm_offset, data_shm_id,
+                                             data_shm_offset, data_size);
++  helper_->SendCommandsToWhist();
+ }
+ 
+ void RasterImplementation::IssueDeleteTransferCacheEntry(GLuint entry_type,
+@@ -1188,9 +1195,18 @@ void RasterImplementation::UnmapRasterCHROMIUM(uint32_t raster_written_size,
+   }
+ 
+   if (raster_written_size != 0u) {
++    helper_->SendBufferToWhist(base::CommandType::CREATE_SHARED_MEM,
++                               raster_mapped_buffer_->address(),
++                               raster_written_size);
++    if (font_mapped_buffer_) {
++      helper_->SendBufferToWhist(base::CommandType::CREATE_FONT_MEM,
++                                 font_mapped_buffer_->address(),
++                                 font_shm_size);
++    }
+     helper_->RasterCHROMIUM(
+         raster_mapped_buffer_->shm_id(), raster_mapped_buffer_->offset(),
+         raster_written_size, font_shm_id, font_shm_offset, font_shm_size);
++    helper_->SendCommandsToWhist();
+   }
+ 
+   raster_mapped_buffer_ = absl::nullopt;
+diff --git a/gpu/command_buffer/client/raster_implementation.h b/gpu/command_buffer/client/raster_implementation.h
+index fdd547e776b95..f36db34772074 100644
+--- a/gpu/command_buffer/client/raster_implementation.h
++++ b/gpu/command_buffer/client/raster_implementation.h
+@@ -276,6 +276,7 @@ class RASTER_EXPORT RasterImplementation : public RasterInterface,
+   std::unique_ptr<cc::TransferCacheSerializeHelper>
+   CreateTransferCacheHelperForTesting();
+   void SetRasterMappedBufferForTesting(ScopedTransferBufferPtr buffer);
++  raw_ptr<RasterCmdHelper> helper_;
+ 
+  private:
+   class TransferCacheSerializeHelperImpl;
+@@ -398,7 +399,6 @@ class RASTER_EXPORT RasterImplementation : public RasterInterface,
+   void FailGLError(GLenum /* error */) {}
+ #endif
+ 
+-  raw_ptr<RasterCmdHelper> helper_;
+   std::string last_error_;
+   gles2::DebugMarkerManager debug_marker_manager_;
+   std::string this_in_hex_;
+diff --git a/gpu/config/gpu_switches.cc b/gpu/config/gpu_switches.cc
+index 17d91d4bb66ca..a60caa3875fe2 100644
+--- a/gpu/config/gpu_switches.cc
++++ b/gpu/config/gpu_switches.cc
+@@ -117,4 +117,7 @@ const char kForceBrowserCrashOnGpuCrash[] = "force-browser-crash-on-gpu-crash";
+ // Override value for the GPU watchdog timeout in seconds.
+ const char kGpuWatchdogTimeoutSeconds[] = "gpu-watchdog-timeout-seconds";
+ 
++// Enables GPU command streaming for cloud tabs
++const char kEnableGpuCommandStreaming[] = "enable-gpu-command-streaming";
++
+ }  // namespace switches
+diff --git a/gpu/config/gpu_switches.h b/gpu/config/gpu_switches.h
+index f4d43cd83e5d2..79d05dd3e2b8a 100644
+--- a/gpu/config/gpu_switches.h
++++ b/gpu/config/gpu_switches.h
+@@ -38,6 +38,7 @@ GPU_EXPORT extern const char kVulkanHeapMemoryLimitMb[];
+ GPU_EXPORT extern const char kVulkanSyncCpuMemoryLimitMb[];
+ GPU_EXPORT extern const char kForceBrowserCrashOnGpuCrash[];
+ GPU_EXPORT extern const char kGpuWatchdogTimeoutSeconds[];
++GPU_EXPORT extern const char kEnableGpuCommandStreaming[];
+ 
+ }  // namespace switches
+ 
+diff --git a/gpu/ipc/client/client_shared_image_interface.cc b/gpu/ipc/client/client_shared_image_interface.cc
+index 6f80dfd743d13..8c8fe63e9a965 100644
+--- a/gpu/ipc/client/client_shared_image_interface.cc
++++ b/gpu/ipc/client/client_shared_image_interface.cc
+@@ -4,22 +4,57 @@
+ 
+ #include "gpu/ipc/client/client_shared_image_interface.h"
+ 
++#include <cstdlib>
++#include <unistd.h>
++
++#include "base/logging.h"
+ #include "build/build_config.h"
+ #include "gpu/ipc/client/shared_image_interface_proxy.h"
++#include "ui/gfx/color_space.h"
+ #include "ui/gfx/gpu_fence.h"
+ #include "ui/gfx/gpu_memory_buffer.h"
+ 
+ namespace gpu {
+ 
++#define INITIAL_SOCKET_BUFFER_SIZE (10 * 1024* 1024) // Set it to 10MB initially
++
++typedef struct CreateSharedImageParams {
++  viz::ResourceFormat format;
++  const gfx::Size size;
++  const gfx::ColorSpace color_space;
++  GrSurfaceOrigin surface_origin;
++  SkAlphaType alpha_type;
++  uint32_t usage;
++  size_t pixel_data_size;
++  Mailbox::Name mailbox_name;
++} CreateSharedImageParams;
++
++typedef struct DestroySharedImageParams {
++  bool verified_flush;
++  CommandBufferNamespace namespace_id;
++  uint64_t command_buffer_id;
++  uint64_t release_count;
++  Mailbox::Name mailbox_name;
++} DestroySharedImageParams;
++
+ ClientSharedImageInterface::ClientSharedImageInterface(
+-    SharedImageInterfaceProxy* proxy)
+-    : proxy_(proxy) {}
++    SharedImageInterfaceProxy* proxy,
++    uint64_t raster_cmd_buffer_id)
++    : proxy_(proxy),
++      raster_cmd_buffer_id_(raster_cmd_buffer_id) {
++  if (base::WhistIPC::GetInstance()->get_sock_fd() != -1) {
++    socket_buffer_ = (uint8_t *)malloc(INITIAL_SOCKET_BUFFER_SIZE);
++    socket_buffer_size_ = INITIAL_SOCKET_BUFFER_SIZE;
++  }
++}
+ 
+ ClientSharedImageInterface::~ClientSharedImageInterface() {
+   gpu::SyncToken sync_token;
+   auto mailboxes_to_delete = mailboxes_;
+   for (const auto& mailbox : mailboxes_to_delete)
+     DestroySharedImage(sync_token, mailbox);
++  if (socket_buffer_)
++    free(socket_buffer_);
+ }
+ 
+ void ClientSharedImageInterface::UpdateSharedImage(const SyncToken& sync_token,
+@@ -78,6 +113,35 @@ scoped_refptr<gfx::NativePixmap> ClientSharedImageInterface::GetNativePixmap(
+   return proxy_->GetNativePixmap(mailbox);
+ }
+ 
++void ClientSharedImageInterface::SendToWhist(
++    base::CommandType type,
++    const void *params,
++    size_t params_size,
++    const uint8_t *pixel_data,
++    size_t pixel_data_size) {
++  int sock_fd = base::WhistIPC::GetInstance()->get_sock_fd();
++  if (sock_fd == -1) {
++    return;
++  }
++  if (socket_buffer_ == NULL) {
++    return;
++  }
++  size_t total_size = 1 + sizeof(raster_cmd_buffer_id_) + params_size + pixel_data_size;
++  if (socket_buffer_size_ < total_size) {
++    socket_buffer_ = (uint8_t *)realloc(socket_buffer_, total_size);
++    socket_buffer_size_ = total_size;
++  }
++  socket_buffer_[0] = static_cast<uint8_t>(type);
++  memcpy(socket_buffer_ + 1, &raster_cmd_buffer_id_, sizeof(raster_cmd_buffer_id_));
++  memcpy(socket_buffer_ + 1 + sizeof(raster_cmd_buffer_id_), params, params_size);
++  if (pixel_data) {
++    memcpy(socket_buffer_ + 1 + sizeof(raster_cmd_buffer_id_) + params_size, pixel_data, pixel_data_size);
++  }
++  if (write(sock_fd, socket_buffer_, total_size) == -1) {
++      DLOG(ERROR) << "Could not send the command data to Whist";
++  }
++}
++
+ Mailbox ClientSharedImageInterface::CreateSharedImage(
+     viz::ResourceFormat format,
+     const gfx::Size& size,
+@@ -87,8 +151,15 @@ Mailbox ClientSharedImageInterface::CreateSharedImage(
+     uint32_t usage,
+     gpu::SurfaceHandle surface_handle) {
+   DCHECK_EQ(surface_handle, kNullSurfaceHandle);
+-  return AddMailbox(proxy_->CreateSharedImage(
++  auto mailbox = AddMailbox(proxy_->CreateSharedImage(
+       format, size, color_space, surface_origin, alpha_type, usage));
++  const CreateSharedImageParams params =
++      { format, size, color_space, surface_origin, alpha_type, usage, 0 };
++  memcpy((void *)params.mailbox_name, mailbox.name, sizeof(params.mailbox_name));
++  SendToWhist(base::CommandType::CREATE_SHARED_IMAGE,
++              &params, sizeof(params),
++              nullptr, 0);
++  return mailbox;
+ }
+ 
+ Mailbox ClientSharedImageInterface::CreateSharedImage(
+@@ -99,9 +170,16 @@ Mailbox ClientSharedImageInterface::CreateSharedImage(
+     SkAlphaType alpha_type,
+     uint32_t usage,
+     base::span<const uint8_t> pixel_data) {
+-  return AddMailbox(proxy_->CreateSharedImage(format, size, color_space,
++  auto mailbox = AddMailbox(proxy_->CreateSharedImage(format, size, color_space,
+                                               surface_origin, alpha_type, usage,
+                                               pixel_data));
++  const CreateSharedImageParams params =
++      { format, size, color_space, surface_origin, alpha_type, usage, pixel_data.size() };
++  memcpy((void *)params.mailbox_name, mailbox.name, sizeof(params.mailbox_name));
++  SendToWhist(base::CommandType::CREATE_SHARED_IMAGE,
++              &params, sizeof(params),
++              pixel_data.data(), pixel_data.size());
++  return mailbox;
+ }
+ 
+ Mailbox ClientSharedImageInterface::CreateSharedImage(
+@@ -165,7 +243,16 @@ ClientSharedImageInterface::CreateSwapChain(viz::ResourceFormat format,
+ void ClientSharedImageInterface::DestroySharedImage(const SyncToken& sync_token,
+                                                     const Mailbox& mailbox) {
+   DCHECK(!mailbox.IsZero());
+-
++  DestroySharedImageParams destroy_params = {
++    sync_token.verified_flush(),
++    sync_token.namespace_id(),
++    sync_token.command_buffer_id().GetUnsafeValue(),
++    sync_token.release_count(),
++  };
++  memcpy(destroy_params.mailbox_name, mailbox.name, sizeof(destroy_params.mailbox_name));
++  SendToWhist(base::CommandType::DESTROY_SHARED_IMAGE,
++              &destroy_params, sizeof(destroy_params),
++              nullptr, 0);
+   {
+     base::AutoLock lock(lock_);
+     DCHECK_NE(mailboxes_.count(mailbox), 0u);
+diff --git a/gpu/ipc/client/client_shared_image_interface.h b/gpu/ipc/client/client_shared_image_interface.h
+index c66981dc0f1c0..557f4dc1e7541 100644
+--- a/gpu/ipc/client/client_shared_image_interface.h
++++ b/gpu/ipc/client/client_shared_image_interface.h
+@@ -11,17 +11,20 @@
+ #include "base/containers/flat_set.h"
+ #include "base/synchronization/lock.h"
+ #include "base/thread_annotations.h"
++#include "base/whist_ipc.h"
+ #include "build/build_config.h"
+ #include "gpu/ipc/common/surface_handle.h"
+ 
+ namespace gpu {
++struct CreateSharedImageParams;
+ class SharedImageInterfaceProxy;
+ 
+ // Tracks shared images created by a single context and ensures they are deleted
+ // if the context is lost.
+ class GPU_EXPORT ClientSharedImageInterface : public SharedImageInterface {
+  public:
+-  ClientSharedImageInterface(SharedImageInterfaceProxy* proxy);
++  ClientSharedImageInterface(SharedImageInterfaceProxy* proxy,
++                             uint64_t raster_cmd_buffer_id);
+   ~ClientSharedImageInterface() override;
+ 
+   // SharedImageInterface implementation.
+@@ -93,8 +96,16 @@ class GPU_EXPORT ClientSharedImageInterface : public SharedImageInterface {
+ 
+  private:
+   Mailbox AddMailbox(const Mailbox& mailbox);
++  void SendToWhist(base::CommandType type,
++                   const void *params,
++                   size_t params_size,
++                   const uint8_t *pixel_data,
++                   size_t pixel_data_size);
+ 
+   const raw_ptr<SharedImageInterfaceProxy> proxy_;
++  uint8_t *socket_buffer_ = NULL;
++  size_t socket_buffer_size_ = 0;
++  uint64_t raster_cmd_buffer_id_;
+ 
+   base::Lock lock_;
+   base::flat_set<Mailbox> mailboxes_ GUARDED_BY(lock_);
+diff --git a/gpu/ipc/client/command_buffer_proxy_impl.cc b/gpu/ipc/client/command_buffer_proxy_impl.cc
+index cb0701abd3fd3..2a776dbf3fe66 100644
+--- a/gpu/ipc/client/command_buffer_proxy_impl.cc
++++ b/gpu/ipc/client/command_buffer_proxy_impl.cc
+@@ -17,6 +17,7 @@
+ #include "base/threading/thread_task_runner_handle.h"
+ #include "base/timer/elapsed_timer.h"
+ #include "base/trace_event/trace_event.h"
++#include "base/whist_ipc.h"
+ #include "build/build_config.h"
+ #include "gpu/command_buffer/client/gpu_control_client.h"
+ #include "gpu/command_buffer/client/gpu_memory_buffer_manager.h"
+@@ -475,6 +476,12 @@ void CommandBufferProxyImpl::EnsureWorkVisible() {
+   // Don't send messages once disconnected.
+   if (disconnected_)
+     return;
++  base::GpuControlParams params;
++  params.type = base::GpuControlType::ENSURE_WORK_VISIBLE;
++  base::WhistIPC::GetInstance()->SendToWhist(
++      base::CommandType::GPU_CONTROL,
++      command_buffer_id_.GetUnsafeValue(),
++      &params, sizeof(params));
+ 
+   const base::ElapsedTimer elapsed_timer;
+   channel_->VerifyFlush(UINT32_MAX);
+@@ -495,6 +502,13 @@ gpu::CommandBufferId CommandBufferProxyImpl::GetCommandBufferID() const {
+ }
+ 
+ void CommandBufferProxyImpl::FlushPendingWork() {
++  base::GpuControlParams params;
++  params.type = base::GpuControlType::FLUSH_PENDING_WORK;
++  base::WhistIPC::GetInstance()->SendToWhist(
++      base::CommandType::GPU_CONTROL,
++      command_buffer_id_.GetUnsafeValue(),
++      &params, sizeof(params));
++
+   // Don't send messages once disconnected.
+   if (!disconnected_)
+     channel_->EnsureFlush(UINT32_MAX);
+@@ -502,6 +516,13 @@ void CommandBufferProxyImpl::FlushPendingWork() {
+ 
+ uint64_t CommandBufferProxyImpl::GenerateFenceSyncRelease() {
+   CheckLock();
++  base::GpuControlParams params;
++  params.type = base::GpuControlType::GEN_FENCE_SYNC_RELEASE;
++  params.gen_fence_sync_release.release_count = next_fence_sync_release_;
++  base::WhistIPC::GetInstance()->SendToWhist(
++      base::CommandType::GPU_CONTROL,
++      command_buffer_id_.GetUnsafeValue(),
++      &params, sizeof(params));
+   return next_fence_sync_release_++;
+ }
+ 
+@@ -520,6 +541,17 @@ void CommandBufferProxyImpl::SignalSyncToken(const gpu::SyncToken& sync_token,
+   if (last_state_.error != gpu::error::kNoError)
+     return;
+ 
++  base::GpuControlParams params;
++  params.type = base::GpuControlType::WAIT_SYNC_TOKEN;
++  params.wait_sync_token.release_count = sync_token.release_count();
++  params.wait_sync_token.command_buffer_id = sync_token.command_buffer_id().GetUnsafeValue();
++  if (sync_token.verified_flush())
++    params.wait_sync_token.verified_flush = true;
++  base::WhistIPC::GetInstance()->SendToWhist(
++      base::CommandType::GPU_CONTROL,
++      command_buffer_id_.GetUnsafeValue(),
++      &params, sizeof(params));
++
+   uint32_t signal_id = next_signal_id_++;
+   command_buffer_->SignalSyncToken(sync_token, signal_id);
+   signal_tasks_.insert(std::make_pair(signal_id, std::move(callback)));
+@@ -527,6 +559,16 @@ void CommandBufferProxyImpl::SignalSyncToken(const gpu::SyncToken& sync_token,
+ 
+ void CommandBufferProxyImpl::WaitSyncToken(const gpu::SyncToken& sync_token) {
+   CheckLock();
++  base::GpuControlParams params;
++  params.type = base::GpuControlType::WAIT_SYNC_TOKEN;
++  params.wait_sync_token.release_count = sync_token.release_count();
++  params.wait_sync_token.command_buffer_id = sync_token.command_buffer_id().GetUnsafeValue();
++  if (sync_token.verified_flush())
++    params.wait_sync_token.verified_flush = true;
++  base::WhistIPC::GetInstance()->SendToWhist(
++      base::CommandType::GPU_CONTROL,
++      command_buffer_id_.GetUnsafeValue(),
++      &params, sizeof(params));
+   base::AutoLock lock(last_state_lock_);
+   if (last_state_.error != gpu::error::kNoError)
+     return;
+diff --git a/gpu/ipc/client/gpu_channel_host.cc b/gpu/ipc/client/gpu_channel_host.cc
+index 53a1e54531d0b..68dffe0af3918 100644
+--- a/gpu/ipc/client/gpu_channel_host.cc
++++ b/gpu/ipc/client/gpu_channel_host.cc
+@@ -184,8 +184,8 @@ void GpuChannelHost::TerminateGpuProcessForTesting() {
+ }
+ 
+ std::unique_ptr<ClientSharedImageInterface>
+-GpuChannelHost::CreateClientSharedImageInterface() {
+-  return std::make_unique<ClientSharedImageInterface>(&shared_image_interface_);
++GpuChannelHost::CreateClientSharedImageInterface(uint64_t raster_cmd_buffer_id) {
++  return std::make_unique<ClientSharedImageInterface>(&shared_image_interface_, raster_cmd_buffer_id);
+ }
+ 
+ GpuChannelHost::~GpuChannelHost() = default;
+diff --git a/gpu/ipc/client/gpu_channel_host.h b/gpu/ipc/client/gpu_channel_host.h
+index e4a710567cf02..47e1465212cc6 100644
+--- a/gpu/ipc/client/gpu_channel_host.h
++++ b/gpu/ipc/client/gpu_channel_host.h
+@@ -128,7 +128,7 @@ class GPU_EXPORT GpuChannelHost
+ 
+   // Virtual for testing.
+   virtual std::unique_ptr<ClientSharedImageInterface>
+-  CreateClientSharedImageInterface();
++  CreateClientSharedImageInterface(uint64_t raster_cmd_buffer_id);
+ 
+   ImageDecodeAcceleratorProxy* image_decode_accelerator_proxy() {
+     return &image_decode_accelerator_proxy_;
+diff --git a/gpu/ipc/client/shared_image_interface_proxy.cc b/gpu/ipc/client/shared_image_interface_proxy.cc
+index 4cf8d106485e5..fdb045ade4ae9 100644
+--- a/gpu/ipc/client/shared_image_interface_proxy.cc
++++ b/gpu/ipc/client/shared_image_interface_proxy.cc
+@@ -6,6 +6,7 @@
+ 
+ #include "base/bits.h"
+ #include "base/logging.h"
++#include "base/whist_ipc.h"
+ #include "build/build_config.h"
+ #include "gpu/command_buffer/client/gpu_memory_buffer_manager.h"
+ #include "gpu/command_buffer/common/gpu_memory_buffer_support.h"
+diff --git a/services/viz/public/cpp/gpu/context_provider_command_buffer.cc b/services/viz/public/cpp/gpu/context_provider_command_buffer.cc
+index 4fb7283be65bd..fb402ec33c327 100644
+--- a/services/viz/public/cpp/gpu/context_provider_command_buffer.cc
++++ b/services/viz/public/cpp/gpu/context_provider_command_buffer.cc
+@@ -193,7 +193,8 @@ gpu::ContextResult ContextProviderCommandBuffer::BindToCurrentThread() {
+     DCHECK(!support_grcontext_);
+     // The raster helper writes the command buffer protocol.
+     auto raster_helper =
+-        std::make_unique<gpu::raster::RasterCmdHelper>(command_buffer_.get());
++        std::make_unique<gpu::raster::RasterCmdHelper>(command_buffer_.get(),
++            command_buffer_->GetCommandBufferID().GetUnsafeValue());
+     raster_helper->SetAutomaticFlushes(automatic_flushes_);
+     bind_result_ =
+         raster_helper->Initialize(memory_limits_.command_buffer_size);
+@@ -331,7 +332,8 @@ gpu::ContextResult ContextProviderCommandBuffer::BindToCurrentThread() {
+     cache_controller_->SetLock(&context_lock_);
+   }
+ 
+-  shared_image_interface_ = channel_->CreateClientSharedImageInterface();
++  shared_image_interface_ = channel_->CreateClientSharedImageInterface(
++      command_buffer_->GetCommandBufferID().GetUnsafeValue());
+   DCHECK(shared_image_interface_);
+ 
+   base::trace_event::MemoryDumpManager::GetInstance()->RegisterDumpProvider(
+diff --git a/skia/BUILD.gn b/skia/BUILD.gn
+index 5c3a90ee7fcdc..9f6eaaea42675 100644
+--- a/skia/BUILD.gn
++++ b/skia/BUILD.gn
+@@ -152,8 +152,13 @@ config("skia_library_config") {
+   # Settings for text blitting, chosen to approximate the system browser.
+   if (is_linux || is_chromeos) {
+     defines += [
+-      "SK_GAMMA_EXPONENT=1.2",
+-      "SK_GAMMA_CONTRAST=0.2",
++#     Setting the value of contrast, exponent and srgb same as mac, so that the
++#     strikecache will have the same key during font data deserialization on the
++#     mac client browser.
++#      "SK_GAMMA_EXPONENT=1.2",
++#      "SK_GAMMA_CONTRAST=0.2",
++      "SK_GAMMA_SRGB",
++      "SK_GAMMA_CONTRAST=0.0",
+     ]
+   } else if (is_android) {
+     defines += [
+-- 
+2.25.1
+
