@@ -12,12 +12,19 @@ whist_configs = [ "//third_party/webrtc:common_config" ]
 
 whist_public_configs = [ "//third_party/webrtc:common_inherited_config" ]
 
-whist_public_deps = [ ":protocol_client_interface" ]
+whist_public_deps = [
+  ":ipc",
+  ":protocol_client_interface",
+]
 
 component("whist_component") {
   configs += whist_configs
   public_configs = whist_public_configs
   public_deps = whist_public_deps
+}
+
+source_set("ipc") {
+  sources = [ "ipc.h" ]
 }
 
 source_set("protocol_client_interface") {
