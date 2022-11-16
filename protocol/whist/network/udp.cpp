@@ -1788,11 +1788,10 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
             g_bytes_sent_so_far += payload_size;
             if(!udp_packet->udp_whist_segment_data.is_a_duplicate){
                 g_bytes_sent_so_far_raw += payload_size;
-
             }
 
             udp_packet->udp_whist_segment_data.bytes_so_far= g_bytes_sent_so_far;
-            udp_packet->udp_whist_segment_data.bytes_so_far= g_bytes_sent_so_far_raw;
+            udp_packet->udp_whist_segment_data.bytes_so_far_raw= g_bytes_sent_so_far_raw;
             udp_packet->udp_whist_segment_data.current_target_bps = context->current_target_video_bitrate;
         }
     }
