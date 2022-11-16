@@ -57,6 +57,7 @@ typedef struct {
     bool is_a_duplicate;
 
     int seq;
+    int bytes_so_far_raw;
     int bytes_so_far;
     int current_target_bps;
 

@@ -1753,6 +1753,7 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
 
 std::atomic<int> g_seq_cnt=0;   //test code
 std::atomic<long long> g_bytes_sent_so_far=0;  //proof of concept
+std::atomic<long long> g_bytes_sent_so_far_raw=0;  //proof of concept
 
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
@@ -1783,7 +1784,12 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
             udp_packet->udp_whist_segment_data.seq=g_seq_cnt++;
 
-            g_bytes_sent_so_far+= UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size;
+            int payload_size= UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size;
+            g_bytes_sent_so_far += payload_size;
+            if(!udp_packet->udp_whist_segment_data.is_a_duplicate){
+                g_bytes_sent_so_far_raw += payload_size;
+
+            }
 
             udp_packet->udp_whist_segment_data.bytes_so_far= g_bytes_sent_so_far;
             udp_packet->udp_whist_segment_data.current_target_bps = context->current_target_video_bitrate;
