@@ -33,7 +33,7 @@ const getConfig = (env) => {
     AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET,
     AUTH0_BASE_PATH: "src",
     // Only auto-delete resources on dev
-    AUTH0_ALLOW_DELETE: env === "dev" || false,
+    AUTH0_ALLOW_DELETE: env === "dev" && false,
     AUTH0_KEYWORD_REPLACE_MAPPINGS: {
       GOOGLE_OAUTH_SECRET: process.env.GOOGLE_OAUTH_SECRET,
     },
