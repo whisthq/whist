@@ -629,7 +629,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             input.packets[0].group_id= (long long)group_id;
 
             input.packets[0].seq= segment->seq;
-            input.packets[0].bytes_so_far= segment->bytes_so_far_raw;
+            input.packets[0].bytes_so_far_raw= segment->bytes_so_far_raw;
+            input.packets[0].bytes_so_far= segment->bytes_so_far;
             input.packets[0].remote_target_bps = segment->current_target_bps;
             FATAL_ASSERT(group_id>=0);
             FATAL_ASSERT(packet_size>0);

@@ -144,7 +144,7 @@ struct BandwithSaturateController
             double low= bwd_stat.get_min();
             double high= bwd_stat.get_max();
 
-            printf("<<<%f %f %f>>>\n", (high-low)/high, high,low);
+            //printf("<<<%f %f %f>>>\n", (high-low)/high, high,low);
             if( (high - low)/high <= diff_allowed_before_turn_off_saturate){
                 saturate = false;
             }
@@ -193,6 +193,7 @@ struct CCSharedState {
 
     double loss_ratio=0;
 
+    double shoot_ratio_raw_100=0;
     double shoot_ratio_100=0;
     double shoot_rate=0;
 

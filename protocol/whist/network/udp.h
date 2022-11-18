@@ -57,8 +57,8 @@ typedef struct {
     bool is_a_duplicate;
 
     int seq;
-    int bytes_so_far_raw;
-    int bytes_so_far;
+    long long bytes_so_far_raw;  //TODO: change this to int with wrapping
+    long long bytes_so_far;
     int current_target_bps;
 
     // Must be last, since only the first segment_size bytes will be sent

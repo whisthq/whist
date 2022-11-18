@@ -18,6 +18,7 @@ struct PacketInfo
     long long group_id;
 
     int seq;
+    long long bytes_so_far_raw;
     long long bytes_so_far;
     int remote_target_bps;
 };
