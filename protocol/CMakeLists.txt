@@ -46,6 +46,11 @@ option(SANITIZE "Enable sanitizer during build (address, thread, undefined)." OF
 option(CLIENT_SHARED_LIB "Build the client as a shared library" OFF)
 option(USE_CCACHE "Use ccache to speed up builds" OFF)
 option(USE_MIMALLOC "Link the client to mimalloc" ON)
+if(USE_MIMALLOC)
+    add_compile_definitions(USING_MLOCK=true)
+else()
+    add_compile_definitions(USING_MLOCK=false)
+endif()
 
 if(USE_CCACHE)
     set(CMAKE_C_COMPILER_LAUNCHER "ccache")

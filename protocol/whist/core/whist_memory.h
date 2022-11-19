@@ -242,7 +242,7 @@ void deallocate_region(void* region);
  * @brief                           Override system macOS malloc with mimalloc calls that have
  * mlock's inserted; this ensures that all our allocations are mlock'ed.
  */
-void init_whist_malloc_hook(void);
+void init_whist_mlock(void);
 #endif
 
 /** @} */

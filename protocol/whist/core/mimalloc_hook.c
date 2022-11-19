@@ -1,14 +1,11 @@
 #include <whist/core/whist.h>
-#include <malloc/malloc.h>
 #include <mimalloc/mimalloc.h>
-extern "C" {
 #include "whist_memory.h"
 #include <mach/mach_vm.h>
 #include <mach/mach.h>
 #include <mach/vm_map.h>
 #include <sys/mman.h>
 #include <string.h>
-}
 
 // Helper function for locking statics
 
@@ -28,7 +25,8 @@ extern "C" {
 // - count: the # of entries of structs corresponding to the flavor (we don't use this either)
 // - obj_name: some other output, also unused
 static void mlock_statics() {
-    // TODO: better way of mlock'ing static segments
+    // NOTE: this address is empirical
+    // I didn't figure out a way to get the end of static memory, but I found that the static variables definitely lived before this address
     static mach_vm_address_t max_addr = (mach_vm_address_t)0x200000000;
     task_t t = mach_task_self();
 
@@ -57,12 +55,14 @@ static void mlock_statics() {
         } else {
             // check for overflow; all VM regions are distinct, so this should not error out until
             // we have reached the end of the memory we want to mlock
-            if ((prev_addr == 0 || addr >= prev_addr + prev_size) && addr <= max_addr) {
+            if (addr <= max_addr) {
+                // if the addr is <, that implies the regions overlapped or we overflowed, which shouldn't happen
+                FATAL_ASSERT(addr >= prev_addr + prev_size); 
                 // update region list data and mlock
                 int ret = mlock((void*)addr, size);
                 // the error check is LOG_INFO because we expect mlock to fail on unmapped/unallocated regions here
                 if (ret != 0) {
-                    LOG_INFO("mlock at addr %p size %llu failed with error %s", (void*)addr, size,
+                    LOG_INFO("mlock at addr %p size 0x%llx failed with error %s", (void*)addr, size,
                              strerror(errno));
                 }
                 prev_addr = addr;
@@ -70,7 +70,7 @@ static void mlock_statics() {
                 // repeatedly call mach_vm_region
                 addr = prev_addr + prev_size;
                 // means address space has wrapped around
-                if (prev_size == 0 || addr != prev_addr + prev_size || addr >= max_addr) {
+                if (prev_size == 0 || addr >= max_addr) {
                     // finished because we've wrapped around
                     done = 1;
                 }
@@ -81,7 +81,7 @@ static void mlock_statics() {
     }
 }
 
-void init_whist_malloc_hook() {
+void init_whist_mlock() {
     // this makes it so that resets and unresets happen once a second instead of once every 100ms,
     // the default
     mi_option_set(mi_option_reset_delay, 1000);
