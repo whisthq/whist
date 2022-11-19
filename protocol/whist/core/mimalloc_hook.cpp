@@ -1,7 +1,6 @@
 #include <whist/core/whist.h>
 #include <malloc/malloc.h>
 #include <mimalloc/mimalloc.h>
-#include <iostream>
 extern "C" {
 #include "whist_memory.h"
 #include <mach/mach_vm.h>
