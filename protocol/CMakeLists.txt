@@ -46,7 +46,7 @@ option(SANITIZE "Enable sanitizer during build (address, thread, undefined)." OF
 option(CLIENT_SHARED_LIB "Build the client as a shared library" OFF)
 option(USE_CCACHE "Use ccache to speed up builds" OFF)
 option(USE_MIMALLOC "Link the client to mimalloc" ON)
-if(USE_MIMALLOC)
+if(USE_MIMALLOC AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_compile_definitions(USING_MLOCK=true)
 else()
     add_compile_definitions(USING_MLOCK=false)
