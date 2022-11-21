@@ -1,5 +1,5 @@
 const cookieToDetails = (cookie: chrome.cookies.Cookie) => {
-    const url = cookie.domain.startsWith(".")
+  const url = cookie.domain.startsWith(".")
     ? `https://${cookie.domain.slice(1)}${cookie.path}`
     : `https://${cookie.domain}${cookie.path}`
 

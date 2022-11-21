@@ -1,9 +1,7 @@
 import pickBy from "lodash.pickby"
 import { WhistTab } from "@app/constants/tabs"
 
-const createTab = (
-  createProperties: { url?: string; active: boolean }
-) => {
+const createTab = (createProperties: { url?: string; active: boolean }) => {
   if (createProperties.url === undefined) return
 
   if (createProperties.url.startsWith("cloud:")) {

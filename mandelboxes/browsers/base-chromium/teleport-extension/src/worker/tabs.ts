@@ -28,7 +28,11 @@ const initSocketioConnection = () => {
 const initActivateTabListener = (socket: Socket) => {
   socket.on(
     "activate-tab",
-    async ([tabToActivate, reload, spotlightId]: [chrome.tabs.Tab, boolean, number]) => {
+    async ([tabToActivate, reload, spotlightId]: [
+      chrome.tabs.Tab,
+      boolean,
+      number
+    ]) => {
       const openTabs = await getOpenTabs()
       const foundTab = find(openTabs, (t) => t.clientTabId === tabToActivate.id)
 

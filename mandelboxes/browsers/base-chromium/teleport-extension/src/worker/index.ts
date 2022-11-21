@@ -22,7 +22,7 @@ import {
   initCookieAddedListener,
   initRemoveCookieListener,
   initCookieRemovedListener,
-  initCookieSyncHandler
+  initCookieSyncHandler,
 } from "./cookies"
 import { initZoomListener } from "./zoom"
 import { initWindowCreatedListener } from "./windows"
