@@ -57,7 +57,7 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 
 - `prod` -- This branch is for Stable channel only, do not push to it.
 - `staging` -- This branch is for Beta channel only, do not push to it. It gets promoted to `prod` periodically.
-- `dev` -- This is our main development branch, PRs should be made to this branch, and it builds the Nightly release. It gets promoted nightly.
+- `dev` -- This is our main development branch, PRs should be made to this branch, and it builds the Nightly channel. It gets promoted nightly.
 - All other branches are considered feature branches. They should be forked off of `dev` and PR-ed into `dev`.
 
 **Feature branches are named as follows:**
