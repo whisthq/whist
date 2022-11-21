@@ -1,6 +1,6 @@
 # Whist Browser & Cloud Tabs Framework
 
-This repository contains the bulk of the code for the Whist Browser, previously known as Whist Application Streaming, following a [monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
+This repository contains the bulk of the code written by the Whist team for the Whist Browser and its Cloud Tabs framework, following a [monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
 ## Repository Status
 
@@ -33,6 +33,7 @@ The Whist monorepository contains many subprojects:
 | backend/auth0                    | Auth0 is a third-party service which manages authentication and user accounts for us.   |
 | backend/services/host-service    | This service runs on EC2 instance hosts and orchestrates mandelbox management.          |
 | backend/services/scaling-service | This service is responsible for scaling up/down EC2 instances to run mandelboxes on.    |
+| browser/hybrid                   | This contains the Chromium code bundled by `whisthq/brave-core` to create the browser.  |
 | host-setup                       | Scripts used to setup EC2 instances for running mandelboxes as Whist-optimized hosts.   |
 | mandelboxes                      | Whist-optimized Dockerfiles (known as mandelboxes) that run the applications we stream. |
 | protocol                         | The streaming technology API, both client and server, for streaming mandelboxes.        |
@@ -41,11 +42,10 @@ For a more in-depth explanation of each subrepository, see that subrepository's 
 
 - [docs.whist.com/backend/services](https://docs.whist.com/backend/services)
 - [docs.whist.com/protocol](https://docs.whist.com/protocol)
-- [docs.whist.com/SDL](https://docs.whist.com/SDL)
 
 ## Development
 
-To get started with development, you will have to clone this repository and navigate to a specific subrepository. On Windows, you will have to install [gitbash](https://git-scm.com/downloads). It is recommended to use [SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent), so that you don't have to type in your github password on every push.
+To get started with development, you will have to clone this repository and navigate to a specific subrepository. On Windows, you will have to install [gitbash](https://git-scm.com/downloads). It is recommended to use [SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent), so that you don't have to type in your GitHub password on every push.
 
 While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Whist Engineering Guidelines](https://www.notion.so/whisthq/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
 
@@ -55,9 +55,9 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 
 ### Branch Conventions
 
-- `prod` -- This branch is for Releases only, do not push to it.
-- `staging` -- This branch is for Beta only, do not push to it. It gets promoted to `prod` periodically.
-- `dev` -- This is our main development branch, PRs should be made to this branch. It gets promoted periodically.
+- `prod` -- This branch is for Stable channel only, do not push to it.
+- `staging` -- This branch is for Beta channel only, do not push to it. It gets promoted to `prod` periodically.
+- `dev` -- This is our main development branch, PRs should be made to this branch, and it builds the Nightly channel. It gets promoted nightly.
 - All other branches are considered feature branches. They should be forked off of `dev` and PR-ed into `dev`.
 
 **Feature branches are named as follows:**
@@ -69,7 +69,7 @@ Note that the last part of the branch name should almost always be an **action**
 
 You're free to modify your own branches in any way you want. However, do not attempt to rewrite history on our common branches unless you have a specific reason to do, and the team's approval.
 
-We explicitly disallow merge commits on this repository, and all branches should be either squash-merged or rebase-merged, to avoid messy git histories with lots of "Merged branch `dev` in ....`. The commands `git rebase`is your friend, and to avoid accidental merge commits when pulling, you can run`git config pull.ff only` in your local repository.
+We explicitly disallow merge commits on this repository, and all branches should be either squash-merged or rebase-merged, to avoid messy git histories with lots of "Merged branch `dev` in ....". The commands `git rebase` is your friend, and to avoid accidental merge commits when pulling, you can run `git config pull.ff only` in your local repository.
 
 ### Commit Conventions
 
@@ -109,7 +109,7 @@ Please refer to a project's subrepository for the associated styling guide. All 
 
 ## Publishing
 
-Each of common branches, `dev`, `staging`, and `prod` get deployed automatically via GitHub Actions to our respective environments on every push to the respective branches. This process is quite complex, and is defined in `.github/workflows/whist-build-and-deploy.yml`.
+Each of common branches, `dev`, `staging`, and `prod` get deployed automatically via GitHub Actions to our respective environments on every push to the respective branches, except for `dev` which gets published nightly. This process is quite complex, and is defined in `.github/workflows/whist-build-and-deploy.yml`.
 
 If something goes wrong in the continuous deployment pipeline and any job fails, it is possible to manually trigger a specific job of the workflow via the GitHub Actions console.
 
