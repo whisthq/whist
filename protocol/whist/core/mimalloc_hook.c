@@ -26,7 +26,8 @@
 // - obj_name: some other output, also unused
 static void mlock_statics() {
     // NOTE: this address is empirical
-    // I didn't figure out a way to get the end of static memory, but I found that the static variables definitely lived before this address
+    // I didn't figure out a way to get the end of static memory, but I found that the static
+    // variables definitely lived before this address
     static mach_vm_address_t max_addr = (mach_vm_address_t)0x200000000;
     task_t t = mach_task_self();
 
@@ -56,11 +57,13 @@ static void mlock_statics() {
             // check for overflow; all VM regions are distinct, so this should not error out until
             // we have reached the end of the memory we want to mlock
             if (addr <= max_addr) {
-                // if the addr is <, that implies the regions overlapped or we overflowed, which shouldn't happen
-                FATAL_ASSERT(addr >= prev_addr + prev_size); 
+                // if the addr is <, that implies the regions overlapped or we overflowed, which
+                // shouldn't happen
+                FATAL_ASSERT(addr >= prev_addr + prev_size);
                 // update region list data and mlock
                 int ret = mlock((void*)addr, size);
-                // the error check is LOG_INFO because we expect mlock to fail on unmapped/unallocated regions here
+                // the error check is LOG_INFO because we expect mlock to fail on
+                // unmapped/unallocated regions here
                 if (ret != 0) {
                     LOG_INFO("mlock at addr %p size 0x%llx failed with error %s", (void*)addr, size,
                              strerror(errno));
