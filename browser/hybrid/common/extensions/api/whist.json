@@ -21,6 +21,18 @@
     ],
     "functions": [
       {
+        "name": "updatePolicies",
+        "type": "function",
+        "description": "WTF do you think this does moron",
+        "parameters": [
+          {
+            "name": "policyJson",
+            "type": "string",
+            "description": "obvious"
+          }
+        ]
+      },
+      {
         "name": "broadcastWhistMessage",
         "type": "function",
         "description": "Sends message to a webUI or another extension",
