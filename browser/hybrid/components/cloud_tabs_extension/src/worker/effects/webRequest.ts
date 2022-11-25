@@ -1,12 +1,13 @@
 import { Storage } from "@app/constants/storage"
 
-import { webRequest } from "@app/worker/events/webRequest"
+import { webRequest, webNavigationError } from "@app/worker/events/webRequest"
 import { getStorage } from "@app/worker/utils/storage"
 import {
   getTab,
   updateTabUrl,
   unmarkActiveCloudTab,
   stripCloudUrl,
+  convertToCloudTab,
 } from "@app/worker/utils/tabs"
 
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
@@ -29,4 +30,15 @@ webRequest.subscribe((response: any) => {
       void updateTabUrl(tab.id, `cloud:${response.url as string}`)
     }
   })
+})
+
+webNavigationError.subscribe((response: any) => {
+  // net::ERR_BLOCKED_BY_ADMINISTRATOR means that this navigation was blocked by a URL blocklist.
+  // All blocklisted URLs should be converted to cloud URLs.
+  if (response.error === "net::ERR_BLOCKED_BY_ADMINISTRATOR") {
+    void Promise.all([getTab(response.tabId)]).then((args: any) => {
+      const [tab] = args
+      void convertToCloudTab(tab)
+    })
+  }
 })

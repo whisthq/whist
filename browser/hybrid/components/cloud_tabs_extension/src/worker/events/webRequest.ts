@@ -19,4 +19,12 @@ const webpageLoaded = fromEventPattern(
   (details: any) => details
 ).pipe(filter((details: any) => details.url.startsWith("http")))
 
-export { webRequest, webpageLoaded }
+const webNavigationError = fromEventPattern(
+  (handler: NodeEventHandler) =>
+    chrome.webNavigation.onErrorOccurred.addListener(handler),
+  (handler: NodeEventHandler) =>
+    chrome.webNavigation.onErrorOccurred.removeListener(handler),
+  (response: any) => response
+)
+
+export { webRequest, webpageLoaded, webNavigationError }
