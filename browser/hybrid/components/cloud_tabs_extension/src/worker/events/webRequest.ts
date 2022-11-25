@@ -21,7 +21,9 @@ const webpageLoaded = fromEventPattern(
 
 const webNavigationError = fromEventPattern(
   (handler: NodeEventHandler) =>
-    chrome.webNavigation.onErrorOccurred.addListener(handler),
+    chrome.webNavigation.onErrorOccurred.addListener(handler, {
+      url: [{ schemes: ["http", "https"] }],
+    }),
   (handler: NodeEventHandler) =>
     chrome.webNavigation.onErrorOccurred.removeListener(handler),
   (response: any) => response
