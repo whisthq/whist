@@ -34,11 +34,15 @@ webRequest.subscribe((response: any) => {
 
 webNavigationError.subscribe((response: any) => {
   // net::ERR_BLOCKED_BY_ADMINISTRATOR means that this navigation was blocked by a URL blocklist.
-  // All blocklisted URLs should be converted to cloud URLs.
-  if (response.error === "net::ERR_BLOCKED_BY_ADMINISTRATOR") {
+  // All blocklisted URLs in the top level (frame ID 0) should be converted to cloud URLs.
+  if (response.frameId === 0 && response.error === "net::ERR_BLOCKED_BY_ADMINISTRATOR") {
     void Promise.all([getTab(response.tabId)]).then((args: any) => {
       const [tab] = args
       void convertToCloudTab(tab)
+
+      // TODO: this results in some weird behavior in history if you click the back button until
+      // you reach the original blocklisted URL in history. We probably don't want to rewrite 
+      // forward history on a blocklist redirect.
     })
   }
 })
