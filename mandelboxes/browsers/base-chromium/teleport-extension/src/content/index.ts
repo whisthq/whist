@@ -23,4 +23,4 @@ initPinchToZoom()
 initLocationSpoofer()
 
 // Enable notification interception
-initNotificationHandler()
+initNotificationSender()

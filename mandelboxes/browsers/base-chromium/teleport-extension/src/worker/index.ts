@@ -26,6 +26,7 @@ import {
 } from "./cookies"
 import { initZoomListener } from "./zoom"
 import { initWindowCreatedListener } from "./windows"
+import { initNotificationHandler } from "./notifications"
 
 initTabState()
 
@@ -53,6 +54,9 @@ initCookieAddedListener(socket)
 initCookieRemovedListener(socket)
 initTabRefreshListener(socket)
 initZoomListener(socket)
+
+// Listen to client for notifications
+initNotificationHandler(socket)
 
 // Initialize the file upload/download handler
 initFileSyncHandler(socket)

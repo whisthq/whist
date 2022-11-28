@@ -4,7 +4,7 @@ import {
 } from "@app/constants/ipc"
 import { injectResourceIntoDOM } from "@app/utils/dom"
 
-const initNotificationHandler = () => {
+const initNotificationSender = () => {
     injectResourceIntoDOM(document, "js/notifications.js")
 
     // Intercept server-side notifications and send them to the client
@@ -56,4 +56,4 @@ const initNotificationHandler = () => {
     // TODO: listen for client-side interactions with the notification and send them back?
 }
 
-export { initNotificationHandler }
+export { initNotificationSender }
