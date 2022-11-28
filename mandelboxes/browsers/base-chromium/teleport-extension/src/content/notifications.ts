@@ -1,7 +1,10 @@
-import { Socket } from "socket.io-client"
+import {
+  ContentScriptMessage,
+  ContentScriptMessageType,
+} from "@app/constants/ipc"
 import { injectResourceIntoDOM } from "@app/utils/dom"
 
-const initNotificationHandler = (socket: Socket) => {
+const initNotificationHandler = () => {
     injectResourceIntoDOM(document, "js/notifications.js")
 
     // Intercept server-side notifications and send them to the client
@@ -31,10 +34,13 @@ const initNotificationHandler = (socket: Socket) => {
         opt: NotificationOptions,
     ): void {
         console.log({title, opt});
-        socket.emit(
-            "server-notification-created",
-            title, opt
-        )
+        chrome.runTime.sendMessage(<ContentScriptMessage>{
+            type: ContentScriptMessageType.SERVER_NOTIFICATION,
+            value: {
+                title: title,
+                opt: opt
+            },
+        })
     }
     setNotificationCallback(notificationCallback);
 

@@ -1,5 +1,6 @@
 export enum ContentScriptMessageType {
   POINTER_LOCK = "POINTER_LOCK",
+  SERVER_NOTIFICATION = "SERVER_NOTIFICATION",
 }
 
 export enum NativeHostMessageType {
