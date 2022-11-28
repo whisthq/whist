@@ -39,19 +39,22 @@ ExtensionFunction::ResponseAction WhistUpdatePoliciesFunction::Run() {
       whist::UpdatePolicies::Params::Create(args()));
   EXTENSION_FUNCTION_VALIDATE(params.get());
 
-  // We don't call this often, and only from the extension, so it is okay
-  // to block. Especially because it's very fast.
-  base::ScopedAllowBlocking allow_blocking;
 
-  base::FilePath config_dir_path;
-  base::PathService::Get(chrome::DIR_POLICY_FILES, &config_dir_path);
-  // Create "mandatory" directory if it doesn't exist
-  base::FilePath mandatory_dir_path = config_dir_path.Append("mandatory");
-  if (!base::PathExists(mandatory_dir_path)) {
-    base::CreateDirectory(mandatory_dir_path);
+  {
+    // We don't call this often, and only from the extension, so it is okay
+    // to block. Especially because it's very fast.
+    base::ScopedAllowBlocking allow_blocking;
+
+    base::FilePath config_dir_path;
+    base::PathService::Get(chrome::DIR_POLICY_FILES, &config_dir_path);
+    // Create "mandatory" directory if it doesn't exist
+    base::FilePath mandatory_dir_path = config_dir_path.Append("mandatory");
+    if (!base::PathExists(mandatory_dir_path)) {
+      base::CreateDirectory(mandatory_dir_path);
+    }
+    base::FilePath policy_file_path = mandatory_dir_path.Append("whist_policy.json");
+    base::WriteFile(policy_file_path, params->policy_json.c_str(), params->policy_json.length());
   }
-  base::FilePath policy_file_path = mandatory_dir_path.Append("whist_policy.json");
-  base::WriteFile(policy_file_path, params->policy_json.c_str(), params->policy_json.length());
 
   // TODO: Validate policy JSON before writing it.
 
