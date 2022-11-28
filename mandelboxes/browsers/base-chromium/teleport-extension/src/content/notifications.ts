@@ -5,7 +5,7 @@ import {
 import { injectResourceIntoDOM } from "@app/utils/dom"
 
 const initNotificationSender = () => {
-    injectResourceIntoDOM(document, "js/notifications.js")
+    injectResourceIntoDOM(document, "js/notifications.js");
 
     // Intercept server-side notifications and send them to the client
     // currently copied from https://github.com/nativefier/nativefier/blob/master/app/src/preload.ts
@@ -15,10 +15,11 @@ const initNotificationSender = () => {
             (title: string, opt?: NotificationOptions | undefined): void;
         },
     ): void {
+        console.log("setNotificationCallback called");
         class newNotify extends Notification {
             constructor(title: string, options?: NotificationOptions | undefined) {
-                super(title, options);
                 createCallback(title, options);
+                super(title, options);
             }
         }
 

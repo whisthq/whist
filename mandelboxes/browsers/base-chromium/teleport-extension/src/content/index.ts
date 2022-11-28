@@ -8,7 +8,7 @@ import { initCursorLockDetection } from "./cursor"
 import { initUserAgentSpoofer } from "./userAgent"
 import { initPinchToZoom } from "./zoom"
 import { initLocationSpoofer } from "./geolocation"
-import { initNotificationHandler } from "./notifications"
+import { initNotificationSender } from "./notifications"
 
 // Enable relative mouse mode
 initCursorLockDetection()
