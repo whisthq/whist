@@ -23,12 +23,12 @@
       {
         "name": "updatePolicies",
         "type": "function",
-        "description": "WTF do you think this does moron",
+        "description": "Update the management policies to the provided JSON data by writing a policy file and triggering a policy update",
         "parameters": [
           {
             "name": "policyJson",
             "type": "string",
-            "description": "obvious"
+            "description": "The policies to set as a JSON string"
           }
         ]
       },
