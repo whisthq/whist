@@ -9,12 +9,20 @@ const initNotificationHandler = () => {
 
     // Intercept server-side notifications and send them to the client
     // currently copied from https://github.com/nativefier/nativefier/blob/master/app/src/preload.ts
+    // TODO: also send over permissions? is this needed? or the client has to communicate permissions
     function setNotificationCallback(
         createCallback: {
-            (title: string, opt: NotificationOptions): void;
+            (title: string, opt?: NotificationOptions | undefined): void;
         },
     ): void {
-        const oldNotify = window.Notification;
+        class newNotify extends Notification {
+            constructor(title: string, options?: NotificationOptions | undefined) {
+                super(title, options);
+                createCallback(title, options);
+            }
+        }
+
+        /*
         const newNotify = function (
             title: string,
             opt: NotificationOptions,
@@ -23,18 +31,19 @@ const initNotificationHandler = () => {
             return new oldNotify(title, opt);
         };
         newNotify.requestPermission = oldNotify.requestPermission.bind(oldNotify);
-        Object.defineProperty(newNotify, "permission", {
+        Object.defineProperty(newNotify.prototype, 'permission', {
             get: () => oldNotify.permission,
         });
+        */
         window.Notification = newNotify;
     }
 
     function notificationCallback(
         title: string,
-        opt: NotificationOptions,
+        opt?: NotificationOptions | undefined,
     ): void {
         console.log({title, opt});
-        chrome.runTime.sendMessage(<ContentScriptMessage>{
+        chrome.runtime.sendMessage(<ContentScriptMessage>{
             type: ContentScriptMessageType.SERVER_NOTIFICATION,
             value: {
                 title: title,
@@ -47,4 +56,4 @@ const initNotificationHandler = () => {
     // TODO: listen for client-side interactions with the notification and send them back?
 }
 
-
+export { initNotificationHandler }
