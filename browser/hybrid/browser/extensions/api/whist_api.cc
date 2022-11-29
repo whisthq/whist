@@ -47,8 +47,9 @@ ExtensionFunction::ResponseAction WhistUpdatePoliciesFunction::Run() {
 
     base::FilePath config_dir_path;
     base::PathService::Get(chrome::DIR_POLICY_FILES, &config_dir_path);
-    // Create "mandatory" directory if it doesn't exist
-    base::FilePath mandatory_dir_path = config_dir_path.Append("mandatory");
+    // Create "managed" directory if it doesn't exist
+    // This should match kMandatoryConfigDir in components/policy/core/common/config_dir_policy_loader.cc
+    base::FilePath mandatory_dir_path = config_dir_path.Append("managed");
     if (!base::PathExists(mandatory_dir_path)) {
       base::CreateDirectory(mandatory_dir_path);
     }
