@@ -7,7 +7,6 @@ import {
   updateTabUrl,
   unmarkActiveCloudTab,
   stripCloudUrl,
-  convertToCloudTab,
 } from "@app/worker/utils/tabs"
 
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
@@ -41,11 +40,22 @@ webNavigationError.subscribe((response: any) => {
   ) {
     void Promise.all([getTab(response.tabId)]).then((args: any) => {
       const [tab] = args
-      void convertToCloudTab(tab)
 
-      // TODO: this results in some weird behavior in history if you click the back button until
-      // you reach the original blocklisted URL in history. We probably don't want to rewrite
-      // forward history on a blocklist redirect.
+      const sleepTimeMs = 80
+      const url = response.url
+
+      chrome.tabs.goBack(tab.id, () => {
+        void new Promise((resolve) => setTimeout(resolve, sleepTimeMs)).then(
+          () => {
+            void updateTabUrl(tab.id, `cloud:${url as string}`)
+          }
+        )
+      })
+      // the goBack() erases the history of original blocklisted URL, which will casue weird
+      // behaivor if when user reach it with the "navigate back" button.
+      // however due to limitations of the extension API, a short sleep has to be added between
+      // goBack() and updateTabUrl().
+      // TODO: replace this with a better solution
     })
   }
 })
