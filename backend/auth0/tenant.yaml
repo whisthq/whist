@@ -18,7 +18,7 @@ rulesConfigs: []
 hooks: []
 pages:
   - name: login
-    enabled: true
+    enabled: false
     html: ./pages/login.html
 resourceServers:
   - name: Whist API
@@ -63,6 +63,8 @@ clients:
       facebook:
         enabled: false
     oidc_conformant: true
+    organization_require_behavior: pre_login_prompt
+    organization_usage: require
     refresh_token:
       expiration_type: expiring
       leeway: 0
@@ -74,6 +76,77 @@ clients:
     sso_disabled: false
     token_endpoint_auth_method: none
     web_origins: []
+  - name: Dashboard Service
+    allowed_clients: []
+    app_type: non_interactive
+    callbacks: []
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
+  - name: Enterprise Dashboard
+    allowed_clients: []
+    allowed_logout_urls:
+      - http://localhost:3000
+      - https://*-splendorous-sorbet-64be49.netlify.app
+    app_type: regular_web
+    callbacks:
+      - http://localhost:3000/api/auth/callback
+      - https://*-splendorous-sorbet-64be49.netlify.app/api/auth/callback
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - authorization_code
+      - implicit
+      - refresh_token
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    organization_require_behavior: pre_login_prompt
+    organization_usage: require
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
 databases: []
 connections:
   - name: google-oauth2
@@ -147,12 +220,23 @@ tenant:
     colors:
       page_background: "#ffffff"
       primary: "#4f35de"
+clientGrants:
+  - client_id: Dashboard Service
+    audience: https://fractal-dev.us.auth0.com/api/v2/
+    scope:
+      - read:organization_members
+      - create:organization_member_roles
+      - read:organization_member_roles
+      - delete:organization_member_roles
 roles:
   - name: Developer
     description: Whist developers
     permissions:
       - permission_name: admin
         resource_server_identifier: https://api.fractal.co
+  - name: Organization Admin
+    description: Enterprise customer account administrator
+    permissions: []
 branding:
   colors:
     page_background: "#ffffff"
@@ -164,4 +248,9 @@ prompts:
 migrations: {}
 actions: []
 triggers: {}
-organizations: []
+organizations:
+  - name: whist-demo
+    connections:
+      - name: google-oauth2
+        assign_membership_on_login: false
+    display_name: Whist Demo
