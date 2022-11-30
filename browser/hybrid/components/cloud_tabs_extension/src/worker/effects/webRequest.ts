@@ -45,7 +45,7 @@ webNavigationError.subscribe((response: any) => {
       const url = response.url
 
       // The goBack() erases the history of original blocklisted URL, which will cause weird
-      // behavior when the useres reach it with the "navigate back" button.
+      // behavior when the users reach it with the "navigate back" button.
       // However due to limitations of the extension API, a short sleep has to be added between
       // goBack() and updateTabUrl().
       // TODO: replace this with a better solution, as sleep is not ideal
