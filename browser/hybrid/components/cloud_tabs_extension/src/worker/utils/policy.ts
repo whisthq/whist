@@ -9,8 +9,8 @@ import { get } from "@app/@core-ts/api"
 import { config } from "@app/constants/app"
 import { AsyncReturnType } from "@app/@types/api"
 
-const getPolicies = (accessToken: string) =>
-  get({
+const getPolicies = async (accessToken: string) =>
+  await get({
     url: `${config.POLICY_SERVICE_URL as string}/api/policies`,
     accessToken,
   })
