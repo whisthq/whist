@@ -44,6 +44,11 @@ webNavigationError.subscribe((response: any) => {
       const sleepTimeMs = 80
       const url = response.url
 
+      // The goBack() erases the history of original blocklisted URL, which will cause weird
+      // behavior when the useres reach it with the "navigate back" button.
+      // However due to limitations of the extension API, a short sleep has to be added between
+      // goBack() and updateTabUrl().
+      // TODO: replace this with a better solution, as sleep is not ideal
       chrome.tabs.goBack(tab.id, () => {
         void new Promise((resolve) => setTimeout(resolve, sleepTimeMs)).then(
           () => {
@@ -51,11 +56,6 @@ webNavigationError.subscribe((response: any) => {
           }
         )
       })
-      // the goBack() erases the history of original blocklisted URL, which will casue weird
-      // behaivor if when user reach it with the "navigate back" button.
-      // however due to limitations of the extension API, a short sleep has to be added between
-      // goBack() and updateTabUrl().
-      // TODO: replace this with a better solution
     })
   }
 })
