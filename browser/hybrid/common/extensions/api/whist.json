@@ -21,6 +21,18 @@
     ],
     "functions": [
       {
+        "name": "updatePolicies",
+        "type": "function",
+        "description": "Update the management policies to the provided JSON data by writing a policy file and triggering a policy update",
+        "parameters": [
+          {
+            "name": "policyJson",
+            "type": "string",
+            "description": "The policies to set as a JSON string"
+          }
+        ]
+      },
+      {
         "name": "broadcastWhistMessage",
         "type": "function",
         "description": "Sends message to a webUI or another extension",

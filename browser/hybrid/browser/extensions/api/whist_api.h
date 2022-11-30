@@ -7,6 +7,16 @@
 namespace extensions {
 namespace api {
 
+class WhistUpdatePoliciesFunction : public ExtensionFunction {
+  public:
+   DECLARE_EXTENSION_FUNCTION("whist.updatePolicies", UNKNOWN)
+
+  protected:
+    ~WhistUpdatePoliciesFunction() override {}
+
+    ResponseAction Run() override;
+};
+
 class WhistBroadcastWhistMessageFunction : public ExtensionFunction {
  public:
   DECLARE_EXTENSION_FUNCTION("whist.broadcastWhistMessage", UNKNOWN)
