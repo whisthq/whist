@@ -8,7 +8,7 @@ import stringify from "json-stringify-safe"
 
 const httpConfig =
   (method: string) =>
-  async (args: { body: object; url: string; accessToken?: string }) => {
+  async (args: { body?: object; url: string; accessToken?: string }) => {
     let response = null
 
     try {
@@ -20,7 +20,9 @@ const httpConfig =
             Authorization: `Bearer ${args.accessToken}`,
           }),
         },
-        body: stringify(args.body),
+        ...(args.body !== undefined && {
+          body: stringify(args.body),
+        }),
       })
     } catch (err) {
       return {
@@ -45,5 +47,6 @@ const httpConfig =
 
 const post = httpConfig("POST")
 const put = httpConfig("PUT")
+const get = httpConfig("GET")
 
-export { post, put }
+export { post, put, get }
