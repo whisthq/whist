@@ -28,7 +28,8 @@ const policyRetrieval = authSuccess.pipe(
         error: "Client Timeout",
       },
     } as GetPoliciesResponse)
-  )
+  ),
+  share()
 )
 
 const policyRetrievalSuccess = policyRetrieval.pipe(
