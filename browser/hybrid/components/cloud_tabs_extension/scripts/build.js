@@ -14,6 +14,7 @@ const build = (argv) => {
     AUTH0_CLIENT_ID: argv.auth0_client_id,
     AUTH0_DOMAIN_URL: argv.auth0_domain_url,
     AUTH0_REDIRECT_URL: argv.auth0_redirect_url,
+    POLICY_SERVICE_URL: argv.policy_service_url,
     SCALING_SERVICE_URL: argv.scaling_service_url,
     AMPLITUDE_KEY: argv.amplitude_key,
     HOST_IP: argv.host_ip,
@@ -67,6 +68,12 @@ if (require.main === module) {
     })
     .option("scaling_service_url", {
       description: "Scaling service URL",
+      type: "string",
+      requiresArg: true,
+      demandOption: false,
+    })
+    .option("policy_service_url", {
+      description: "Policy service URL",
       type: "string",
       requiresArg: true,
       demandOption: false,
