@@ -18,13 +18,11 @@ const getPolicies = async (accessToken: string) =>
 type GetPoliciesResponse = AsyncReturnType<typeof getPolicies>
 
 const getPoliciesSuccess = (res: GetPoliciesResponse) => {
-  if (res.json?.error !== "") {
-    return false
-  }
-  return res.json?.policy !== undefined
+  return (res.json?.error ?? "") === "" && res.json?.policy !== undefined
 }
 
 const applyPolicies = (policies: any) => {
+  // TODO: Handle boolean return value
   ;(chrome as any).whist.updatePolicies(JSON.stringify(policies))
 }
 
