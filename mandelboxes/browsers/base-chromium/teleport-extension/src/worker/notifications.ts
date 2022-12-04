@@ -9,6 +9,7 @@ const initNotificationHandler = (socket: Socket) => {
     // and send them along to the client
     chrome.runtime.onMessage.addListener(async (msg: ContentScriptMessage, sender: chrome.runtime.MessageSender) => {
         if (msg.type !== ContentScriptMessageType.SERVER_NOTIFICATION) return
+        console.log("received server notification message", msg.value.title, msg.value.opt);
         socket.emit("server-notification", msg.value.title, msg.value.opt)
     })
     // Listen for client messages about notification clicks, dismisses, etc
