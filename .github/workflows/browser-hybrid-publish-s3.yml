@@ -379,7 +379,7 @@ jobs:
 
           export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
           export WHIST_AUTH0_REDIRECT_URL=https://com.whist.auth0/callback
-          export WHIST_POLICY_SERVICE_URL=https://www.dashboard.whist.com
+          export WHIST_POLICY_SERVICE_URL=https://dashboard.whist.com
 
           pushd src/whist
           export WHIST_COMMIT_SHA=$(git rev-parse ${{ inputs.branch }})
