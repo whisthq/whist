@@ -9,6 +9,8 @@ const notificationCallback = (
     opt: NotificationOptions | undefined,
 ) => {
     console.log("Notification callback called", title, opt);
+    // apparently chrome.runtime.sendMessage() called from a webpage must specify an Extension ID (string) for its first argument.
+    /*
     chrome.runtime.sendMessage(<ContentScriptMessage>{
         type: ContentScriptMessageType.SERVER_NOTIFICATION,
         value: {
@@ -16,6 +18,15 @@ const notificationCallback = (
             opt: opt
         }
     });
+    */
+    const data = <ContentScriptMessage>{
+        type: ContentScriptMessageType.SERVER_NOTIFICATION,
+        value: {
+            title: title,
+            opt: opt
+        }
+    };
+    window.postMessage(data, "*");
 }
 
 // Intercept server-side notifications and send them to the client
