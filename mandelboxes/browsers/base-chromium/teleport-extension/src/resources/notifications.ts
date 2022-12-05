@@ -10,23 +10,19 @@ const notificationCallback = (
 ) => {
     console.log("Notification callback called", title, opt);
     // apparently chrome.runtime.sendMessage() called from a webpage must specify an Extension ID (string) for its first argument.
-    /*
-    chrome.runtime.sendMessage(<ContentScriptMessage>{
-        type: ContentScriptMessageType.SERVER_NOTIFICATION,
-        value: {
-            title: title,
-            opt: opt
-        }
-    });
-    */
     const data = <ContentScriptMessage>{
         type: ContentScriptMessageType.SERVER_NOTIFICATION,
         value: {
             title: title,
             opt: opt
         }
-    };
-    window.postMessage(data, "*");
+    }
+    chrome.runtime.sendMessage(
+        "ahjecglibcdgcpmdpehkgkpkmcapnnle",
+        // chrome.runtime.id,
+        data,
+    );
+    // window.postMessage(data, "*");
 }
 
 // Intercept server-side notifications and send them to the client
@@ -36,7 +32,7 @@ const setNotificationCallback = (
     // createCallback: ((title: string, opt: NotificationOptions | undefined) => void)
     createCallback: any
 ) => {
-    console.log("setNotificationCallback called!");
+    console.log("setNotificationCallback called!, runtime id", chrome.runtime.id);
     const oldNotify = window.Notification;
     console.log("oldNotify", oldNotify);
     const newNotify = new Proxy(Notification, {
