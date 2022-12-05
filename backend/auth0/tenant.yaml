@@ -111,11 +111,11 @@ clients:
     allowed_clients: []
     allowed_logout_urls:
       - http://localhost:3000
-      - https://*-splendorous-sorbet-64be49.netlify.app
+      - https://dashboard.whist.com
     app_type: regular_web
     callbacks:
       - http://localhost:3000/api/auth/callback
-      - https://*-splendorous-sorbet-64be49.netlify.app/api/auth/callback
+      - https://dashboard.whist.com/api/auth/callback
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
